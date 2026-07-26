@@ -34,32 +34,23 @@ const featuredTools = [
 
 const topCategories = CATEGORIES.slice(0, 6);
 
-const trustPoints = [
-  { label: 'Free forever', icon: true },
-  { label: 'No signup required', icon: true },
-  { label: 'All units supported', icon: true },
-  { label: 'Accurate calculations', icon: true },
-  { label: 'Mobile friendly', icon: true },
-  { label: 'No ads', icon: true },
-];
-
 const howItWorks = [
   {
     step: '01',
     title: 'Enter your dimensions',
-    description: 'Type width and height in any unit — inches, feet, mm, cm, or meters. Fractions work too.',
+    description: 'Type width and height in any unit. Fractions like 36 1/2" work. No conversion needed — just measure.',
     icon: 'Ruler',
   },
   {
     step: '02',
-    title: 'Results update live',
-    description: 'Area, perimeter, aspect ratio, and reference conversions calculate instantly as you type.',
+    title: 'Get explained results',
+    description: 'Area, perimeter, aspect ratio, and reference dimensions calculate instantly — each result shows you what it\'s for.',
     icon: 'Zap',
   },
   {
     step: '03',
-    title: 'Make a better decision',
-    description: 'Get the nearest standard size, curtain recommendations, glass estimates, and suggested next steps.',
+    title: 'Know what to do next',
+    description: 'Nearest standard size, curtain coverage, glass weight, and replacement notes — all generated from one measurement.',
     icon: 'ClipboardCheck',
   },
 ];
@@ -67,52 +58,52 @@ const howItWorks = [
 const whyPoints = [
   {
     icon: 'Scale',
-    title: 'Professional formulas',
-    description: 'Every calculation follows industry-standard formulas used by contractors and window manufacturers worldwide.',
+    title: 'Industry-standard formulas',
+    description: 'Calculations match the methods used by contractors, glaziers, and window manufacturers. Not approximations.',
   },
   {
     icon: 'Zap',
-    title: 'Instant results',
-    description: 'Results update as you type. No submit button. No loading. Just accurate answers the moment you need them.',
+    title: 'Results as you type',
+    description: 'No submit button. No loading spinner. Area, perimeter, and recommendations update the instant you type a number.',
   },
   {
     icon: 'ClipboardCheck',
-    title: 'Decision recommendations',
-    description: 'Go beyond raw numbers. Get nearest standard sizes, curtain guides, glass estimates, and next steps automatically.',
+    title: 'Every result explained',
+    description: 'Numbers without context are useless. Every result tells you what it means and what to do with it.',
   },
   {
     icon: 'Expand',
-    title: 'Every unit, every region',
-    description: 'Imperial and metric. US, UK, Canada, Australia, and Europe. Switch units at any time without losing your work.',
+    title: 'Any unit, any region',
+    description: 'Inches, feet, mm, cm, or meters. US, UK, Australia, Europe. Switch units at any point — results recalculate instantly.',
   },
   {
     icon: 'Shield',
-    title: '100% free, always',
-    description: 'No account. No paywall. No limits. Every tool on WindowMetrics is completely free and open to everyone.',
+    title: 'Free for everyone',
+    description: 'No account, no paywall, no limits. Every calculator is permanently free for homeowners, contractors, and installers.',
   },
   {
     icon: 'Lock',
-    title: 'Private by default',
-    description: 'All calculations run in your browser. Nothing is sent to a server. Your measurements stay completely private.',
+    title: 'Fully private',
+    description: 'Everything runs in your browser. Nothing leaves your device. Your measurements are never stored or transmitted.',
   },
 ];
 
 const faqs = [
   {
-    question: 'Do I need to create an account?',
-    answer: 'No. Every calculator on WindowMetrics is completely free and requires no account or signup. Just open the tool and start measuring.',
+    question: 'What does WindowMetrics actually do?',
+    answer: 'WindowMetrics turns a single window measurement into a complete set of decisions. Enter your width and height once — get area, perimeter, nearest standard size, curtain sizing, glass weight estimate, and replacement planning. No spreadsheets. No guesswork.',
   },
   {
-    question: 'Which units does WindowMetrics support?',
-    answer: 'All calculators support millimeters (mm), centimeters (cm), meters (m), inches (in), and feet (ft). You can switch units at any time and results update instantly.',
+    question: 'Which units are supported?',
+    answer: 'All calculators support millimeters (mm), centimeters (cm), meters (m), inches (in), and feet (ft). Imperial fractions like 36 1/2" work too. Switch units at any point and all results update instantly.',
   },
   {
     question: 'How accurate are the calculations?',
-    answer: 'Our calculations use standard formulas derived from industry references. For critical projects such as glass orders, always verify measurements with a professional.',
+    answer: 'Calculations follow industry-standard formulas used in window manufacturing and glazing trades. For glass orders, curtain fabric, or replacement windows, always take a final measurement before purchasing.',
   },
   {
-    question: 'Can I use WindowMetrics on my phone?',
-    answer: 'Yes. All calculators are fully responsive and work on any device — phone, tablet, or desktop — with no app download required.',
+    question: 'Does it work on mobile?',
+    answer: 'Yes. Every calculator is designed for touch-first input and works on any device — phone, tablet, or desktop. No app download, no signup required.',
   },
 ];
 ---
@@ -135,7 +126,7 @@ const faqs = [
         <div class="hero-copy">
           <div class="hero-eyebrow">
             <span class="hero-eyebrow-dot" aria-hidden="true"></span>
-            <span>Free window measurement platform</span>
+            <span>Window Decision Platform</span>
           </div>
 
           <h1 class="hero-headline">
@@ -144,8 +135,8 @@ const faqs = [
           </h1>
 
           <p class="hero-sub">
-            Professional tools for measurement, replacement planning, glass estimation,
-            curtain sizing, and more. One platform for every window decision.
+            Enter your dimensions once. Instantly get area, perimeter, nearest standard size,
+            curtain sizing, glass estimate, and replacement guidance — all explained, all free.
           </p>
 
           <div class="hero-cta-row">
@@ -153,7 +144,7 @@ const faqs = [
               Measure My Window
             </a>
             <a href="/tools" class="btn-hero-secondary" id="hero-cta-secondary">
-              Browse All Calculators
+              Browse Calculators
               <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
                 <path d="M1 6h10M7 2l4 4-4 4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
               </svg>
@@ -270,11 +261,11 @@ const faqs = [
     <div class="container-content">
       <div class="hp-section-header">
         <div>
-          <h2 class="hp-section-title" id="featured-heading">Start calculating</h2>
-          <p class="hp-section-sub">The most-used window measurement tools, ready now.</p>
+          <h2 class="hp-section-title" id="featured-heading">Start measuring</h2>
+          <p class="hp-section-sub">One measurement powers all of these results. Try the live calculator now.</p>
         </div>
         <a href="/tools" class="hp-view-all" aria-label="View all window calculators">
-          All tools →
+          All calculators →
         </a>
       </div>
 
@@ -290,7 +281,7 @@ const faqs = [
   <section class="hp-section" aria-labelledby="how-heading">
     <div class="container-content">
       <h2 class="hp-section-title" id="how-heading">How it works</h2>
-      <p class="hp-section-sub" style="margin-bottom: var(--spacing-2xl)">Three steps, no guesswork.</p>
+      <p class="hp-section-sub" style="margin-bottom: var(--spacing-2xl)">One measurement. Three steps. Every answer you need.</p>
 
       <div class="how-grid">
         {
@@ -321,8 +312,8 @@ const faqs = [
     <div class="container-content">
       <div class="hp-section-header">
         <div>
-          <h2 class="hp-section-title" id="cat-heading">Every window project covered</h2>
-          <p class="hp-section-sub">Tools organized by what you need to accomplish.</p>
+          <h2 class="hp-section-title" id="cat-heading">Every project type covered</h2>
+          <p class="hp-section-sub">Tools organized by job — from a quick measurement to a full replacement project.</p>
         </div>
         <a href="/tools" class="hp-view-all" aria-label="Browse all tool categories">
           Browse all →
@@ -364,8 +355,8 @@ const faqs = [
     <div class="container-content">
       <div class="hp-section-header" style="margin-bottom: var(--spacing-2xl)">
         <div>
-          <h2 class="hp-section-title" id="why-heading">Built for real decisions</h2>
-          <p class="hp-section-sub">Not just numbers. Actual answers for every window project.</p>
+          <h2 class="hp-section-title" id="why-heading">Why WindowMetrics</h2>
+          <p class="hp-section-sub">Designed for people who need accurate answers, not just raw numbers.</p>
         </div>
       </div>
 
@@ -396,10 +387,10 @@ const faqs = [
         <div class="faq-left">
           <h2 class="hp-section-title" id="faq-hp-heading">Common questions</h2>
           <p class="hp-section-sub">
-            Everything you need to know before you start measuring.
+            Quick answers before you open the calculator.
           </p>
           <a href="/tools/window-size-calculator" class="btn-hero-primary" style="margin-top: var(--spacing-lg); display:inline-flex; align-self:flex-start;">
-            Try the calculator
+            Open the calculator
           </a>
         </div>
         <div class="faq-right">

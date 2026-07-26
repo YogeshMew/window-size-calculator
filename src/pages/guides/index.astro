@@ -22,12 +22,42 @@ const breadcrumbs: BreadcrumbItem[] = [
 ];
 
 const upcomingGuides = [
-  { tag: 'Replacement', difficulty: 'Beginner', readTime: '5 min', title: 'How to Measure a Window for Replacement', desc: 'Step-by-step guide to measuring your existing window frame for a new replacement window — including how to handle out-of-square walls.' },
-  { tag: 'Reference',   difficulty: 'Beginner', readTime: '3 min', title: 'Standard Window Sizes in the US',          desc: 'Complete reference for single-hung, double-hung, casement, awning, and picture window standard dimensions.' },
-  { tag: 'Curtains',    difficulty: 'Beginner', readTime: '4 min', title: 'How to Measure for Curtains',              desc: 'Measure window width, height, and rod placement for curtains that look professionally styled from the first install.' },
-  { tag: 'Energy',      difficulty: 'Intermediate', readTime: '6 min', title: 'Window U-Factor Explained',            desc: 'What U-factor means for your windows, how to read energy performance labels, and which values are best for your climate.' },
-  { tag: 'Blinds',      difficulty: 'Beginner', readTime: '4 min', title: 'Inside vs Outside Mount Blinds',           desc: 'When to choose inside vs outside mount for blinds and shades — and how to measure correctly for each method.' },
-  { tag: 'Codes',       difficulty: 'Intermediate', readTime: '5 min', title: 'Egress Window Requirements by State',  desc: 'IRC code requirements for egress windows in bedrooms and basements, including minimum opening dimensions.' },
+  {
+    tag: 'Replacement', difficulty: 'Beginner', readTime: '5 min',
+    title: 'How to Measure a Window for Replacement',
+    preview: 'Measure at three points; always use the smallest. Rough opening is 1/2" larger on each side.',
+    desc: 'Step-by-step guide to measuring your existing window frame for a new replacement window — including how to handle out-of-square walls.',
+  },
+  {
+    tag: 'Reference', difficulty: 'Beginner', readTime: '3 min',
+    title: 'Standard Window Sizes in the US',
+    preview: 'Single-hung common sizes: 24×36, 28×54, 36×60, 36×72, 48×60, 60×48 inches.',
+    desc: 'Complete reference for single-hung, double-hung, casement, awning, and picture window standard dimensions.',
+  },
+  {
+    tag: 'Curtains', difficulty: 'Beginner', readTime: '4 min',
+    title: 'How to Measure for Curtains',
+    preview: 'Full coverage = window width × 2. Add 6–8" above frame for rod placement.',
+    desc: 'Measure window width, height, and rod placement for curtains that look professionally styled from the first install.',
+  },
+  {
+    tag: 'Energy', difficulty: 'Intermediate', readTime: '6 min',
+    title: 'Window U-Factor Explained',
+    preview: 'U-0.30 or below is Energy Star certified. Lower is better. SHGC varies by climate zone.',
+    desc: 'What U-factor means for your windows, how to read energy performance labels, and which values are best for your climate.',
+  },
+  {
+    tag: 'Blinds', difficulty: 'Beginner', readTime: '4 min',
+    title: 'Inside vs Outside Mount Blinds',
+    preview: 'Inside mount: deduct 1/4" from width. Outside mount: add 3–4" on each side for light coverage.',
+    desc: 'When to choose inside vs outside mount for blinds and shades — and how to measure correctly for each method.',
+  },
+  {
+    tag: 'Codes', difficulty: 'Intermediate', readTime: '5 min',
+    title: 'Egress Window Requirements by State',
+    preview: 'IRC minimum: 5.7 sq ft net clear opening, 20" width, 24" height, max 44" sill height.',
+    desc: 'IRC code requirements for egress windows in bedrooms and basements, including minimum opening dimensions.',
+  },
 ];
 ---
 
@@ -80,11 +110,15 @@ const upcomingGuides = [
                 <div class="guide-card-meta">
                   <span class="guide-tag">{guide.tag}</span>
                   <span class="guide-read">{guide.readTime} read</span>
+                  <span class="guide-difficulty" data-level={guide.difficulty.toLowerCase()}>{guide.difficulty}</span>
                 </div>
                 <h2 class="guide-title">{guide.title}</h2>
                 <p class="guide-desc">{guide.desc}</p>
+                <div class="guide-preview-block" aria-label="Key fact">
+                  <span class="guide-preview-icon" aria-hidden="true">→</span>
+                  <span class="guide-preview-text">{guide.preview}</span>
+                </div>
                 <div class="guide-card-footer">
-                  <span class="guide-difficulty" data-level={guide.difficulty.toLowerCase()}>{guide.difficulty}</span>
                   <span class="guide-preview-note">Coming soon</span>
                 </div>
               </div>
@@ -247,24 +281,26 @@ const upcomingGuides = [
   }
 
   .guide-card-footer {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: var(--spacing-xs);
     margin-top: auto;
     padding-top: var(--spacing-xs);
     border-top: 1px solid var(--color-hairline);
   }
 
+  /* Difficulty badge — shown in meta row */
   .guide-difficulty {
     font-family: var(--font-family-mono);
     font-size: 10px;
+    font-weight: 500;
     padding: 1px 5px;
     border-radius: 3px;
     letter-spacing: 0.03em;
-    border: 1px solid var(--color-hairline);
-    background-color: var(--color-canvas-soft-2);
-    color: var(--color-muted);
+    border: 1px solid color-mix(in srgb, #22c55e 18%, transparent);
+    background-color: color-mix(in srgb, #22c55e 8%, transparent);
+    color: #16a34a;
+  }
+
+  [data-theme='dark'] .guide-difficulty {
+    color: #4ade80;
   }
 
   .guide-difficulty[data-level='intermediate'] {
@@ -275,6 +311,35 @@ const upcomingGuides = [
 
   [data-theme='dark'] .guide-difficulty[data-level='intermediate'] {
     color: #fbbf24;
+  }
+
+  /* Key fact preview block */
+  .guide-preview-block {
+    display: flex;
+    align-items: flex-start;
+    gap: 6px;
+    padding: var(--spacing-xs) var(--spacing-sm);
+    background-color: var(--color-canvas-soft-2);
+    border: 1px solid var(--color-hairline);
+    border-left: 2px solid var(--color-hairline-strong);
+    border-radius: var(--radius-sm);
+    margin-top: var(--spacing-xs);
+  }
+
+  .guide-preview-icon {
+    font-family: var(--font-family-mono);
+    font-size: 10px;
+    color: var(--color-muted);
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+
+  .guide-preview-text {
+    font-family: var(--font-family-mono);
+    font-size: 11px;
+    color: var(--color-body);
+    line-height: 1.45;
+    letter-spacing: 0.01em;
   }
 
   .guide-preview-note {

@@ -30,9 +30,10 @@ const upcomingPosts = [
   {
     category: 'Buying Guide',
     readTime: '10 min',
-    title: 'The Complete Guide to Buying Replacement Windows in 2025',
+    title: 'The Complete Guide to Buying Replacement Windows in 2026',
     desc: 'Frame materials, glass types, energy ratings, installation costs, and everything else you need to know before buying replacement windows.',
     author: 'WindowMetrics Editorial',
+    initials: 'WM',
   },
   {
     category: 'DIY',
@@ -40,6 +41,7 @@ const upcomingPosts = [
     title: 'How to Measure a Window in 5 Minutes (and Get It Right)',
     desc: 'A simple, mistake-proof method for measuring windows for replacement — including what to do when your opening is out of square.',
     author: 'WindowMetrics Editorial',
+    initials: 'WM',
   },
   {
     category: 'Energy',
@@ -47,6 +49,7 @@ const upcomingPosts = [
     title: 'Double vs Triple Pane Windows: Is the Upgrade Worth It?',
     desc: 'A data-driven comparison of double and triple pane windows — energy savings, payback period, and climate zone recommendations.',
     author: 'WindowMetrics Editorial',
+    initials: 'WM',
   },
   {
     category: 'Curtains',
@@ -54,6 +57,7 @@ const upcomingPosts = [
     title: 'Curtain Width Calculator: The Formula That Actually Works',
     desc: 'Why the "1.5× window width" rule is wrong for most windows, and the correct formula for full, professionally styled curtains.',
     author: 'WindowMetrics Editorial',
+    initials: 'WM',
   },
 ];
 ---
@@ -127,12 +131,16 @@ const upcomingPosts = [
                   <span class="post-category">{post.category}</span>
                   <span class="post-divider" aria-hidden="true">·</span>
                   <span class="post-date">{post.readTime} read</span>
+                  <span class="post-divider" aria-hidden="true">·</span>
+                  <span class="upcoming-coming-inline">Coming soon</span>
                 </div>
                 <h2 class="upcoming-title">{post.title}</h2>
                 <p class="upcoming-desc">{post.desc}</p>
                 <div class="upcoming-card-footer">
-                  <span class="upcoming-author">{post.author}</span>
-                  <span class="upcoming-coming">Coming soon</span>
+                  <div class="upcoming-author-row">
+                    <span class="upcoming-avatar" aria-hidden="true">{post.initials}</span>
+                    <span class="upcoming-author">{post.author}</span>
+                  </div>
                 </div>
               </div>
             ))}
@@ -409,12 +417,32 @@ const upcomingPosts = [
   }
 
   .upcoming-card-footer {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
     padding-top: var(--spacing-xs);
     border-top: 1px solid var(--color-hairline);
     margin-top: auto;
+  }
+
+  .upcoming-author-row {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+  }
+
+  .upcoming-avatar {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background-color: var(--color-canvas-soft-2);
+    border: 1px solid var(--color-hairline);
+    font-family: var(--font-family-mono);
+    font-size: 8px;
+    font-weight: 600;
+    color: var(--color-muted);
+    letter-spacing: 0;
+    flex-shrink: 0;
   }
 
   .upcoming-author {
@@ -424,14 +452,10 @@ const upcomingPosts = [
     letter-spacing: 0.02em;
   }
 
-  .upcoming-coming {
+  .upcoming-coming-inline {
     font-family: var(--font-family-mono);
     font-size: 10px;
     color: var(--color-muted);
-    background-color: var(--color-canvas-soft-2);
-    border: 1px solid var(--color-hairline);
-    border-radius: 3px;
-    padding: 1px 5px;
     letter-spacing: 0.03em;
   }
 

@@ -21,63 +21,87 @@ const breadcrumbs: BreadcrumbItem[] = [
 const upcomingCharts = [
   {
     flag: '🇺🇸',
-    region:  'United States',
+    region:   'United States',
     standard: 'ANSI / AAMA',
-    system:  'Imperial (in)',
-    status:  'Drafting',
-    types:   ['Single Hung', 'Double Hung', 'Casement', 'Sliding', 'Awning'],
-    sizes:   ['24×36', '28×54', '36×60', '36×72', '48×60'],
-    note:    'inches',
+    system:   'Imperial (in)',
+    status:   'Drafting',
+    unit:     'inches',
+    preview: [
+      { type: 'Single Hung',  size: '36 × 72' },
+      { type: 'Double Hung',  size: '36 × 60' },
+      { type: 'Casement',     size: '24 × 48' },
+      { type: 'Sliding',      size: '60 × 48' },
+    ],
   },
   {
     flag: '🇬🇧',
-    region:  'United Kingdom',
+    region:   'United Kingdom',
     standard: 'BS 6375',
-    system:  'Metric (mm)',
-    status:  'Drafting',
-    types:   ['Casement', 'Sash', 'Tilt & Turn', 'Fixed'],
-    sizes:   ['600×900', '900×1200', '1200×1200', '630×1050'],
-    note:    'mm',
+    system:   'Metric (mm)',
+    status:   'Drafting',
+    unit:     'mm',
+    preview: [
+      { type: 'Casement',     size: '630 × 1050' },
+      { type: 'Sash',         size: '900 × 1200' },
+      { type: 'Tilt & Turn',  size: '1200 × 1200' },
+      { type: 'Fixed',        size: '600 × 900' },
+    ],
   },
   {
     flag: '🇨🇦',
-    region:  'Canada',
+    region:   'Canada',
     standard: 'NBC',
-    system:  'Imperial + Metric',
-    status:  'Planned',
-    types:   ['Single Hung', 'Casement', 'Sliding', 'Fixed'],
-    sizes:   ['24×36', '30×54', '36×60', '48×60'],
-    note:    'inches',
+    system:   'Imperial + Metric',
+    status:   'Planned',
+    unit:     'inches',
+    preview: [
+      { type: 'Single Hung',  size: '30 × 54' },
+      { type: 'Casement',     size: '24 × 36' },
+      { type: 'Sliding',      size: '48 × 60' },
+      { type: 'Fixed',        size: '36 × 60' },
+    ],
   },
   {
     flag: '🇦🇺',
-    region:  'Australia',
+    region:   'Australia',
     standard: 'AS 2047',
-    system:  'Metric (mm)',
-    status:  'Planned',
-    types:   ['Casement', 'Awning', 'Sliding', 'Fixed'],
-    sizes:   ['600×900', '900×1200', '1200×1500'],
-    note:    'mm',
+    system:   'Metric (mm)',
+    status:   'Planned',
+    unit:     'mm',
+    preview: [
+      { type: 'Casement',     size: '600 × 900' },
+      { type: 'Awning',       size: '900 × 600' },
+      { type: 'Sliding',      size: '1200 × 1200' },
+      { type: 'Fixed',        size: '900 × 1200' },
+    ],
   },
   {
     flag: '🇪🇺',
-    region:  'Europe',
+    region:   'Europe',
     standard: 'EN 14351',
-    system:  'Metric (mm)',
-    status:  'Planned',
-    types:   ['Tilt & Turn', 'Casement', 'Fixed', 'Sliding'],
-    sizes:   ['600×1000', '900×1200', '1200×1500'],
-    note:    'mm',
+    system:   'Metric (mm)',
+    status:   'Planned',
+    unit:     'mm',
+    preview: [
+      { type: 'Tilt & Turn',  size: '900 × 1200' },
+      { type: 'Casement',     size: '600 × 1000' },
+      { type: 'Fixed',        size: '1200 × 1500' },
+      { type: 'Sliding',      size: '2400 × 2100' },
+    ],
   },
   {
     flag: '🌍',
-    region:  'Global Comparison',
+    region:   'Global Comparison',
     standard: 'All standards',
-    system:  'Both',
-    status:  'Planned',
-    types:   ['All window types'],
-    sizes:   ['Cross-region comparison', 'US vs EU sizes'],
-    note:    '',
+    system:   'Both',
+    status:   'Planned',
+    unit:     '',
+    preview: [
+      { type: 'US 36 × 72"',     size: '≈ 914 × 1829 mm' },
+      { type: 'UK 630 × 1050mm', size: '≈ 25 × 41"' },
+      { type: 'EU 900 × 1200mm', size: '≈ 35 × 47"' },
+      { type: 'AU 900 × 1200mm', size: '≈ 35 × 47"' },
+    ],
   },
 ];
 ---
@@ -151,22 +175,27 @@ const upcomingCharts = [
                   </div>
                 </div>
 
-                <!-- Window types -->
-                <div class="chart-types">
-                  <span class="chart-types-label">Types covered</span>
-                  <div class="chart-type-list">
-                    {chart.types.map((type) => (
-                      <span class="chart-type-tag">{type}</span>
-                    ))}
-                  </div>
-                </div>
-
-                <div class="chart-card-sizes">
-                  <p class="chart-sizes-label">Common sizes</p>
-                  <div class="chart-sizes-list">
-                    {chart.sizes.map(size => <span class="chart-size-tag">{size}</span>)}
-                  </div>
-                  <p class="chart-sizes-unit">{chart.note}</p>
+                <!-- Mini preview table -->
+                <div class="chart-preview-wrap">
+                  <span class="chart-preview-label">
+                    Sample sizes{chart.unit ? ` (${chart.unit})` : ''}
+                  </span>
+                  <table class="chart-preview-table" aria-label={`Sample ${chart.region} window sizes`}>
+                    <thead>
+                      <tr>
+                        <th>Type</th>
+                        <th>Nominal size</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {chart.preview.map((row) => (
+                        <tr>
+                          <td>{row.type}</td>
+                          <td>{row.size}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
                 </div>
               </div>
             ))}
@@ -357,38 +386,58 @@ const upcomingCharts = [
     color: var(--color-ink);
   }
 
-  /* Types */
-  .chart-types-label {
+  /* Mini preview table */
+  .chart-preview-wrap {
+    margin-top: var(--spacing-sm);
+    padding-top: var(--spacing-sm);
+    border-top: 1px solid var(--color-hairline);
+  }
+
+  .chart-preview-label {
     display: block;
     font-family: var(--font-family-mono);
     font-size: 9px;
     color: var(--color-muted);
     text-transform: uppercase;
     letter-spacing: 0.07em;
-    margin-bottom: 6px;
+    margin-bottom: var(--spacing-xs);
   }
 
-  .chart-type-list {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 4px;
-  }
-
-  .chart-type-tag {
-    font-size: 10px;
+  .chart-preview-table {
+    width: 100%;
+    border-collapse: collapse;
     font-family: var(--font-family-mono);
-    color: var(--color-muted);
-    background-color: var(--color-canvas-soft-2);
-    border: 1px solid var(--color-hairline);
-    border-radius: 3px;
-    padding: 1px 5px;
+    font-size: 11px;
   }
 
-  .chart-card-sizes { margin-top: var(--spacing-sm); padding-top: var(--spacing-sm); border-top: 1px solid var(--color-hairline); }
-  .chart-sizes-label { font-family: var(--font-family-mono); font-size: 10px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--color-muted); margin: 0 0 6px; }
-  .chart-sizes-list { display: flex; flex-wrap: wrap; gap: 4px; }
-  .chart-size-tag { font-family: var(--font-family-mono); font-size: 11px; font-weight: 600; color: var(--color-ink); background: var(--color-canvas-soft-2); border: 1px solid var(--color-hairline); border-radius: 3px; padding: 2px 6px; }
-  .chart-sizes-unit { font-size: 10px; color: var(--color-muted); margin: 4px 0 0; font-family: var(--font-family-mono); }
+  .chart-preview-table thead th {
+    font-size: 9px;
+    color: var(--color-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    font-weight: 500;
+    padding: 0 4px 4px 0;
+    text-align: left;
+    border-bottom: 1px solid var(--color-hairline);
+  }
+
+  .chart-preview-table tbody td {
+    padding: 4px 4px 0 0;
+    color: var(--color-body);
+    line-height: 1.3;
+    vertical-align: top;
+  }
+
+  .chart-preview-table tbody td:last-child {
+    font-weight: 600;
+    color: var(--color-ink);
+    text-align: right;
+    padding-right: 0;
+  }
+
+  .chart-preview-table tbody tr:first-child td {
+    padding-top: var(--spacing-xs);
+  }
 
   /* Card title/desc for live charts */
   .chart-card-title {

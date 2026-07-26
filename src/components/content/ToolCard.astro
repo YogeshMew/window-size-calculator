@@ -2,12 +2,12 @@
 /**
  * WindowMetrics — Tool Card
  *
- * Premium card component for tool grids.
- * Live tools: stronger border, full clickable surface, arrow CTA, use-case chips.
- * Coming-soon / planned: muted border, no hover, opacity dimmed.
+ * Outcome-driven card for all tool grids.
+ * Live tools: full clickable surface, checkmark benefits, animated CTA.
+ * Planned/Coming-soon: shows expected outcomes as a preview, clearly labelled.
  *
  * Props:
- *   tool    — Tool from the registry (includes optional useCases[])
+ *   tool    — Tool from the registry
  *   variant — 'default' | 'compact'
  */
 
@@ -24,9 +24,10 @@ const { tool, variant = 'default' } = Astro.props;
 const isLive       = tool.status === 'live';
 const isComingSoon = tool.status === 'coming-soon';
 const badgeLabel   = isLive ? 'Available' : isComingSoon ? 'Coming soon' : 'Planned';
+const hasBenefits  = tool.benefits && tool.benefits.length > 0;
 ---
 
-<article class:list={['tc', `tc--${variant}`, { 'tc--live': isLive }]}>
+<article class:list={['tc', `tc--${variant}`, { 'tc--live': isLive, 'tc--pending': !isLive }]}>
   {
     isLive ? (
       <a href={tool.href} class="tc-inner" aria-label={`Open ${tool.title}`}>
@@ -40,9 +41,9 @@ const badgeLabel   = isLive ? 'Available' : isComingSoon ? 'Coming soon' : 'Plan
           <h3 class="tc-title">{tool.title}</h3>
           <p class="tc-desc">{tool.description}</p>
         </div>
-        {tool.benefits && tool.benefits.length > 0 ? (
+        {hasBenefits ? (
           <ul class="tc-benefits" aria-label="What you get">
-            {tool.benefits.map((b) => (
+            {tool.benefits!.map((b) => (
               <li class="tc-benefit-item">
                 <svg width="11" height="11" viewBox="0 0 11 11" fill="none" aria-hidden="true" class="tc-benefit-check">
                   <path d="M1.5 5.5L4 8L9.5 2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
@@ -77,11 +78,23 @@ const badgeLabel   = isLive ? 'Available' : isComingSoon ? 'Coming soon' : 'Plan
           <h3 class="tc-title">{tool.title}</h3>
           <p class="tc-desc">{tool.description}</p>
         </div>
-        <p class="tc-pending-note">
-          {isComingSoon
-            ? 'This calculator is being built — check back soon.'
-            : 'Planned for a future release.'}
-        </p>
+        {hasBenefits ? (
+          <ul class="tc-benefits tc-benefits--preview" aria-label="Planned features">
+            {tool.benefits!.slice(0, 4).map((b) => (
+              <li class="tc-benefit-item tc-benefit-item--preview">
+                <svg width="9" height="9" viewBox="0 0 9 9" fill="none" aria-hidden="true" class="tc-benefit-dash">
+                  <line x1="1.5" y1="4.5" x2="7.5" y2="4.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                </svg>
+                <span>{b}</span>
+              </li>
+            ))}
+          </ul>
+        ) : null}
+        <div class="tc-footer">
+          <span class="tc-pending-note">
+            {isComingSoon ? 'In development' : 'On the roadmap'}
+          </span>
+        </div>
       </div>
     )
   }
@@ -106,17 +119,16 @@ const badgeLabel   = isLive ? 'Available' : isComingSoon ? 'Coming soon' : 'Plan
     transition: border-color 150ms ease, box-shadow 150ms ease, transform 150ms ease;
   }
 
-  /* Live card — stronger default appearance */
+  /* Live card — stronger border, full hover */
   .tc--live .tc-inner {
     border-color: var(--color-hairline-strong);
-    cursor: pointer;
   }
 
   .tc--live a.tc-inner:hover {
-    border-color: color-mix(in srgb, var(--color-ink) 30%, transparent);
+    border-color: color-mix(in srgb, var(--color-ink) 28%, transparent);
     box-shadow:
       0 2px 4px color-mix(in srgb, var(--color-ink) 4%, transparent),
-      0 6px 16px color-mix(in srgb, var(--color-ink) 6%, transparent);
+      0 8px 20px color-mix(in srgb, var(--color-ink) 6%, transparent);
     transform: translateY(-2px);
   }
 
@@ -132,10 +144,11 @@ const badgeLabel   = isLive ? 'Available' : isComingSoon ? 'Coming soon' : 'Plan
     transition-duration: 60ms;
   }
 
-  /* Planned / coming-soon — dimmed */
-  .tc:not(.tc--live) .tc-inner {
-    opacity: 0.6;
+  /* Planned / coming-soon — subtle dim, no pointer cursor */
+  .tc--pending .tc-inner {
+    opacity: 0.65;
     cursor: default;
+    background-color: var(--color-canvas-soft);
   }
 
   /* Top row: icon + badge */
@@ -162,7 +175,7 @@ const badgeLabel   = isLive ? 'Available' : isComingSoon ? 'Coming soon' : 'Plan
   }
 
   .tc--live a.tc-inner:hover .tc-icon-wrap {
-    background-color: color-mix(in srgb, var(--color-ink) 10%, transparent);
+    background-color: color-mix(in srgb, var(--color-ink) 11%, transparent);
   }
 
   /* Body */
@@ -188,23 +201,12 @@ const badgeLabel   = isLive ? 'Available' : isComingSoon ? 'Coming soon' : 'Plan
     line-height: 1.55;
     margin: 0;
     display: -webkit-box;
-    -webkit-line-clamp: 3;
+    -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
   }
 
-  .tc-pending-note {
-    font-family: var(--font-family-mono);
-    font-size: 10px;
-    color: var(--color-muted);
-    margin: auto 0 0;
-    padding-top: var(--spacing-xs);
-    line-height: 1.5;
-    letter-spacing: 0.02em;
-    opacity: 0.8;
-  }
-
-  /* Benefit list — checkmark items for live tools */
+  /* Benefit list — checkmarks for live tools */
   .tc-benefits {
     list-style: none;
     padding: 0;
@@ -226,6 +228,15 @@ const badgeLabel   = isLive ? 'Available' : isComingSoon ? 'Coming soon' : 'Plan
     line-height: 1.4;
   }
 
+  /* Preview benefits (planned tools) */
+  .tc-benefits--preview {
+    border-top-style: dashed;
+  }
+
+  .tc-benefit-item--preview {
+    color: var(--color-muted);
+  }
+
   .tc-benefit-check {
     color: #16a34a;
     flex-shrink: 0;
@@ -234,6 +245,12 @@ const badgeLabel   = isLive ? 'Available' : isComingSoon ? 'Coming soon' : 'Plan
 
   [data-theme='dark'] .tc-benefit-check {
     color: #4ade80;
+  }
+
+  .tc-benefit-dash {
+    color: var(--color-hairline-strong);
+    flex-shrink: 0;
+    margin-top: 3px;
   }
 
   /* Use-case chips */
@@ -262,7 +279,7 @@ const badgeLabel   = isLive ? 'Available' : isComingSoon ? 'Coming soon' : 'Plan
     border-color: var(--color-hairline-strong);
   }
 
-  /* CTA row */
+  /* CTA row — live tools only */
   .tc-cta {
     display: flex;
     align-items: center;
@@ -286,7 +303,21 @@ const badgeLabel   = isLive ? 'Available' : isComingSoon ? 'Coming soon' : 'Plan
   }
 
   .tc--live a.tc-inner:hover .tc-arrow {
-    transform: translateX(2px);
+    transform: translateX(3px);
+  }
+
+  /* Footer row — pending tools only */
+  .tc-footer {
+    margin-top: auto;
+    padding-top: var(--spacing-xs);
+    border-top: 1px dashed var(--color-hairline);
+  }
+
+  .tc-pending-note {
+    font-family: var(--font-family-mono);
+    font-size: 10px;
+    color: var(--color-muted);
+    letter-spacing: 0.04em;
   }
 
   /* Badges */
@@ -327,7 +358,9 @@ const badgeLabel   = isLive ? 'Available' : isComingSoon ? 'Coming soon' : 'Plan
 
   .tc--compact .tc-desc,
   .tc--compact .tc-chips,
-  .tc--compact .tc-cta {
+  .tc--compact .tc-benefits,
+  .tc--compact .tc-cta,
+  .tc--compact .tc-footer {
     display: none;
   }
 </style>

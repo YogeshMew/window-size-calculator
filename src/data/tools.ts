@@ -69,6 +69,12 @@ export const TOOLS: Tool[] = [
     href: '/tools/replacement-window-calculator',
     icon: 'RefreshCw',
     status: 'planned',
+    benefits: [
+      'Nearest standard size match',
+      'Custom vs standard cost comparison',
+      'Rough opening dimensions',
+      'Installation clearance guide',
+    ],
     relatedSlugs: ['window-size-calculator', 'window-cost-estimator'],
   },
   {
@@ -94,6 +100,12 @@ export const TOOLS: Tool[] = [
     href: '/tools/window-glass-calculator',
     icon: 'PanelTop',
     status: 'planned',
+    benefits: [
+      'Glass area in sq ft or m²',
+      'Weight for single, double, triple pane',
+      'Glazing quantity estimate',
+      'Cutting waste allowance',
+    ],
     relatedSlugs: ['window-size-calculator', 'window-weight-calculator'],
   },
   {
@@ -118,6 +130,12 @@ export const TOOLS: Tool[] = [
     href: '/tools/curtain-size-calculator',
     icon: 'Blinds',
     status: 'planned',
+    benefits: [
+      'Min. and full-coverage curtain width',
+      'Correct drop length with heading',
+      'Rod placement recommendation',
+      'Fabric quantity estimate',
+    ],
     relatedSlugs: ['window-size-calculator', 'blind-size-calculator'],
   },
   {
@@ -128,6 +146,12 @@ export const TOOLS: Tool[] = [
     href: '/tools/blind-size-calculator',
     icon: 'SlidersHorizontal',
     status: 'planned',
+    benefits: [
+      'Inside and outside mount widths',
+      'Deduction recommendations by brand',
+      'Drop and headrail height',
+      'Clearance check',
+    ],
     relatedSlugs: ['window-size-calculator', 'curtain-size-calculator'],
   },
   {
@@ -152,6 +176,12 @@ export const TOOLS: Tool[] = [
     href: '/tools/window-ac-calculator',
     icon: 'AirVent',
     status: 'planned',
+    benefits: [
+      'BTU recommendation for room size',
+      'Window opening fit check',
+      'Energy efficiency comparison',
+      'Installation clearance guide',
+    ],
     relatedSlugs: ['btu-calculator', 'window-size-calculator'],
   },
   {
@@ -221,6 +251,12 @@ export const TOOLS: Tool[] = [
     href: '/tools/egress-window-calculator',
     icon: 'DoorOpen',
     status: 'planned',
+    benefits: [
+      'IRC code compliance check',
+      'Minimum opening area verification',
+      'Clear height & width check',
+      'State-specific code notes',
+    ],
     relatedSlugs: ['window-size-calculator', 'window-opening-calculator'],
   },
 ];

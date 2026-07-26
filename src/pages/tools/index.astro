@@ -50,19 +50,19 @@ const liveCount  = TOOLS.filter((t) => t.status === 'live').length;
       <div class="tools-header-copy">
         <h1 class="tools-h1">Window Calculators & Tools</h1>
         <p class="tools-lead">
-          Professional measurement tools for the entire window project lifecycle.
-          Free, no signup required.
+          Every window measurement tool you need — from a quick size check to
+          a full replacement project. Enter dimensions once, get every answer.
         </p>
       </div>
       <div class="tools-counts">
         <div class="count-stat">
-          <span class="count-num">{totalTools}</span>
-          <span class="count-label">planned</span>
+          <span class="count-num count-num--live">{liveCount}</span>
+          <span class="count-label">available</span>
         </div>
         <div class="count-divider"></div>
         <div class="count-stat">
-          <span class="count-num count-num--live">{liveCount}</span>
-          <span class="count-label">available</span>
+          <span class="count-num">{totalTools}</span>
+          <span class="count-label">total planned</span>
         </div>
       </div>
     </header>
