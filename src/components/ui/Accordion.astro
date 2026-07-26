@@ -1,0 +1,95 @@
+---
+/**
+ * WindowMetrics — Accordion
+ *
+ * Native <details>/<summary> with no JS.
+ * Clean borders, smooth chevron, consistent padding.
+ *
+ * Props:
+ *   question — The question text
+ *   open     — Whether to render open by default
+ */
+
+import { ChevronDown } from '@lucide/astro';
+
+interface Props {
+  question: string;
+  open?: boolean;
+}
+
+const { question, open = false } = Astro.props;
+---
+
+<details class="acc" open={open}>
+  <summary class="acc-summary">
+    <span class="acc-question">{question}</span>
+    <ChevronDown size={15} aria-hidden="true" class="acc-chevron" />
+  </summary>
+  <div class="acc-body">
+    <slot />
+  </div>
+</details>
+
+<style>
+  .acc {
+    border-bottom: 1px solid var(--color-hairline);
+  }
+
+  .acc:first-of-type {
+    border-top: 1px solid var(--color-hairline);
+  }
+
+  .acc-summary {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--spacing-md);
+    padding: var(--spacing-md) 0;
+    cursor: pointer;
+    list-style: none;
+    user-select: none;
+    transition: color 150ms ease;
+  }
+
+  /* Remove native marker */
+  .acc-summary::-webkit-details-marker { display: none; }
+  .acc-summary::marker { display: none; }
+
+  .acc-summary:hover .acc-question {
+    color: var(--color-ink);
+  }
+
+  .acc-question {
+    font-size: var(--font-size-body-sm);
+    font-weight: 500;
+    color: var(--color-body);
+    line-height: 1.45;
+    transition: color 150ms ease;
+  }
+
+  .acc[open] .acc-question {
+    color: var(--color-ink);
+  }
+
+  .acc-chevron {
+    flex-shrink: 0;
+    color: var(--color-muted);
+    transition: transform 200ms ease, color 150ms ease;
+  }
+
+  .acc[open] .acc-chevron {
+    transform: rotate(180deg);
+    color: var(--color-body);
+  }
+
+  .acc-body {
+    padding: 0 0 var(--spacing-md);
+  }
+
+  .acc-body p {
+    font-size: var(--font-size-body-sm);
+    color: var(--color-body);
+    line-height: 1.65;
+    margin: 0;
+  }
+</style>

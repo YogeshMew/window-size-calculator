@@ -1,0 +1,61 @@
+---
+/**
+ * WindowMetrics — Callout Component
+ *
+ * Props:
+ *   type  — 'info' | 'tip' | 'warning' | 'error'
+ *   title — Optional bold heading
+ */
+
+import { Info, Lightbulb, TriangleAlert, CircleX } from '@lucide/astro';
+
+interface Props {
+  type?: 'info' | 'tip' | 'warning' | 'error';
+  title?: string;
+  class?: string;
+}
+
+const { type = 'info', title, class: className } = Astro.props;
+
+const typeClass = {
+  info: 'callout-info',
+  tip: 'callout-tip',
+  warning: 'callout-warning',
+  error: 'callout-error',
+}[type];
+
+const Icon = {
+  info: Info,
+  tip: Lightbulb,
+  warning: TriangleAlert,
+  error: CircleX,
+}[type];
+
+const ariaRole = type === 'error' || type === 'warning' ? 'alert' : 'note';
+---
+
+<div class:list={['callout', typeClass, className]} role={ariaRole}>
+  <Icon size={16} aria-hidden="true" class="callout-icon" />
+  <div class="callout-content">
+    {title && <strong class="callout-title">{title}</strong>}
+    <slot />
+  </div>
+</div>
+
+<style>
+  .callout-icon {
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+
+  .callout-content {
+    min-width: 0;
+    flex: 1;
+  }
+
+  .callout-title {
+    display: block;
+    font-weight: 600;
+    margin-bottom: var(--spacing-xxs);
+  }
+</style>

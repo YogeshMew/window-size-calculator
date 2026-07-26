@@ -1,0 +1,116 @@
+---
+/**
+ * WindowMetrics — Tool Layout
+ *
+ * Applied to all calculator and tool pages.
+ * Extends Layout.astro with:
+ * - Breadcrumbs
+ * - Two-column layout: tool content (main) + sidebar (related tools)
+ * - SoftwareApplication JSON-LD auto-injected
+ *
+ * Props:
+ *   tool           — Tool data from the registry
+ *   breadcrumbs    — Breadcrumb items for this page
+ *   faqs           — Optional FAQ data (injects FAQPage JSON-LD when provided)
+ *   description    — Override tool.description for meta
+ *   class          — Additional classes
+ */
+
+import Layout from '@/layouts/Layout.astro';
+import Breadcrumbs from '@/components/global/Breadcrumbs.astro';
+import type { Tool } from '@/types/content.js';
+import type { BreadcrumbItem, FAQ } from '@/types/calculator.js';
+import { buildSoftwareApplicationSchema, buildFAQSchema, toJsonLd } from '@/lib/jsonld.js';
+import { getCanonical } from '@/lib/seo.js';
+
+interface Props {
+  tool: Tool;
+  breadcrumbs: BreadcrumbItem[];
+  faqs?: FAQ[];
+  description?: string;
+  class?: string;
+}
+
+const { tool, breadcrumbs, faqs, description, class: className } = Astro.props;
+
+const canonical = getCanonical(tool.href);
+const pageDescription = description ?? tool.description;
+
+// Build JSON-LD schemas
+const schemas: object[] = [
+  buildSoftwareApplicationSchema(tool, tool.href),
+];
+if (faqs && faqs.length > 0) {
+  schemas.push(buildFAQSchema(faqs));
+}
+const jsonLd = toJsonLd(schemas);
+---
+
+<Layout
+  title={tool.title}
+  description={pageDescription}
+  canonical={canonical}
+  jsonLd={jsonLd}
+  class={className}
+>
+  <slot name="head" slot="head" />
+
+  <div class="tool-page-wrapper">
+    <!-- Breadcrumbs -->
+    <div class="tool-breadcrumbs">
+      <div class="container-content">
+        <Breadcrumbs items={breadcrumbs} />
+      </div>
+    </div>
+
+    <!-- Page content -->
+    <div class="container-content tool-layout">
+      <!-- Main content column -->
+      <div class="tool-main">
+        <slot />
+      </div>
+
+      <!-- Sidebar — shown on desktop -->
+      {Astro.slots.has('sidebar') && (
+        <aside class="tool-sidebar" aria-label="Related resources">
+          <slot name="sidebar" />
+        </aside>
+      )}
+    </div>
+  </div>
+</Layout>
+
+<style>
+  .tool-page-wrapper {
+    padding-bottom: var(--spacing-5xl);
+  }
+
+  .tool-breadcrumbs {
+    padding: var(--spacing-sm) 0;
+    border-bottom: 1px solid var(--color-hairline);
+    margin-bottom: var(--spacing-lg);
+    background-color: var(--color-canvas-soft);
+  }
+
+  .tool-layout {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--spacing-2xl);
+    align-items: start;
+  }
+
+  @media (min-width: 960px) {
+    .tool-layout {
+      grid-template-columns: 1fr 320px;
+    }
+  }
+
+  .tool-main {
+    min-width: 0; /* prevent grid blowout */
+  }
+
+  .tool-sidebar {
+    position: sticky;
+    top: calc(var(--height-nav) + var(--spacing-lg));
+  }
+</style>

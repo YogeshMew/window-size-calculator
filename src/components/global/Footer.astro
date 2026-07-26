@@ -1,0 +1,278 @@
+---
+/**
+ * WindowMetrics — Site Footer
+ *
+ * Expanded 5-column footer:
+ *   Brand | Calculators | Resources | Window Types | Company
+ */
+
+const currentYear = new Date().getFullYear();
+
+const columns = [
+  {
+    heading: 'Calculators',
+    links: [
+      { label: 'Window Size Calculator',        href: '/tools/window-size-calculator' },
+      { label: 'Window Glass Calculator',        href: '/tools/window-glass-calculator' },
+      { label: 'Replacement Calculator',         href: '/tools/replacement-window-calculator' },
+      { label: 'Curtain Size Calculator',        href: '/tools/curtain-size-calculator' },
+      { label: 'Window AC Calculator',           href: '/tools/window-ac-calculator' },
+      { label: 'All Calculators →',              href: '/tools' },
+    ],
+  },
+  {
+    heading: 'Resources',
+    links: [
+      { label: 'Measurement Guides',  href: '/guides' },
+      { label: 'Standard Size Charts', href: '/charts' },
+      { label: 'US Window Sizes',     href: '/charts' },
+      { label: 'UK Window Sizes',     href: '/charts' },
+      { label: 'Blog',                href: '/blog' },
+    ],
+  },
+  {
+    heading: 'Window Types',
+    links: [
+      { label: 'Single Hung Windows',    href: '/guides' },
+      { label: 'Double Hung Windows',    href: '/guides' },
+      { label: 'Casement Windows',       href: '/guides' },
+      { label: 'Sliding Windows',        href: '/guides' },
+      { label: 'Bay & Bow Windows',      href: '/guides' },
+    ],
+  },
+  {
+    heading: 'Company',
+    links: [
+      { label: 'About WindowMetrics',  href: '/about' },
+      { label: 'Privacy Policy',       href: '/privacy' },
+      { label: 'Contact',              href: '/contact' },
+    ],
+  },
+];
+
+const audiences = ['Homeowners', 'DIY Users', 'Contractors', 'Architects', 'Builders', 'Glaziers'];
+---
+
+<footer class="site-footer" role="contentinfo">
+  <div class="footer-grid container-page">
+
+    <!-- Brand column -->
+    <div class="footer-brand">
+      <a href="/" class="footer-logo" aria-label="WindowMetrics — Home">
+        WindowMetrics
+      </a>
+      <p class="footer-tagline">
+        The professional platform for window measurements, replacement planning, and sizing
+        decisions. Free for everyone.
+      </p>
+      <div class="footer-trust">
+        <div class="footer-trust-item">
+          <svg width="10" height="10" viewBox="0 0 10 10" fill="none" aria-hidden="true">
+            <path d="M1.5 5l2 2 5-4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <span>Free forever</span>
+        </div>
+        <div class="footer-trust-item">
+          <svg width="10" height="10" viewBox="0 0 10 10" fill="none" aria-hidden="true">
+            <path d="M1.5 5l2 2 5-4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <span>No account required</span>
+        </div>
+        <div class="footer-trust-item">
+          <svg width="10" height="10" viewBox="0 0 10 10" fill="none" aria-hidden="true">
+            <path d="M1.5 5l2 2 5-4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <span>Runs in your browser</span>
+        </div>
+      </div>
+      <div class="footer-built-for">
+        <p class="footer-built-label">Built for</p>
+        <p class="footer-built-list">
+          {audiences.join(' · ')}
+        </p>
+      </div>
+    </div>
+
+    <!-- Nav columns -->
+    {
+      columns.map((col) => (
+        <div class="footer-col">
+          <p class="footer-col-heading">{col.heading}</p>
+          <ul class="footer-links" role="list">
+            {col.links.map((link) => (
+              <li>
+                <a href={link.href} class="footer-link">{link.label}</a>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ))
+    }
+
+  </div>
+
+  <!-- Bottom bar -->
+  <div class="footer-bottom">
+    <div class="container-page footer-bottom-inner">
+      <p class="footer-copy">© {currentYear} WindowMetrics</p>
+      <p class="footer-disclaimer">
+        For informational purposes only. Always verify measurements before purchase or installation.
+      </p>
+    </div>
+  </div>
+</footer>
+
+<style>
+  .site-footer {
+    border-top: 1px solid var(--color-hairline);
+    background-color: var(--color-canvas-soft);
+  }
+
+  .footer-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--spacing-2xl);
+    padding-block: var(--spacing-3xl);
+  }
+
+  @media (min-width: 600px) {
+    .footer-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+
+  @media (min-width: 960px) {
+    .footer-grid {
+      grid-template-columns: 2fr repeat(4, 1fr);
+    }
+  }
+
+  /* Brand */
+  .footer-logo {
+    display: inline-block;
+    font-size: var(--font-size-body-sm);
+    font-weight: 600;
+    color: var(--color-ink);
+    text-decoration: none;
+    letter-spacing: -0.01em;
+    margin-bottom: var(--spacing-sm);
+  }
+
+  .footer-tagline {
+    font-size: var(--font-size-caption);
+    color: var(--color-body);
+    line-height: 1.6;
+    margin: 0 0 var(--spacing-md);
+    max-width: 260px;
+  }
+
+  /* Trust items */
+  .footer-trust {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-bottom: var(--spacing-lg);
+  }
+
+  .footer-trust-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-family: var(--font-family-mono);
+    font-size: 10px;
+    color: var(--color-muted);
+  }
+
+  .footer-trust-item svg {
+    color: #16a34a;
+    flex-shrink: 0;
+  }
+
+  [data-theme='dark'] .footer-trust-item svg {
+    color: #4ade80;
+  }
+
+  .footer-built-for {
+    border-top: 1px solid var(--color-hairline);
+    padding-top: var(--spacing-md);
+  }
+
+  .footer-built-label {
+    font-family: var(--font-family-mono);
+    font-size: 10px;
+    font-weight: 500;
+    color: var(--color-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin: 0 0 4px;
+  }
+
+  .footer-built-list {
+    font-size: var(--font-size-caption);
+    color: var(--color-muted);
+    margin: 0;
+    line-height: 1.5;
+  }
+
+  /* Nav columns */
+  .footer-col-heading {
+    font-family: var(--font-family-mono);
+    font-size: 10px;
+    font-weight: 500;
+    color: var(--color-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin: 0 0 var(--spacing-md);
+  }
+
+  .footer-links {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-xs);
+  }
+
+  .footer-link {
+    font-size: var(--font-size-caption);
+    color: var(--color-body);
+    text-decoration: none;
+    transition: color 150ms ease;
+
+    &:hover {
+      color: var(--color-ink);
+    }
+  }
+
+  /* Bottom bar */
+  .footer-bottom {
+    border-top: 1px solid var(--color-hairline);
+    padding-block: var(--spacing-md);
+    background-color: var(--color-canvas);
+  }
+
+  .footer-bottom-inner {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    align-items: flex-start;
+  }
+
+  @media (min-width: 640px) {
+    .footer-bottom-inner {
+      flex-direction: row;
+      justify-content: space-between;
+      align-items: center;
+    }
+  }
+
+  .footer-copy,
+  .footer-disclaimer {
+    font-family: var(--font-family-mono);
+    font-size: 11px;
+    color: var(--color-muted);
+    margin: 0;
+    letter-spacing: 0.02em;
+  }
+</style>

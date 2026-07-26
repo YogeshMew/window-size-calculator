@@ -1,0 +1,81 @@
+---
+/**
+ * WindowMetrics — Unit Selector
+ *
+ * Tab-style button group for selecting measurement unit.
+ * Renders as a group of buttons; active state managed by client JS.
+ *
+ * Props:
+ *   selected — Current selected unit
+ *   name     — Form control name (for event handling in parent)
+ *   id       — Element ID
+ */
+
+import type { MeasurementUnit } from '@/types/calculator.js';
+
+interface Props {
+  selected?: MeasurementUnit;
+  name?: string;
+  id?: string;
+}
+
+const { selected = 'in', name = 'unit', id = 'unit-selector' } = Astro.props;
+
+const units: { value: MeasurementUnit; label: string; ariaLabel: string }[] = [
+  { value: 'mm', label: 'mm', ariaLabel: 'millimeters' },
+  { value: 'cm', label: 'cm', ariaLabel: 'centimeters' },
+  { value: 'm', label: 'm', ariaLabel: 'meters' },
+  { value: 'in', label: 'in', ariaLabel: 'inches' },
+  { value: 'ft', label: 'ft', ariaLabel: 'feet' },
+];
+---
+
+<div
+  class="unit-selector"
+  role="group"
+  aria-label="Select measurement unit"
+  id={id}
+  data-name={name}
+>
+  {
+    units.map((unit) => (
+      <button
+        type="button"
+        class="unit-btn"
+        aria-pressed={selected === unit.value ? 'true' : 'false'}
+        aria-label={unit.ariaLabel}
+        data-unit={unit.value}
+      >
+        {unit.label}
+      </button>
+    ))
+  }
+</div>
+
+<script>
+  // Initialize all unit selectors on the page
+  document.querySelectorAll<HTMLElement>('.unit-selector').forEach((selector) => {
+    selector.addEventListener('click', (e) => {
+      const btn = (e.target as HTMLElement).closest('.unit-btn') as HTMLButtonElement | null;
+      if (!btn) return;
+
+      const unit = btn.dataset.unit;
+
+      // Update aria-pressed states
+      selector.querySelectorAll('.unit-btn').forEach((b) => {
+        b.setAttribute('aria-pressed', b === btn ? 'true' : 'false');
+      });
+
+      // Dispatch custom event for parent calculator to handle
+      selector.dispatchEvent(
+        new CustomEvent('unitchange', {
+          bubbles: true,
+          detail: {
+            unit,
+            name: selector.dataset.name,
+          },
+        }),
+      );
+    });
+  });
+</script>

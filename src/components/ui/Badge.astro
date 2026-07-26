@@ -1,0 +1,26 @@
+---
+/**
+ * WindowMetrics — Badge Component
+ *
+ * Props:
+ *   variant — 'default' | 'success' | 'warning' | 'error'
+ */
+
+interface Props {
+  variant?: 'default' | 'success' | 'warning' | 'error';
+  class?: string;
+}
+
+const { variant = 'default', class: className } = Astro.props;
+
+const variantClass = {
+  default: 'badge-default',
+  success: 'badge-success',
+  warning: 'badge-warning',
+  error: 'badge-error',
+}[variant];
+---
+
+<span class:list={['badge', variantClass, className]}>
+  <slot />
+</span>

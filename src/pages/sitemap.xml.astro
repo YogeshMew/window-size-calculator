@@ -1,0 +1,41 @@
+---
+import type { APIContext } from 'astro';
+import { TOOLS } from '@/data/tools.js';
+
+export const prerender = true;
+
+const SITE_URL = 'https://windowmetrics.com';
+
+const staticRoutes = [
+  { path: '/', changefreq: 'weekly', priority: '1.0' },
+  { path: '/tools', changefreq: 'weekly', priority: '0.9' },
+  { path: '/guides', changefreq: 'weekly', priority: '0.8' },
+  { path: '/charts', changefreq: 'weekly', priority: '0.8' },
+  { path: '/blog', changefreq: 'weekly', priority: '0.7' },
+  { path: '/about', changefreq: 'monthly', priority: '0.5' },
+  { path: '/privacy', changefreq: 'yearly', priority: '0.3' },
+];
+
+const toolRoutes = TOOLS.filter((t) => t.status === 'live').map((t) => ({
+  path: t.href,
+  changefreq: 'monthly',
+  priority: '0.8',
+}));
+
+const allRoutes = [...staticRoutes, ...toolRoutes];
+const today = new Date().toISOString().split('T')[0];
+---
+
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  {
+    allRoutes.map((route) => (
+      <url>
+        <loc>{`${SITE_URL}${route.path}`}</loc>
+        <lastmod>{today}</lastmod>
+        <changefreq>{route.changefreq}</changefreq>
+        <priority>{route.priority}</priority>
+      </url>
+    ))
+  }
+</urlset>

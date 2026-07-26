@@ -1,11 +1,932 @@
 ---
-import Welcome from '../components/Welcome.astro';
-import Layout from '../layouts/Layout.astro';
+/**
+ * WindowMetrics — Homepage
+ *
+ * Sections:
+ *   1. Hero — headline + animated SVG + CTAs
+ *   2. Trust bar — enterprise trust strip
+ *   3. Featured Tools — live first + use-case chips
+ *   4. How It Works — 3-step with connectors
+ *   5. Tool Categories — 6 cards with context
+ *   6. Why WindowMetrics — 4 value props
+ *   7. FAQ
+ */
 
-// Welcome to Astro! Wondering what to do next? Check out the Astro documentation at https://docs.astro.build
-// Don't want to use any of this? Delete everything in this file, the `assets`, `components`, and `layouts` directories, and start fresh.
+import Layout from '@/layouts/Layout.astro';
+import ToolCard from '@/components/content/ToolCard.astro';
+import Accordion from '@/components/ui/Accordion.astro';
+import ToolIcon from '@/components/ui/ToolIcon.astro';
+import TrustStrip from '@/components/ui/TrustStrip.astro';
+
+import { getCanonical } from '@/lib/seo.js';
+import { buildWebSiteSchema, buildOrganizationSchema, toJsonLd } from '@/lib/jsonld.js';
+import { TOOLS } from '@/data/tools.js';
+import { CATEGORIES } from '@/data/categories.js';
+
+const canonical = getCanonical('/');
+const jsonLd    = toJsonLd([buildWebSiteSchema(), buildOrganizationSchema()]);
+
+const liveTools     = TOOLS.filter((t) => t.status === 'live');
+const featuredTools = [
+  ...liveTools,
+  ...TOOLS.filter((t) => t.status !== 'live').slice(0, Math.max(0, 6 - liveTools.length)),
+].slice(0, 6);
+
+const topCategories = CATEGORIES.slice(0, 6);
+
+const trustPoints = [
+  { label: 'Free forever', icon: true },
+  { label: 'No signup required', icon: true },
+  { label: 'All units supported', icon: true },
+  { label: 'Accurate calculations', icon: true },
+  { label: 'Mobile friendly', icon: true },
+  { label: 'No ads', icon: true },
+];
+
+const howItWorks = [
+  {
+    step: '01',
+    title: 'Enter your dimensions',
+    description: 'Type width and height in any unit — inches, feet, mm, cm, or meters. Fractions work too.',
+    icon: 'Ruler',
+  },
+  {
+    step: '02',
+    title: 'Results update live',
+    description: 'Area, perimeter, aspect ratio, and reference conversions calculate instantly as you type.',
+    icon: 'Zap',
+  },
+  {
+    step: '03',
+    title: 'Make a better decision',
+    description: 'Get the nearest standard size, curtain recommendations, glass estimates, and suggested next steps.',
+    icon: 'ClipboardCheck',
+  },
+];
+
+const whyPoints = [
+  {
+    icon: 'Scale',
+    title: 'Professional formulas',
+    description: 'Every calculation follows industry-standard formulas used by contractors and window manufacturers worldwide.',
+  },
+  {
+    icon: 'Zap',
+    title: 'Instant results',
+    description: 'Results update as you type. No submit button. No loading. Just accurate answers the moment you need them.',
+  },
+  {
+    icon: 'ClipboardCheck',
+    title: 'Decision recommendations',
+    description: 'Go beyond raw numbers. Get nearest standard sizes, curtain guides, glass estimates, and next steps automatically.',
+  },
+  {
+    icon: 'Expand',
+    title: 'Every unit, every region',
+    description: 'Imperial and metric. US, UK, Canada, Australia, and Europe. Switch units at any time without losing your work.',
+  },
+  {
+    icon: 'Shield',
+    title: '100% free, always',
+    description: 'No account. No paywall. No limits. Every tool on WindowMetrics is completely free and open to everyone.',
+  },
+  {
+    icon: 'Lock',
+    title: 'Private by default',
+    description: 'All calculations run in your browser. Nothing is sent to a server. Your measurements stay completely private.',
+  },
+];
+
+const faqs = [
+  {
+    question: 'Do I need to create an account?',
+    answer: 'No. Every calculator on WindowMetrics is completely free and requires no account or signup. Just open the tool and start measuring.',
+  },
+  {
+    question: 'Which units does WindowMetrics support?',
+    answer: 'All calculators support millimeters (mm), centimeters (cm), meters (m), inches (in), and feet (ft). You can switch units at any time and results update instantly.',
+  },
+  {
+    question: 'How accurate are the calculations?',
+    answer: 'Our calculations use standard formulas derived from industry references. For critical projects such as glass orders, always verify measurements with a professional.',
+  },
+  {
+    question: 'Can I use WindowMetrics on my phone?',
+    answer: 'Yes. All calculators are fully responsive and work on any device — phone, tablet, or desktop — with no app download required.',
+  },
+];
 ---
 
-<Layout>
-	<Welcome />
+<Layout
+  title="Window Measurements Without Guesswork"
+  description="Professional window calculators for measurement, glass, curtains, replacement planning, and energy. Accurate tools for homeowners, contractors, and installers. Free, no signup."
+  canonical={canonical}
+  jsonLd={jsonLd}
+>
+
+  <!-- ═══════════════════════════════════════════════════
+       HERO
+  ════════════════════════════════════════════════════ -->
+  <section class="hero" aria-label="Window measurement tools">
+    <div class="container-content">
+      <div class="hero-layout">
+
+        <!-- Copy -->
+        <div class="hero-copy">
+          <div class="hero-eyebrow">
+            <span class="hero-eyebrow-dot" aria-hidden="true"></span>
+            <span>Free window measurement platform</span>
+          </div>
+
+          <h1 class="hero-headline">
+            Measure once.<br class="hero-br" />
+            Plan every window project.
+          </h1>
+
+          <p class="hero-sub">
+            Professional tools for measurement, replacement planning, glass estimation,
+            curtain sizing, and more. One platform for every window decision.
+          </p>
+
+          <div class="hero-cta-row">
+            <a href="/tools/window-size-calculator" class="btn-hero-primary" id="hero-cta-primary">
+              Measure My Window
+            </a>
+            <a href="/tools" class="btn-hero-secondary" id="hero-cta-secondary">
+              Browse All Calculators
+              <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
+                <path d="M1 6h10M7 2l4 4-4 4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </a>
+          </div>
+        </div>
+
+        <!-- Window SVG Diagram -->
+        <div class="hero-diagram" aria-hidden="true">
+          <div class="diagram-wrap" id="hero-diagram">
+            <svg
+              viewBox="0 0 320 280"
+              xmlns="http://www.w3.org/2000/svg"
+              class="window-svg"
+              role="img"
+              aria-label="Technical window measurement diagram"
+            >
+              <defs>
+                <marker id="ha-s" markerWidth="6" markerHeight="6" refX="3" refY="3" orient="auto-start-reverse">
+                  <path d="M6 0L0 3L6 6" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
+                </marker>
+                <marker id="ha-e" markerWidth="6" markerHeight="6" refX="3" refY="3" orient="auto">
+                  <path d="M0 0L6 3L0 6" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
+                </marker>
+                <!-- Blueprint grid pattern -->
+                <pattern id="bp-grid" width="16" height="16" patternUnits="userSpaceOnUse">
+                  <path d="M16 0H0V16" fill="none" stroke="currentColor" stroke-width="0.4" opacity="0.12"/>
+                </pattern>
+              </defs>
+
+              <!-- Grid background -->
+              <rect x="0" y="0" width="320" height="280" fill="url(#bp-grid)" />
+
+              <!-- Frame -->
+              <rect x="48" y="20" width="192" height="196" rx="4" class="svg-frame" stroke-width="2.5"/>
+
+              <!-- Dividers -->
+              <line x1="48" y1="118" x2="240" y2="118" class="svg-divider" stroke-width="2"/>
+              <line x1="144" y1="20"  x2="144" y2="216" class="svg-divider" stroke-width="2"/>
+
+              <!-- Panes -->
+              <rect x="50"  y="22"  width="92" height="94" rx="2" class="svg-pane"/>
+              <rect x="146" y="22"  width="92" height="94" rx="2" class="svg-pane"/>
+              <rect x="50"  y="120" width="92" height="94" rx="2" class="svg-pane"/>
+              <rect x="146" y="120" width="92" height="94" rx="2" class="svg-pane"/>
+
+              <!-- Corner marks -->
+              <circle cx="48"  cy="20"  r="3" class="svg-anchor"/>
+              <circle cx="240" cy="20"  r="3" class="svg-anchor"/>
+              <circle cx="48"  cy="216" r="3" class="svg-anchor"/>
+              <circle cx="240" cy="216" r="3" class="svg-anchor"/>
+
+              <!-- Width dimension line -->
+              <line x1="48"  y1="216" x2="48"  y2="244" class="svg-ext" stroke-dasharray="3,3"/>
+              <line x1="240" y1="216" x2="240" y2="244" class="svg-ext" stroke-dasharray="3,3"/>
+              <line x1="48"  y1="240" x2="240" y2="240" class="svg-dim svg-dim-width" marker-start="url(#ha-s)" marker-end="url(#ha-e)"/>
+
+              <!-- Width label -->
+              <rect x="117" y="248" width="46" height="18" rx="3" class="svg-label-bg"/>
+              <text x="140" y="261" class="svg-label" text-anchor="middle">Width</text>
+
+              <!-- Width value badge -->
+              <rect x="74" y="62" width="44" height="20" rx="4" class="svg-value-bg svg-badge-w"/>
+              <text x="96" y="76" class="svg-value" text-anchor="middle">36 in</text>
+
+              <!-- Height dimension line -->
+              <line x1="240" y1="20"  x2="264" y2="20"  class="svg-ext" stroke-dasharray="3,3"/>
+              <line x1="240" y1="216" x2="264" y2="216" class="svg-ext" stroke-dasharray="3,3"/>
+              <line x1="260" y1="20"  x2="260" y2="216" class="svg-dim svg-dim-height" marker-start="url(#ha-s)" marker-end="url(#ha-e)"/>
+
+              <!-- Height label -->
+              <rect x="264" y="109" width="18" height="46" rx="3" class="svg-label-bg"/>
+              <text x="273" y="136" class="svg-label" text-anchor="middle" transform="rotate(90 273 132)">Height</text>
+
+              <!-- Height value badge -->
+              <rect x="74" y="152" width="44" height="20" rx="4" class="svg-value-bg svg-badge-h"/>
+              <text x="96" y="166" class="svg-value" text-anchor="middle">48 in</text>
+
+              <!-- Area label (center of frame) -->
+              <rect x="110" y="57" width="68" height="28" rx="4" class="svg-area-bg"/>
+              <text x="144" y="68" class="svg-area-label" text-anchor="middle">Area</text>
+              <text x="144" y="81" class="svg-area-value" text-anchor="middle">1,728 sq in</text>
+            </svg>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════
+       TRUST BAR
+  ════════════════════════════════════════════════════ -->
+  <div class="trust-bar" role="list" aria-label="Key features">
+    <div class="container-content trust-inner">
+      <TrustStrip
+        compact
+        items={[
+          { label: 'Free forever' },
+          { label: 'No signup required' },
+          { label: 'All units supported' },
+          { label: 'Accurate calculations' },
+          { label: 'Mobile friendly' },
+          { label: 'Client-side only' },
+        ]}
+      />
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════
+       FEATURED TOOLS
+  ════════════════════════════════════════════════════ -->
+  <section class="hp-section hp-section--alt" aria-labelledby="featured-heading">
+    <div class="container-content">
+      <div class="hp-section-header">
+        <div>
+          <h2 class="hp-section-title" id="featured-heading">Start calculating</h2>
+          <p class="hp-section-sub">The most-used window measurement tools, ready now.</p>
+        </div>
+        <a href="/tools" class="hp-view-all" aria-label="View all window calculators">
+          All tools →
+        </a>
+      </div>
+
+      <div class="tool-grid-6">
+        {featuredTools.map((tool) => <ToolCard tool={tool} />)}
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════
+       HOW IT WORKS
+  ════════════════════════════════════════════════════ -->
+  <section class="hp-section" aria-labelledby="how-heading">
+    <div class="container-content">
+      <h2 class="hp-section-title" id="how-heading">How it works</h2>
+      <p class="hp-section-sub" style="margin-bottom: var(--spacing-2xl)">Three steps, no guesswork.</p>
+
+      <div class="how-grid">
+        {
+          howItWorks.map((step, i) => (
+            <div class="how-card">
+              <div class="how-step-row">
+                <span class="how-num" aria-hidden="true">{step.step}</span>
+                <div class="icon-container">
+                  <ToolIcon name={step.icon} size={18} />
+                </div>
+                {i < howItWorks.length - 1 && (
+                  <div class="how-connector" aria-hidden="true"></div>
+                )}
+              </div>
+              <h3 class="how-title">{step.title}</h3>
+              <p class="how-desc">{step.description}</p>
+            </div>
+          ))
+        }
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════
+       CATEGORIES
+  ════════════════════════════════════════════════════ -->
+  <section class="hp-section hp-section--alt" aria-labelledby="cat-heading">
+    <div class="container-content">
+      <div class="hp-section-header">
+        <div>
+          <h2 class="hp-section-title" id="cat-heading">Every window project covered</h2>
+          <p class="hp-section-sub">Tools organized by what you need to accomplish.</p>
+        </div>
+        <a href="/tools" class="hp-view-all" aria-label="Browse all tool categories">
+          Browse all →
+        </a>
+      </div>
+
+      <div class="cat-grid">
+        {
+          topCategories.map((cat) => {
+            const catTools = TOOLS.filter((t) => t.category === cat.slug);
+            const live     = catTools.filter((t) => t.status === 'live').length;
+            return (
+              <a href={`/tools#cat-${cat.slug}`} class="cat-card" aria-label={`${cat.title} — ${catTools.length} tools`}>
+                <div class="cat-card-top">
+                  <div class="icon-container icon-container-sm">
+                    <ToolIcon name={cat.icon ?? 'Ruler'} size={15} />
+                  </div>
+                  {live > 0 && (
+                    <span class="cat-live-badge" aria-label={`${live} available`}>
+                      {live} live
+                    </span>
+                  )}
+                </div>
+                <h3 class="cat-title">{cat.title}</h3>
+                <p class="cat-desc">{cat.description}</p>
+                <span class="cat-count">{catTools.length} tool{catTools.length !== 1 ? 's' : ''}</span>
+              </a>
+            );
+          })
+        }
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════
+       WHY WINDOWMETRICS
+  ════════════════════════════════════════════════════ -->
+  <section class="hp-section" aria-labelledby="why-heading">
+    <div class="container-content">
+      <div class="hp-section-header" style="margin-bottom: var(--spacing-2xl)">
+        <div>
+          <h2 class="hp-section-title" id="why-heading">Built for real decisions</h2>
+          <p class="hp-section-sub">Not just numbers. Actual answers for every window project.</p>
+        </div>
+      </div>
+
+      <div class="why-grid">
+        {
+          whyPoints.map((point) => (
+            <div class="why-card">
+              <div class="icon-container">
+                <ToolIcon name={point.icon} size={18} />
+              </div>
+              <div>
+                <h3 class="why-title">{point.title}</h3>
+                <p class="why-desc">{point.description}</p>
+              </div>
+            </div>
+          ))
+        }
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════
+       FAQ
+  ════════════════════════════════════════════════════ -->
+  <section class="hp-section hp-section--alt" aria-labelledby="faq-hp-heading">
+    <div class="container-content">
+      <div class="faq-layout">
+        <div class="faq-left">
+          <h2 class="hp-section-title" id="faq-hp-heading">Common questions</h2>
+          <p class="hp-section-sub">
+            Everything you need to know before you start measuring.
+          </p>
+          <a href="/tools/window-size-calculator" class="btn-hero-primary" style="margin-top: var(--spacing-lg); display:inline-flex; align-self:flex-start;">
+            Try the calculator
+          </a>
+        </div>
+        <div class="faq-right">
+          {faqs.map((faq) => <Accordion question={faq.question}><p>{faq.answer}</p></Accordion>)}
+        </div>
+      </div>
+    </div>
+  </section>
+
 </Layout>
+
+<style>
+  /* ── Hero ─────────────────────────────────────────────────────────── */
+
+  .hero {
+    padding-block: var(--spacing-4xl);
+    border-bottom: 1px solid var(--color-hairline);
+    background-color: var(--color-canvas-soft);
+  }
+
+  .hero-layout {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--spacing-3xl);
+    align-items: center;
+  }
+
+  @media (min-width: 800px) {
+    .hero-layout {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+
+  /* Eyebrow */
+  .hero-eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    font-family: var(--font-family-mono);
+    font-size: 11px;
+    color: var(--color-muted);
+    margin-bottom: var(--spacing-md);
+    letter-spacing: 0.04em;
+  }
+
+  .hero-eyebrow-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background-color: #22c55e;
+    flex-shrink: 0;
+  }
+
+  /* Headline */
+  .hero-headline {
+    font-size: clamp(1.9rem, 4.5vw, 3rem);
+    font-weight: 600;
+    letter-spacing: -0.03em;
+    line-height: 1.08;
+    color: var(--color-ink);
+    margin: 0 0 var(--spacing-lg);
+  }
+
+  .hero-br { display: none; }
+  @media (min-width: 480px) { .hero-br { display: block; } }
+
+  /* Sub */
+  .hero-sub {
+    font-size: var(--font-size-body-md);
+    color: var(--color-body);
+    line-height: 1.65;
+    max-width: 480px;
+    margin: 0 0 var(--spacing-xl);
+  }
+
+  /* CTAs */
+  .hero-cta-row {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+    flex-wrap: wrap;
+  }
+
+  .btn-hero-primary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    height: 40px;
+    padding: 0 var(--spacing-lg);
+    background-color: var(--color-ink);
+    color: var(--color-canvas);
+    font-size: var(--font-size-body-sm);
+    font-weight: 500;
+    border-radius: var(--radius-sm);
+    text-decoration: none;
+    transition: opacity 150ms ease;
+    white-space: nowrap;
+    letter-spacing: -0.01em;
+  }
+
+  .btn-hero-primary:hover {
+    opacity: 0.82;
+  }
+
+  .btn-hero-secondary {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    height: 40px;
+    padding: 0 var(--spacing-md);
+    font-size: var(--font-size-body-sm);
+    font-weight: 500;
+    color: var(--color-body);
+    text-decoration: none;
+    border: 1px solid var(--color-hairline);
+    border-radius: var(--radius-sm);
+    background-color: var(--color-canvas);
+    transition: border-color 150ms ease, color 150ms ease;
+  }
+
+  .btn-hero-secondary:hover {
+    border-color: var(--color-hairline-strong);
+    color: var(--color-ink);
+  }
+
+  /* SVG Diagram */
+  .hero-diagram {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .diagram-wrap {
+    width: 100%;
+    max-width: 320px;
+    padding: var(--spacing-md);
+  }
+
+  .window-svg {
+    width: 100%;
+    color: var(--color-ink);
+  }
+
+  /* SVG element classes */
+  .svg-frame   { fill: none; stroke: currentColor; opacity: 0.85; }
+  .svg-divider { stroke: currentColor; opacity: 0.4; fill: none; }
+  .svg-pane    { fill: color-mix(in srgb, var(--color-link) 6%, transparent); }
+  .svg-anchor  { fill: currentColor; opacity: 0.7; }
+  .svg-ext     { stroke: currentColor; opacity: 0.3; stroke-width: 1; fill: none; }
+
+  .svg-dim {
+    stroke: currentColor;
+    opacity: 0.55;
+    stroke-width: 1.5;
+    fill: none;
+    transition: opacity 200ms ease, stroke-width 200ms ease;
+  }
+
+  .diagram-wrap:hover .svg-dim {
+    opacity: 0.9;
+    stroke-width: 2;
+  }
+
+  .diagram-wrap:hover .svg-dim-width  { stroke: var(--color-link); opacity: 1; }
+  .diagram-wrap:hover .svg-dim-height { stroke: var(--color-link); opacity: 1; }
+
+  .svg-label-bg  { fill: var(--color-canvas-soft-2); }
+  .svg-label     { font-family: var(--font-family-mono); font-size: 10px; fill: var(--color-muted); }
+
+  .svg-value-bg  {
+    fill: color-mix(in srgb, var(--color-link) 8%, transparent);
+    transition: fill 200ms ease;
+  }
+  .diagram-wrap:hover .svg-value-bg {
+    fill: color-mix(in srgb, var(--color-link) 14%, transparent);
+  }
+
+  .svg-value {
+    font-family: var(--font-family-mono);
+    font-size: 11px;
+    font-weight: 600;
+    fill: var(--color-link);
+  }
+
+  /* Area center badge */
+  .svg-area-bg {
+    fill: var(--color-canvas-soft-2);
+    stroke: var(--color-hairline);
+    stroke-width: 1;
+    opacity: 0.9;
+  }
+
+  .svg-area-label {
+    font-family: var(--font-family-mono);
+    font-size: 9px;
+    fill: var(--color-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+
+  .svg-area-value {
+    font-family: var(--font-family-mono);
+    font-size: 10px;
+    font-weight: 600;
+    fill: var(--color-ink);
+  }
+
+  /* SVG entrance animation — draw the dimension lines */
+  @media (prefers-reduced-motion: no-preference) {
+    .svg-dim {
+      stroke-dasharray: 300;
+      stroke-dashoffset: 300;
+      animation: draw-line 0.9s ease forwards;
+    }
+
+    .svg-dim-width  { animation-delay: 0.3s; }
+    .svg-dim-height { animation-delay: 0.6s; }
+
+    .svg-badge-w, .svg-badge-h {
+      animation: badge-appear 0.35s ease forwards;
+      opacity: 0;
+    }
+    .svg-badge-w { animation-delay: 0.8s; }
+    .svg-badge-h { animation-delay: 1.0s; }
+
+    @keyframes draw-line {
+      to { stroke-dashoffset: 0; }
+    }
+
+    @keyframes badge-appear {
+      from { opacity: 0; transform: scale(0.85); transform-box: fill-box; transform-origin: center; }
+      to   { opacity: 1; transform: scale(1); }
+    }
+  }
+
+  /* ── Trust bar ────────────────────────────────────────────────────── */
+
+  .trust-bar {
+    border-bottom: 1px solid var(--color-hairline);
+    background-color: var(--color-canvas);
+    padding-block: var(--spacing-md);
+  }
+
+  /* trust-item and trust-check styles now inherited from TrustStrip component */
+  .trust-inner {
+    padding-block: var(--spacing-xs);
+  }
+
+  /* ── Section scaffold ─────────────────────────────────────────────── */
+
+  .hp-section {
+    padding-block: var(--spacing-3xl);
+    border-bottom: 1px solid var(--color-hairline);
+    background-color: var(--color-canvas);
+  }
+
+  .hp-section--alt {
+    background-color: var(--color-canvas-soft);
+  }
+
+  .hp-section-header {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: var(--spacing-lg);
+    flex-wrap: wrap;
+    margin-bottom: var(--spacing-xl);
+  }
+
+  .hp-section-title {
+    font-size: var(--font-size-display-md);
+    font-weight: 600;
+    letter-spacing: var(--tracking-display-md);
+    color: var(--color-ink);
+    margin: 0 0 4px;
+  }
+
+  .hp-section-sub {
+    font-size: var(--font-size-body-sm);
+    color: var(--color-body);
+    margin: 0;
+    max-width: 480px;
+    line-height: 1.55;
+  }
+
+  .hp-view-all {
+    font-family: var(--font-family-mono);
+    font-size: 12px;
+    color: var(--color-muted);
+    text-decoration: none;
+    white-space: nowrap;
+    flex-shrink: 0;
+    transition: color 150ms ease;
+  }
+
+  .hp-view-all:hover {
+    color: var(--color-ink);
+  }
+
+  /* ── Tool grid ────────────────────────────────────────────────────── */
+
+  .tool-grid-6 {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: var(--spacing-sm);
+  }
+
+  /* ── How it works ─────────────────────────────────────────────────── */
+
+  .how-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--spacing-xl);
+  }
+
+  @media (min-width: 640px) {
+    .how-grid {
+      grid-template-columns: repeat(3, 1fr);
+      gap: 0;
+    }
+  }
+
+  .how-card {
+    position: relative;
+    padding: var(--spacing-lg);
+  }
+
+  @media (min-width: 640px) {
+    .how-card {
+      padding: var(--spacing-xl) var(--spacing-lg);
+      border-right: 1px solid var(--color-hairline);
+    }
+
+    .how-card:last-child {
+      border-right: none;
+    }
+  }
+
+  .how-step-row {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    margin-bottom: var(--spacing-md);
+    position: relative;
+  }
+
+  .how-num {
+    font-family: var(--font-family-mono);
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--color-muted);
+    letter-spacing: 0.06em;
+    min-width: 24px;
+  }
+
+  .how-connector {
+    display: none;
+    position: absolute;
+    right: calc(-1 * var(--spacing-lg) - 1px);
+    top: 50%;
+    transform: translateY(-50%);
+    width: calc(var(--spacing-lg) * 2 + 2px);
+    height: 1px;
+    background: var(--color-hairline);
+    z-index: 1;
+  }
+
+  .how-title {
+    font-size: var(--font-size-body-md);
+    font-weight: 600;
+    color: var(--color-ink);
+    margin: 0 0 var(--spacing-xs);
+    letter-spacing: -0.01em;
+  }
+
+  .how-desc {
+    font-size: var(--font-size-body-sm);
+    color: var(--color-body);
+    line-height: 1.6;
+    margin: 0;
+  }
+
+  /* ── Categories ───────────────────────────────────────────────────── */
+
+  .cat-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: var(--spacing-sm);
+  }
+
+  .cat-card {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-md);
+    background-color: var(--color-canvas);
+    border: 1px solid var(--color-hairline);
+    border-radius: var(--radius-md);
+    text-decoration: none;
+    color: inherit;
+    transition: border-color 150ms ease, transform 150ms ease;
+  }
+
+  .cat-card:hover {
+    border-color: var(--color-hairline-strong);
+    transform: translateY(-1px);
+  }
+
+  .cat-card-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--spacing-xs);
+  }
+
+  .cat-live-badge {
+    font-family: var(--font-family-mono);
+    font-size: 10px;
+    color: #16a34a;
+    background-color: color-mix(in srgb, #22c55e 8%, transparent);
+    border: 1px solid color-mix(in srgb, #22c55e 15%, transparent);
+    border-radius: 3px;
+    padding: 1px 5px;
+    letter-spacing: 0.03em;
+  }
+
+  [data-theme='dark'] .cat-live-badge {
+    color: #4ade80;
+  }
+
+  .cat-title {
+    font-size: var(--font-size-body-sm);
+    font-weight: 600;
+    color: var(--color-ink);
+    margin: 0;
+    letter-spacing: -0.01em;
+  }
+
+  .cat-desc {
+    font-size: var(--font-size-caption);
+    color: var(--color-body);
+    margin: 0;
+    line-height: 1.5;
+    flex: 1;
+  }
+
+  .cat-count {
+    font-family: var(--font-family-mono);
+    font-size: 10px;
+    color: var(--color-muted);
+    letter-spacing: 0.03em;
+    margin-top: auto;
+  }
+
+  /* ── Why ──────────────────────────────────────────────────────────── */
+
+  .why-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--spacing-sm);
+  }
+
+  @media (min-width: 600px) {
+    .why-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+
+  @media (min-width: 900px) {
+    .why-grid {
+      grid-template-columns: repeat(3, 1fr);
+    }
+  }
+
+  .why-card {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--spacing-md);
+    padding: var(--spacing-lg);
+    border: 1px solid var(--color-hairline);
+    border-radius: var(--radius-md);
+    background-color: var(--color-canvas-soft);
+    transition: border-color 150ms ease;
+  }
+
+  .why-card:hover {
+    border-color: var(--color-hairline-strong);
+  }
+
+  .why-title {
+    font-size: var(--font-size-body-sm);
+    font-weight: 600;
+    color: var(--color-ink);
+    margin: 0 0 4px;
+    letter-spacing: -0.01em;
+  }
+
+  .why-desc {
+    font-size: var(--font-size-caption);
+    color: var(--color-body);
+    line-height: 1.6;
+    margin: 0;
+  }
+
+  /* ── FAQ ──────────────────────────────────────────────────────────── */
+
+  .faq-layout {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--spacing-2xl);
+    align-items: start;
+  }
+
+  @media (min-width: 768px) {
+    .faq-layout {
+      grid-template-columns: 300px 1fr;
+    }
+  }
+
+  .faq-left {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .faq-right {
+    display: flex;
+    flex-direction: column;
+  }
+</style>

@@ -1,0 +1,98 @@
+---
+/**
+ * WindowMetrics — Input Card
+ *
+ * A labeled form field with hint and optional validation error.
+ * Clean panel-friendly design — no card shadow, integrates flush into parent panels.
+ *
+ * Props:
+ *   label    — Field label text
+ *   inputId  — ID of the input for <label> association
+ *   hint     — Hint text (e.g. format guide)
+ *   error    — Inline validation error message
+ *   required — Whether field is required (shows asterisk)
+ *   class    — Additional class names
+ */
+
+interface Props {
+  label: string;
+  inputId: string;
+  hint?: string;
+  error?: string;
+  required?: boolean;
+  class?: string;
+}
+
+const { label, inputId, hint, error, required = false, class: className } = Astro.props;
+---
+
+<div class:list={['input-card', { 'input-card--error': !!error }, className]}>
+  <div class="input-card-header">
+    <label class="input-card-label" for={inputId}>
+      {label}
+      {required && <span class="input-required" aria-label="required">*</span>}
+    </label>
+    {hint && <span class="input-card-hint" id={`${inputId}-hint`}>{hint}</span>}
+  </div>
+  <div class="input-card-field">
+    <slot />
+  </div>
+  {error && (
+    <p class="input-card-error" id={`${inputId}-error`} role="alert" aria-live="polite">
+      {error}
+    </p>
+  )}
+</div>
+
+<style>
+  .input-card {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-xs);
+    padding: var(--spacing-md);
+  }
+
+  .input-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: var(--spacing-sm);
+  }
+
+  .input-card-label {
+    font-size: var(--font-size-body-sm);
+    font-weight: 500;
+    color: var(--color-ink);
+    cursor: pointer;
+  }
+
+  .input-required {
+    color: var(--color-error);
+    margin-left: 2px;
+    font-weight: 400;
+  }
+
+  .input-card-hint {
+    font-family: var(--font-family-mono);
+    font-size: 11px;
+    color: var(--color-muted);
+    flex-shrink: 0;
+    letter-spacing: 0.02em;
+  }
+
+  .input-card-field {
+    width: 100%;
+  }
+
+  /* Error state */
+  .input-card--error .input-card-label {
+    color: var(--color-error);
+  }
+
+  .input-card-error {
+    font-size: var(--font-size-caption);
+    color: var(--color-error);
+    margin: 0;
+    line-height: 1.4;
+  }
+</style>

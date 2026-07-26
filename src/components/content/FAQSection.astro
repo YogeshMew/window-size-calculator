@@ -1,0 +1,59 @@
+---
+/**
+ * WindowMetrics — FAQ Section
+ *
+ * Renders FAQ items using the Accordion component.
+ * Injects FAQPage JSON-LD schema when schema=true.
+ *
+ * Props:
+ *   faqs   — Array of { question, answer }
+ *   schema — Inject FAQPage JSON-LD (default: true)
+ *   title  — Section heading (default: "Frequently asked questions")
+ */
+
+import Accordion from '@/components/ui/Accordion.astro';
+import { buildFAQSchema } from '@/lib/jsonld.js';
+import type { FAQ } from '@/types/calculator.js';
+
+interface Props {
+  faqs: FAQ[];
+  schema?: boolean;
+  title?: string;
+}
+
+const { faqs, schema = true, title = 'Frequently asked questions' } = Astro.props;
+
+const faqSchemaJson = schema ? JSON.stringify(buildFAQSchema(faqs)) : null;
+---
+
+<section class="faq-section" aria-labelledby="faq-section-heading">
+  <h2 id="faq-section-heading" class="faq-section-title">{title}</h2>
+
+  <div class="faq-list">
+    {faqs.map((faq) => (
+      <Accordion question={faq.question}>
+        <p>{faq.answer}</p>
+      </Accordion>
+    ))}
+  </div>
+</section>
+
+{faqSchemaJson && (
+  <Fragment set:html={`<script type="application/ld+json">${faqSchemaJson}</script>`} />
+)}
+
+<style>
+  .faq-section-title {
+    font-size: var(--font-size-display-sm);
+    font-weight: 600;
+    color: var(--color-ink);
+    letter-spacing: var(--tracking-display-sm);
+    margin: 0 0 var(--spacing-xl);
+  }
+
+  .faq-list {
+    display: flex;
+    flex-direction: column;
+    max-width: 680px;
+  }
+</style>

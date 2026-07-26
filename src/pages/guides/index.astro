@@ -1,0 +1,283 @@
+---
+/**
+ * WindowMetrics — Guides Index
+ * Editorial card layout with upcoming preview.
+ */
+
+import Layout from '@/layouts/Layout.astro';
+import Breadcrumbs from '@/components/global/Breadcrumbs.astro';
+import ToolCard from '@/components/content/ToolCard.astro';
+import { getCanonical } from '@/lib/seo.js';
+import { getCollection } from 'astro:content';
+import { getLiveTools } from '@/data/tools.js';
+import type { BreadcrumbItem } from '@/types/calculator.js';
+
+const canonical  = getCanonical('/guides');
+const guides     = await getCollection('guides', ({ data }) => !data.draft);
+const liveTools  = getLiveTools();
+
+const breadcrumbs: BreadcrumbItem[] = [
+  { label: 'Home', href: '/' },
+  { label: 'Guides', href: '/guides', current: true },
+];
+
+const upcomingGuides = [
+  { tag: 'Replacement',  readTime: '5 min', title: 'How to Measure a Window for Replacement', desc: 'Step-by-step guide to measuring your existing window frame for a new replacement window — including how to handle out-of-square walls.' },
+  { tag: 'Reference',    readTime: '3 min', title: 'Standard Window Sizes in the US',          desc: 'Complete reference for single-hung, double-hung, casement, awning, and picture window standard dimensions.' },
+  { tag: 'Curtains',     readTime: '4 min', title: 'How to Measure for Curtains',              desc: 'Measure window width, height, and rod placement for curtains that look professionally styled from the first install.' },
+  { tag: 'Energy',       readTime: '6 min', title: 'Window U-Factor Explained',                desc: 'What U-factor means for your windows, how to read energy performance labels, and which values are best for your climate.' },
+  { tag: 'Blinds',       readTime: '4 min', title: 'Inside vs Outside Mount Blinds',           desc: 'When to choose inside vs outside mount for blinds and shades — and how to measure correctly for each method.' },
+  { tag: 'Codes',        readTime: '5 min', title: 'Egress Window Requirements by State',      desc: 'IRC code requirements for egress windows in bedrooms and basements, including minimum opening dimensions.' },
+];
+---
+
+<Layout
+  title="Window Measurement Guides"
+  description="Step-by-step guides for measuring windows, planning replacements, choosing curtains, and more."
+  canonical={canonical}
+>
+  <div class="guides-topbar">
+    <div class="container-content">
+      <Breadcrumbs items={breadcrumbs} />
+    </div>
+  </div>
+
+  <div class="container-content guides-page">
+
+    <header class="guides-header">
+      <h1 class="guides-h1">Measurement Guides</h1>
+      <p class="guides-lead">
+        Step-by-step guides for measuring windows, planning replacements, and making the
+        right decisions — written for homeowners and contractors.
+      </p>
+    </header>
+
+    {
+      guides.length > 0 ? (
+        <div class="guides-grid">
+          {guides.map((guide) => (
+            <a href={`/guides/${guide.id}`} class="guide-card">
+              <div class="guide-card-meta">
+                <span class="guide-tag">Guide</span>
+                <span class="guide-read">—</span>
+              </div>
+              <h2 class="guide-title">{guide.data.title}</h2>
+              <p class="guide-desc">{guide.data.description}</p>
+              <span class="guide-read-more">Read guide →</span>
+            </a>
+          ))}
+        </div>
+      ) : (
+        <div class="upcoming-section">
+          <div class="upcoming-label-row">
+            <span class="upcoming-chip">Coming soon</span>
+            <span class="upcoming-sub">Guides are being written and reviewed</span>
+          </div>
+
+          <div class="guides-grid">
+            {upcomingGuides.map((guide) => (
+              <div class="guide-card guide-card--preview">
+                <div class="guide-card-meta">
+                  <span class="guide-tag">{guide.tag}</span>
+                  <span class="guide-read">{guide.readTime} read</span>
+                </div>
+                <h2 class="guide-title">{guide.title}</h2>
+                <p class="guide-desc">{guide.desc}</p>
+                <span class="guide-preview-note">Coming soon</span>
+              </div>
+            ))}
+          </div>
+
+          {liveTools.length > 0 && (
+            <div class="guides-bridge">
+              <div class="bridge-header">
+                <p class="bridge-title">Use the calculator while you wait</p>
+                <p class="bridge-sub">Our calculator is live right now.</p>
+              </div>
+              <div class="bridge-tools">
+                {liveTools.slice(0, 3).map((tool) => <ToolCard tool={tool} />)}
+              </div>
+            </div>
+          )}
+        </div>
+      )
+    }
+  </div>
+</Layout>
+
+<style>
+  .guides-topbar {
+    padding: var(--spacing-sm) 0;
+    border-bottom: 1px solid var(--color-hairline);
+    background-color: var(--color-canvas-soft);
+  }
+
+  .guides-page {
+    padding-block: var(--spacing-2xl) var(--spacing-5xl);
+  }
+
+  .guides-header {
+    padding-bottom: var(--spacing-xl);
+    border-bottom: 1px solid var(--color-hairline);
+    margin-bottom: var(--spacing-2xl);
+  }
+
+  .guides-h1 {
+    font-size: var(--font-size-display-md);
+    font-weight: 600;
+    letter-spacing: var(--tracking-display-md);
+    margin: 0 0 var(--spacing-xs);
+  }
+
+  .guides-lead {
+    font-size: var(--font-size-body-sm);
+    color: var(--color-body);
+    max-width: 520px;
+    margin: 0;
+    line-height: 1.6;
+  }
+
+  /* Upcoming label */
+  .upcoming-label-row {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+    margin-bottom: var(--spacing-xl);
+  }
+
+  .upcoming-chip {
+    font-family: var(--font-family-mono);
+    font-size: 11px;
+    color: var(--color-muted);
+    background-color: var(--color-canvas-soft-2);
+    border: 1px solid var(--color-hairline);
+    border-radius: 3px;
+    padding: 2px 7px;
+    letter-spacing: 0.03em;
+  }
+
+  .upcoming-sub {
+    font-size: var(--font-size-caption);
+    color: var(--color-muted);
+  }
+
+  /* Guide card grid */
+  .guides-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: var(--spacing-sm);
+    margin-bottom: var(--spacing-3xl);
+  }
+
+  .guide-card {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-lg);
+    background-color: var(--color-canvas);
+    border: 1px solid var(--color-hairline);
+    border-radius: var(--radius-md);
+    text-decoration: none;
+    color: inherit;
+    transition: border-color 150ms ease, transform 150ms ease;
+  }
+
+  a.guide-card:hover {
+    border-color: var(--color-hairline-strong);
+    transform: translateY(-1px);
+  }
+
+  .guide-card--preview {
+    opacity: 0.65;
+  }
+
+  .guide-card-meta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .guide-tag {
+    font-family: var(--font-family-mono);
+    font-size: 10px;
+    color: var(--color-muted);
+    background-color: var(--color-canvas-soft-2);
+    border: 1px solid var(--color-hairline);
+    border-radius: 3px;
+    padding: 1px 5px;
+    letter-spacing: 0.03em;
+  }
+
+  .guide-read {
+    font-family: var(--font-family-mono);
+    font-size: 10px;
+    color: var(--color-muted);
+    letter-spacing: 0.03em;
+  }
+
+  .guide-title {
+    font-size: var(--font-size-body-sm);
+    font-weight: 600;
+    color: var(--color-ink);
+    margin: 0;
+    letter-spacing: -0.01em;
+    line-height: 1.35;
+  }
+
+  .guide-desc {
+    font-size: var(--font-size-caption);
+    color: var(--color-body);
+    margin: 0;
+    flex: 1;
+    line-height: 1.55;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .guide-read-more {
+    font-family: var(--font-family-mono);
+    font-size: 11px;
+    color: var(--color-link);
+    margin-top: auto;
+  }
+
+  .guide-preview-note {
+    font-family: var(--font-family-mono);
+    font-size: 10px;
+    color: var(--color-muted);
+    margin-top: auto;
+    letter-spacing: 0.03em;
+  }
+
+  /* Bridge */
+  .guides-bridge {
+    padding-top: var(--spacing-2xl);
+    border-top: 1px solid var(--color-hairline);
+  }
+
+  .bridge-header {
+    margin-bottom: var(--spacing-lg);
+  }
+
+  .bridge-title {
+    font-size: var(--font-size-body-md);
+    font-weight: 600;
+    color: var(--color-ink);
+    margin: 0 0 2px;
+    letter-spacing: -0.01em;
+  }
+
+  .bridge-sub {
+    font-size: var(--font-size-body-sm);
+    color: var(--color-body);
+    margin: 0;
+  }
+
+  .bridge-tools {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: var(--spacing-sm);
+  }
+</style>

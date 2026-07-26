@@ -1,0 +1,28 @@
+---
+/**
+ * WindowMetrics — Card Component
+ *
+ * Props:
+ *   variant — 'default' | 'soft' | 'elevated'
+ *   as      — HTML element to render (default: 'div')
+ */
+
+interface Props {
+  variant?: 'default' | 'soft' | 'elevated';
+  as?: 'div' | 'article' | 'section' | 'aside';
+  class?: string;
+  [key: string]: unknown;
+}
+
+const { variant = 'default', as: Tag = 'div', class: className, ...rest } = Astro.props;
+
+const variantClass = {
+  default: 'card',
+  soft: 'card-soft',
+  elevated: 'card-elevated',
+}[variant];
+---
+
+<Tag class:list={[variantClass, className]} {...rest}>
+  <slot />
+</Tag>

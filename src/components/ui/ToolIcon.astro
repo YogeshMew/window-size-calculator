@@ -1,0 +1,78 @@
+---
+/**
+ * WindowMetrics — ToolIcon
+ *
+ * Maps icon name strings (stored in the tools registry) to actual
+ * @lucide/astro components. All icons must be explicitly imported
+ * because Astro resolves components at build time.
+ *
+ * Props:
+ *   name  — Icon name string matching the tool registry icon field
+ *   size  — Icon size in px (default: 18)
+ */
+
+import {
+  Ruler,
+  Square,
+  Expand,
+  RefreshCw,
+  DollarSign,
+  PanelTop,
+  Scale,
+  Blinds,
+  SlidersHorizontal,
+  Film,
+  AirVent,
+  Thermometer,
+  Shield,
+  Frame,
+  Crop,
+  Grid2x2,
+  DoorOpen,
+  Hammer,
+  Wrench,
+  Zap,
+  ClipboardCheck,
+  LayoutDashboard,
+  BookOpen,
+  Newspaper,
+  Table,
+  ChevronRight,
+} from '@lucide/astro';
+
+interface Props {
+  name: string;
+  size?: number;
+}
+
+const { name, size = 18 } = Astro.props;
+---
+
+{name === 'Ruler' && <Ruler size={size} aria-hidden="true" />}
+{name === 'Square' && <Square size={size} aria-hidden="true" />}
+{name === 'Expand' && <Expand size={size} aria-hidden="true" />}
+{name === 'RefreshCw' && <RefreshCw size={size} aria-hidden="true" />}
+{name === 'DollarSign' && <DollarSign size={size} aria-hidden="true" />}
+{name === 'PanelTop' && <PanelTop size={size} aria-hidden="true" />}
+{name === 'Scale' && <Scale size={size} aria-hidden="true" />}
+{name === 'Blinds' && <Blinds size={size} aria-hidden="true" />}
+{name === 'SlidersHorizontal' && <SlidersHorizontal size={size} aria-hidden="true" />}
+{name === 'Film' && <Film size={size} aria-hidden="true" />}
+{name === 'AirVent' && <AirVent size={size} aria-hidden="true" />}
+{name === 'Thermometer' && <Thermometer size={size} aria-hidden="true" />}
+{name === 'Shield' && <Shield size={size} aria-hidden="true" />}
+{name === 'Frame' && <Frame size={size} aria-hidden="true" />}
+{name === 'Crop' && <Crop size={size} aria-hidden="true" />}
+{name === 'Grid2x2' && <Grid2x2 size={size} aria-hidden="true" />}
+{name === 'DoorOpen' && <DoorOpen size={size} aria-hidden="true" />}
+{name === 'Hammer' && <Hammer size={size} aria-hidden="true" />}
+{name === 'Wrench' && <Wrench size={size} aria-hidden="true" />}
+{name === 'Zap' && <Zap size={size} aria-hidden="true" />}
+{name === 'ClipboardCheck' && <ClipboardCheck size={size} aria-hidden="true" />}
+{name === 'LayoutDashboard' && <LayoutDashboard size={size} aria-hidden="true" />}
+{name === 'BookOpen' && <BookOpen size={size} aria-hidden="true" />}
+{name === 'Newspaper' && <Newspaper size={size} aria-hidden="true" />}
+{name === 'Table' && <Table size={size} aria-hidden="true" />}
+{name === 'ChevronRight' && <ChevronRight size={size} aria-hidden="true" />}
+<!-- Fallback: Ruler if no match -->
+{!['Ruler','Square','Expand','RefreshCw','DollarSign','PanelTop','Scale','Blinds','SlidersHorizontal','Film','AirVent','Thermometer','Shield','Frame','Crop','Grid2x2','DoorOpen','Hammer','Wrench','Zap','ClipboardCheck','LayoutDashboard','BookOpen','Newspaper','Table','ChevronRight'].includes(name) && <Ruler size={size} aria-hidden="true" />}

@@ -1,0 +1,103 @@
+---
+/**
+ * WindowMetrics — Trust Strip
+ *
+ * A reusable row of trust signals for calculator and tool pages.
+ * All items are static — no JavaScript required.
+ *
+ * Props:
+ *   items     — Override the default trust items
+ *   compact   — Render a smaller single-row version
+ *   class     — Additional wrapper classes
+ */
+
+interface TrustItem {
+  label: string;
+  icon?: string; // SVG path data
+}
+
+interface Props {
+  items?: TrustItem[];
+  compact?: boolean;
+  class?: string;
+}
+
+const { compact = false, class: className } = Astro.props;
+
+const defaultItems: TrustItem[] = [
+  { label: 'Free forever' },
+  { label: 'No account required' },
+  { label: 'Runs in your browser' },
+  { label: 'Privacy first' },
+  { label: 'All units supported' },
+  { label: 'Industry-standard calculations' },
+];
+
+const items = Astro.props.items ?? defaultItems;
+---
+
+<div class:list={['trust-strip', { 'trust-strip--compact': compact }, className]} role="list" aria-label="Trust signals">
+  {items.map((item) => (
+    <div class="trust-item" role="listitem">
+      <svg
+        class="trust-check"
+        width="12"
+        height="12"
+        viewBox="0 0 12 12"
+        fill="none"
+        aria-hidden="true"
+      >
+        <path
+          d="M2 6L4.5 8.5L10 3"
+          stroke="currentColor"
+          stroke-width="1.5"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        />
+      </svg>
+      <span class="trust-label">{item.label}</span>
+    </div>
+  ))}
+</div>
+
+<style>
+  .trust-strip {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--spacing-md) var(--spacing-lg);
+    padding: var(--spacing-md) 0;
+  }
+
+  .trust-strip--compact {
+    gap: var(--spacing-sm) var(--spacing-md);
+    padding: var(--spacing-sm) 0;
+  }
+
+  .trust-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+  }
+
+  .trust-check {
+    color: #16a34a;
+    flex-shrink: 0;
+  }
+
+  [data-theme='dark'] .trust-check {
+    color: #4ade80;
+  }
+
+  .trust-label {
+    font-family: var(--font-family-mono);
+    font-size: 11px;
+    color: var(--color-muted);
+    letter-spacing: 0.02em;
+    white-space: nowrap;
+  }
+
+  .trust-strip--compact .trust-label {
+    font-size: 10px;
+  }
+</style>

@@ -1,0 +1,414 @@
+---
+/**
+ * WindowMetrics — Charts Index
+ * Information-dense regional chart previews.
+ */
+
+import Layout from '@/layouts/Layout.astro';
+import Breadcrumbs from '@/components/global/Breadcrumbs.astro';
+import { getCanonical } from '@/lib/seo.js';
+import { getCollection } from 'astro:content';
+import type { BreadcrumbItem } from '@/types/calculator.js';
+
+const canonical = getCanonical('/charts');
+const charts    = await getCollection('charts', ({ data }) => !data.draft);
+
+const breadcrumbs: BreadcrumbItem[] = [
+  { label: 'Home', href: '/' },
+  { label: 'Charts', href: '/charts', current: true },
+];
+
+const upcomingCharts = [
+  {
+    flag: '🇺🇸',
+    region:  'United States',
+    standard: 'ANSI / AAMA',
+    system:  'Imperial (in)',
+    status:  'Drafting',
+    types:   ['Single Hung', 'Double Hung', 'Casement', 'Sliding', 'Awning'],
+    sizes:   ['24×36', '28×54', '36×60', '36×72', '48×60'],
+    note:    'inches',
+  },
+  {
+    flag: '🇬🇧',
+    region:  'United Kingdom',
+    standard: 'BS 6375',
+    system:  'Metric (mm)',
+    status:  'Drafting',
+    types:   ['Casement', 'Sash', 'Tilt & Turn', 'Fixed'],
+    sizes:   ['600×900', '900×1200', '1200×1200', '630×1050'],
+    note:    'mm',
+  },
+  {
+    flag: '🇨🇦',
+    region:  'Canada',
+    standard: 'NBC',
+    system:  'Imperial + Metric',
+    status:  'Planned',
+    types:   ['Single Hung', 'Casement', 'Sliding', 'Fixed'],
+    sizes:   ['24×36', '30×54', '36×60', '48×60'],
+    note:    'inches',
+  },
+  {
+    flag: '🇦🇺',
+    region:  'Australia',
+    standard: 'AS 2047',
+    system:  'Metric (mm)',
+    status:  'Planned',
+    types:   ['Casement', 'Awning', 'Sliding', 'Fixed'],
+    sizes:   ['600×900', '900×1200', '1200×1500'],
+    note:    'mm',
+  },
+  {
+    flag: '🇪🇺',
+    region:  'Europe',
+    standard: 'EN 14351',
+    system:  'Metric (mm)',
+    status:  'Planned',
+    types:   ['Tilt & Turn', 'Casement', 'Fixed', 'Sliding'],
+    sizes:   ['600×1000', '900×1200', '1200×1500'],
+    note:    'mm',
+  },
+  {
+    flag: '🌍',
+    region:  'Global Comparison',
+    standard: 'All standards',
+    system:  'Both',
+    status:  'Planned',
+    types:   ['All window types'],
+    sizes:   ['Cross-region comparison', 'US vs EU sizes'],
+    note:    '',
+  },
+];
+---
+
+<Layout
+  title="Window Size Charts & Reference Tables"
+  description="Standard window size charts for the US, UK, Canada, Australia, and Europe. Reference tables for double-hung, casement, sliding, and more."
+  canonical={canonical}
+>
+  <div class="charts-topbar">
+    <div class="container-content">
+      <Breadcrumbs items={breadcrumbs} />
+    </div>
+  </div>
+
+  <div class="container-content charts-page">
+
+    <header class="charts-header">
+      <h1 class="charts-h1">Window Size Charts</h1>
+      <p class="charts-lead">
+        Standard window size reference tables for the US, UK, Canada, Australia, and Europe.
+        Based on ANSI, BS, AS, and EN standards.
+      </p>
+    </header>
+
+    {
+      charts.length > 0 ? (
+        <div class="charts-grid">
+          {charts.map((chart) => (
+            <a href={`/charts/${chart.id}`} class="chart-card">
+              <h2 class="chart-card-title">{chart.data.title}</h2>
+              <p class="chart-card-desc">{chart.data.description}</p>
+            </a>
+          ))}
+        </div>
+      ) : (
+        <div class="upcoming">
+          <div class="upcoming-bar">
+            <span class="upcoming-chip">Coming soon</span>
+            <span class="upcoming-note">
+              We're compiling verified data from ANSI, BS 6375, AS 2047, and EN 14351 standards.
+            </span>
+          </div>
+
+          <div class="charts-grid">
+            {upcomingCharts.map((chart) => (
+              <div class="chart-card chart-card--preview">
+                <!-- Top: flag + status -->
+                <div class="chart-card-top">
+                  <div class="chart-region-row">
+                    <span class="chart-flag" aria-hidden="true">{chart.flag}</span>
+                    <span class="chart-region">{chart.region}</span>
+                  </div>
+                  <span class:list={[
+                    'chart-status',
+                    chart.status === 'Drafting' ? 'chart-status--drafting' : 'chart-status--planned'
+                  ]}>
+                    {chart.status}
+                  </span>
+                </div>
+
+                <!-- Standard + measurement system -->
+                <div class="chart-meta-grid">
+                  <div class="chart-meta-item">
+                    <span class="chart-meta-key">Standard</span>
+                    <span class="chart-meta-val">{chart.standard}</span>
+                  </div>
+                  <div class="chart-meta-item">
+                    <span class="chart-meta-key">Units</span>
+                    <span class="chart-meta-val">{chart.system}</span>
+                  </div>
+                </div>
+
+                <!-- Window types -->
+                <div class="chart-types">
+                  <span class="chart-types-label">Types covered</span>
+                  <div class="chart-type-list">
+                    {chart.types.map((type) => (
+                      <span class="chart-type-tag">{type}</span>
+                    ))}
+                  </div>
+                </div>
+
+                <div class="chart-card-sizes">
+                  <p class="chart-sizes-label">Common sizes</p>
+                  <div class="chart-sizes-list">
+                    {chart.sizes.map(size => <span class="chart-size-tag">{size}</span>)}
+                  </div>
+                  <p class="chart-sizes-unit">{chart.note}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+
+        </div>
+      )
+    }
+
+    <div class="charts-cta">
+      <p class="charts-cta-text">Use your measurements to find the right size</p>
+      <a href="/tools/window-size-calculator" class="charts-cta-link">Open Window Size Calculator →</a>
+    </div>
+
+  </div>
+</Layout>
+
+<style>
+  .charts-topbar {
+    padding: var(--spacing-sm) 0;
+    border-bottom: 1px solid var(--color-hairline);
+    background-color: var(--color-canvas-soft);
+  }
+
+  .charts-page {
+    padding-block: var(--spacing-2xl) var(--spacing-5xl);
+  }
+
+  .charts-header {
+    padding-bottom: var(--spacing-xl);
+    border-bottom: 1px solid var(--color-hairline);
+    margin-bottom: var(--spacing-2xl);
+  }
+
+  .charts-h1 {
+    font-size: var(--font-size-display-md);
+    font-weight: 600;
+    letter-spacing: var(--tracking-display-md);
+    margin: 0 0 var(--spacing-xs);
+  }
+
+  .charts-lead {
+    font-size: var(--font-size-body-sm);
+    color: var(--color-body);
+    max-width: 520px;
+    margin: 0;
+    line-height: 1.6;
+  }
+
+  /* Upcoming notice */
+  .upcoming-bar {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+    flex-wrap: wrap;
+    margin-bottom: var(--spacing-xl);
+  }
+
+  .upcoming-chip {
+    font-family: var(--font-family-mono);
+    font-size: 11px;
+    color: var(--color-muted);
+    background-color: var(--color-canvas-soft-2);
+    border: 1px solid var(--color-hairline);
+    border-radius: 3px;
+    padding: 2px 7px;
+    letter-spacing: 0.03em;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  .upcoming-note {
+    font-size: var(--font-size-caption);
+    color: var(--color-muted);
+    line-height: 1.5;
+  }
+
+  /* Chart grid */
+  .charts-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: var(--spacing-sm);
+    margin-bottom: var(--spacing-3xl);
+  }
+
+  .chart-card {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+    padding: var(--spacing-md);
+    background-color: var(--color-canvas);
+    border: 1px solid var(--color-hairline);
+    border-radius: var(--radius-md);
+    text-decoration: none;
+    color: inherit;
+    transition: border-color 150ms ease, transform 150ms ease;
+  }
+
+  a.chart-card:hover {
+    border-color: var(--color-hairline-strong);
+    transform: translateY(-1px);
+  }
+
+  .chart-card--preview {
+    opacity: 0.72;
+  }
+
+  /* Card top row */
+  .chart-card-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--spacing-xs);
+  }
+
+  .chart-region-row {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+  }
+
+  .chart-flag {
+    font-size: 16px;
+    line-height: 1;
+    flex-shrink: 0;
+  }
+
+  .chart-region {
+    font-size: var(--font-size-body-sm);
+    font-weight: 600;
+    color: var(--color-ink);
+    letter-spacing: -0.01em;
+  }
+
+  .chart-status {
+    font-family: var(--font-family-mono);
+    font-size: 10px;
+    padding: 1px 5px;
+    border-radius: 3px;
+    letter-spacing: 0.03em;
+    flex-shrink: 0;
+  }
+
+  .chart-status--drafting {
+    color: #b45309;
+    background-color: color-mix(in srgb, #f59e0b 8%, transparent);
+    border: 1px solid color-mix(in srgb, #f59e0b 15%, transparent);
+  }
+
+  [data-theme='dark'] .chart-status--drafting {
+    color: #fbbf24;
+  }
+
+  .chart-status--planned {
+    color: var(--color-muted);
+    background-color: var(--color-canvas-soft-2);
+    border: 1px solid var(--color-hairline);
+  }
+
+  /* Meta grid */
+  .chart-meta-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-sm);
+    background-color: var(--color-canvas-soft);
+    border: 1px solid var(--color-hairline);
+    border-radius: var(--radius-sm);
+  }
+
+  .chart-meta-item {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .chart-meta-key {
+    font-family: var(--font-family-mono);
+    font-size: 9px;
+    color: var(--color-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+  }
+
+  .chart-meta-val {
+    font-size: var(--font-size-caption);
+    font-weight: 500;
+    color: var(--color-ink);
+  }
+
+  /* Types */
+  .chart-types-label {
+    display: block;
+    font-family: var(--font-family-mono);
+    font-size: 9px;
+    color: var(--color-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    margin-bottom: 6px;
+  }
+
+  .chart-type-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+
+  .chart-type-tag {
+    font-size: 10px;
+    font-family: var(--font-family-mono);
+    color: var(--color-muted);
+    background-color: var(--color-canvas-soft-2);
+    border: 1px solid var(--color-hairline);
+    border-radius: 3px;
+    padding: 1px 5px;
+  }
+
+  .chart-card-sizes { margin-top: var(--spacing-sm); padding-top: var(--spacing-sm); border-top: 1px solid var(--color-hairline); }
+  .chart-sizes-label { font-family: var(--font-family-mono); font-size: 10px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--color-muted); margin: 0 0 6px; }
+  .chart-sizes-list { display: flex; flex-wrap: wrap; gap: 4px; }
+  .chart-size-tag { font-family: var(--font-family-mono); font-size: 11px; font-weight: 600; color: var(--color-ink); background: var(--color-canvas-soft-2); border: 1px solid var(--color-hairline); border-radius: 3px; padding: 2px 6px; }
+  .chart-sizes-unit { font-size: 10px; color: var(--color-muted); margin: 4px 0 0; font-family: var(--font-family-mono); }
+
+  /* Card title/desc for live charts */
+  .chart-card-title {
+    font-size: var(--font-size-body-sm);
+    font-weight: 600;
+    color: var(--color-ink);
+    margin: 0;
+    letter-spacing: -0.01em;
+  }
+
+  .chart-card-desc {
+    font-size: var(--font-size-caption);
+    color: var(--color-body);
+    margin: 0;
+    line-height: 1.55;
+  }
+
+  /* CTA bar */
+  .charts-cta { margin-top: var(--spacing-3xl); padding: var(--spacing-lg); border: 2px solid var(--color-ink); border-radius: var(--radius-md); display: flex; align-items: center; justify-content: space-between; gap: var(--spacing-lg); flex-wrap: wrap; }
+  .charts-cta-text { font-size: var(--font-size-body-sm); font-weight: 500; color: var(--color-ink); margin: 0; }
+  .charts-cta-link { font-family: var(--font-family-mono); font-size: 12px; font-weight: 600; color: var(--color-link); text-decoration: none; white-space: nowrap; }
+  .charts-cta-link:hover { opacity: 0.75; }
+</style>

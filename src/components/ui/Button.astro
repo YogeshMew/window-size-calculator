@@ -1,0 +1,64 @@
+---
+/**
+ * WindowMetrics — Button Component
+ *
+ * Renders either a <button> or <a> depending on whether href is provided.
+ *
+ * Props:
+ *   variant  — 'primary' | 'secondary' | 'ghost'
+ *   size     — 'sm' | 'md' | 'lg'
+ *   href     — If set, renders as an <a> tag
+ *   type     — button type (default: 'button')
+ *   disabled — disable state
+ *   class    — additional classes
+ */
+
+interface Props {
+  variant?: 'primary' | 'secondary' | 'ghost';
+  size?: 'sm' | 'md' | 'lg';
+  href?: string;
+  type?: 'button' | 'submit' | 'reset';
+  disabled?: boolean;
+  class?: string;
+  [key: string]: unknown;
+}
+
+const {
+  variant = 'primary',
+  size = 'md',
+  href,
+  type = 'button',
+  disabled = false,
+  class: className,
+  ...rest
+} = Astro.props;
+
+// Build class list
+const variantClass = {
+  primary: 'btn-primary',
+  secondary: 'btn-secondary',
+  ghost: 'btn-ghost',
+}[variant];
+
+const sizeClass = {
+  sm: 'btn-sm',
+  md: '',
+  lg: 'btn-lg',
+}[size];
+
+const classes = ['btn', variantClass, sizeClass, className].filter(Boolean).join(' ');
+
+const isLink = !!href;
+---
+
+{
+  isLink ? (
+    <a href={href} class={classes} role="button" {...rest}>
+      <slot />
+    </a>
+  ) : (
+    <button type={type} class={classes} disabled={disabled} {...rest}>
+      <slot />
+    </button>
+  )
+}

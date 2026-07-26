@@ -1,0 +1,74 @@
+---
+/**
+ * WindowMetrics — 404 Not Found
+ *
+ * Custom error page shown when a route is not found.
+ * Uses the base layout for consistent header/footer.
+ */
+
+import Layout from '@/layouts/Layout.astro';
+import { getCanonical } from '@/lib/seo.js';
+
+const canonical = getCanonical('/404');
+---
+
+<Layout
+  title="Page Not Found"
+  description="The page you're looking for doesn't exist. Browse our window calculators and guides instead."
+  canonical={canonical}
+  noindex={true}
+>
+  <div class="container-narrow error-page">
+    <div class="error-code">404</div>
+    <h1 class="error-title">Page not found</h1>
+    <p class="error-message">
+      The page you're looking for doesn't exist or may have moved.
+    </p>
+
+    <div class="error-actions">
+      <a href="/" class="btn btn-primary">Go home</a>
+      <a href="/tools" class="btn btn-secondary">Browse tools</a>
+    </div>
+  </div>
+</Layout>
+
+<style>
+  .error-page {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    padding: var(--spacing-5xl) var(--spacing-lg);
+    min-height: calc(100vh - var(--height-nav) - 200px);
+    justify-content: center;
+    gap: var(--spacing-lg);
+  }
+
+  .error-code {
+    font-family: var(--font-family-mono);
+    font-size: clamp(4rem, 10vw, 8rem);
+    font-weight: 400;
+    color: var(--color-hairline);
+    line-height: 1;
+    letter-spacing: -0.05em;
+  }
+
+  .error-title {
+    font-size: var(--font-size-display-lg);
+    margin: 0;
+  }
+
+  .error-message {
+    color: var(--color-body);
+    max-width: 400px;
+    margin: 0;
+  }
+
+  .error-actions {
+    display: flex;
+    gap: var(--spacing-sm);
+    flex-wrap: wrap;
+    justify-content: center;
+    margin-top: var(--spacing-sm);
+  }
+</style>

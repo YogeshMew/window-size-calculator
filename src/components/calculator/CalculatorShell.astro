@@ -1,0 +1,106 @@
+---
+/**
+ * WindowMetrics — Calculator Shell
+ *
+ * Outer container for all calculator pages.
+ * Provides consistent layout structure with named slots.
+ *
+ * Named slots:
+ *   (default) — Calculator inputs
+ *   results   — Calculation outputs
+ *   diagram   — SVG or visual diagram (optional)
+ *   info      — Below results: interpretation, recommendations
+ *
+ * Props:
+ *   id    — Unique ID for the calculator form (for aria-labelledby)
+ *   title — Calculator section heading
+ */
+
+interface Props {
+  id?: string;
+  title?: string;
+}
+
+const { id = 'calculator', title } = Astro.props;
+---
+
+<div class="calculator-shell" id={id}>
+  {title && <h2 class="calc-section-title">{title}</h2>}
+
+  <div class="calculator-grid">
+    <!-- Inputs column -->
+    <div class="calculator-inputs" aria-label="Calculator inputs">
+      <slot />
+    </div>
+
+    <!-- Results column -->
+    {
+      Astro.slots.has('results') && (
+        <div class="calculator-results" aria-label="Calculation results" aria-live="polite">
+          <slot name="results" />
+        </div>
+      )
+    }
+  </div>
+
+  <!-- Diagram area (full width, below the grid) -->
+  {
+    Astro.slots.has('diagram') && (
+      <div class="calculator-diagram">
+        <slot name="diagram" />
+      </div>
+    )
+  }
+
+  <!-- Info area: interpretation, recommendations, related tools -->
+  {
+    Astro.slots.has('info') && (
+      <div class="calculator-info">
+        <slot name="info" />
+      </div>
+    )
+  }
+</div>
+
+<style>
+  .calc-section-title {
+    font-size: var(--font-size-display-md);
+    font-weight: 600;
+    color: var(--color-ink);
+    letter-spacing: var(--tracking-display-md);
+    margin-bottom: var(--spacing-xl);
+  }
+
+  .calculator-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--spacing-xl);
+    align-items: start;
+  }
+
+  @media (min-width: 768px) {
+    .calculator-grid {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+
+  .calculator-inputs {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-lg);
+  }
+
+  .calculator-results {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+  }
+
+  .calculator-diagram {
+    margin-top: var(--spacing-xl);
+  }
+
+  .calculator-info {
+    margin-top: var(--spacing-2xl);
+  }
+</style>

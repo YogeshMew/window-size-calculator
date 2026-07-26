@@ -1,0 +1,143 @@
+---
+/**
+ * WindowMetrics — Result Card
+ *
+ * Premium result display: large value, label above, contextual explanation below.
+ * JS targets .result-value-text and .result-unit by class inside the element with [id].
+ *
+ * Props:
+ *   id          — HTML id used by calculator JS (required for live updates)
+ *   label       — Metric name (e.g. "Window Area")
+ *   value       — Initial value string (e.g. "—")
+ *   unit        — Unit suffix (e.g. "sq in")
+ *   sublabel    — Optional secondary note below the value
+ *   highlight   — Whether this is the primary result (stronger border + prominence)
+ *   usedFor     — Small "Useful for" chip list (e.g. ["Glass", "Film", "Paint"])
+ *   class       — Additional classes
+ */
+
+interface Props {
+  id?: string;
+  label: string;
+  value?: string;
+  unit?: string;
+  sublabel?: string;
+  highlight?: boolean;
+  usedFor?: string[];
+  class?: string;
+}
+
+const {
+  id,
+  label,
+  value = '—',
+  unit,
+  sublabel,
+  highlight = false,
+  usedFor,
+  class: className,
+} = Astro.props;
+---
+
+<div
+  class:list={['result-card', { 'result-card--highlight': highlight }, className]}
+  id={id}
+>
+  <p class="result-card-label">{label}</p>
+  <p class="result-card-value">
+    <span class="result-value-text">{value}</span>{
+      unit && <span class="result-unit">{unit}</span>
+    }
+  </p>
+  {sublabel && <p class="result-card-sublabel">{sublabel}</p>}
+  {
+    usedFor && usedFor.length > 0 && (
+      <div class="result-used-for">
+        {usedFor.map((tag) => (
+          <span class="result-tag">{tag}</span>
+        ))}
+      </div>
+    )
+  }
+</div>
+
+<style>
+  .result-card {
+    background-color: var(--color-canvas);
+    border: 1px solid var(--color-hairline);
+    border-radius: var(--radius-md);
+    padding: var(--spacing-md) var(--spacing-lg);
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    transition: border-color 150ms ease;
+  }
+
+  .result-card-label {
+    font-family: var(--font-family-mono);
+    font-size: 11px;
+    font-weight: 400;
+    color: var(--color-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    margin: 0;
+  }
+
+  .result-card-value {
+    font-size: var(--font-size-display-md);
+    font-weight: 600;
+    color: var(--color-ink);
+    letter-spacing: var(--tracking-display-md);
+    line-height: 1.1;
+    margin: 0;
+    font-family: var(--font-family-mono);
+  }
+
+  .result-unit {
+    font-size: var(--font-size-body-sm);
+    font-weight: 400;
+    color: var(--color-muted);
+    margin-left: 5px;
+    font-family: var(--font-family-sans);
+    letter-spacing: 0;
+  }
+
+  .result-card-sublabel {
+    font-size: var(--font-size-caption);
+    color: var(--color-muted);
+    margin: 2px 0 0;
+    line-height: 1.4;
+  }
+
+  .result-used-for {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin-top: var(--spacing-xs);
+  }
+
+  .result-tag {
+    font-size: 10px;
+    font-family: var(--font-family-mono);
+    color: var(--color-muted);
+    background-color: var(--color-canvas-soft-2);
+    border: 1px solid var(--color-hairline);
+    border-radius: 3px;
+    padding: 1px 5px;
+    letter-spacing: 0.03em;
+  }
+
+  /* Highlight variant — primary metric */
+  .result-card--highlight {
+    border-color: color-mix(in srgb, var(--color-ink) 20%, transparent);
+    background-color: var(--color-canvas-soft);
+  }
+
+  .result-card--highlight .result-card-value {
+    font-size: var(--font-size-display-lg);
+  }
+
+  .result-card--highlight .result-card-label {
+    color: var(--color-body);
+  }
+</style>

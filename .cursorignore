@@ -1,0 +1,36 @@
+# Add directories or file patterns to ignore during indexing (e.g. foo/ or *.csv)
+# Dependencies
+node_modules/
+
+# Build outputs
+dist/
+.astro/
+
+# Git
+.git/
+
+# Cache
+.cache/
+.vscode/
+.idea/
+
+# Package manager caches
+.pnpm-store/
+.npm/
+
+# Logs
+*.log
+
+# Environment
+.env
+.env.*
+
+# Coverage
+coverage/
+
+# Vercel
+.vercel/
+
+# Temporary
+tmp/
+temp/

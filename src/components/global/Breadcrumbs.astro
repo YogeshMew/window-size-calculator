@@ -1,0 +1,51 @@
+---
+/**
+ * WindowMetrics — Breadcrumbs
+ *
+ * Renders semantic breadcrumb navigation and injects BreadcrumbList JSON-LD.
+ *
+ * Props:
+ *   items — Array of { label, href, current? }
+ */
+
+import { ChevronRight } from '@lucide/astro';
+import { buildBreadcrumbSchema } from '@/lib/jsonld.js';
+import type { BreadcrumbItem } from '@/types/calculator.js';
+
+interface Props {
+  items: BreadcrumbItem[];
+}
+
+const { items } = Astro.props;
+const schema = buildBreadcrumbSchema(items);
+const schemaJson = JSON.stringify(schema);
+---
+
+<nav aria-label="Breadcrumb">
+  <ol class="breadcrumbs" role="list">
+    {
+      items.map((item, index) => (
+        <li class="breadcrumb-item" aria-current={item.current ? 'page' : undefined}>
+          {item.current ? (
+            <span>{item.label}</span>
+          ) : (
+            <a href={item.href}>{item.label}</a>
+          )}
+          {index < items.length - 1 && (
+            <ChevronRight size={12} aria-hidden="true" class="breadcrumb-separator" />
+          )}
+        </li>
+      ))
+    }
+  </ol>
+</nav>
+
+<!-- BreadcrumbList JSON-LD — injected via Fragment to allow script tag -->
+<Fragment set:html={`<script type="application/ld+json">${schemaJson}</script>`} />
+
+<style>
+  .breadcrumb-separator {
+    color: var(--color-hairline-strong);
+    flex-shrink: 0;
+  }
+</style>

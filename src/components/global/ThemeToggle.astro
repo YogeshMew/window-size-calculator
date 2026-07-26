@@ -1,0 +1,107 @@
+---
+/**
+ * WindowMetrics — Theme Toggle
+ *
+ * Switches between light and dark mode.
+ * - Reads initial state from <html data-theme> (set by Layout FOUC script)
+ * - Saves preference to localStorage as 'wm-theme'
+ * - Uses lucide-astro Sun and Moon icons
+ */
+
+import { Sun, Moon } from '@lucide/astro';
+---
+
+<button
+  id="theme-toggle"
+  type="button"
+  aria-label="Toggle dark mode"
+  title="Toggle dark mode"
+  class="theme-toggle-btn"
+>
+  <!-- Sun icon — shown in dark mode (click to go light) -->
+  <Sun
+    id="icon-sun"
+    size={18}
+    aria-hidden="true"
+    class="theme-icon"
+  />
+  <!-- Moon icon — shown in light mode (click to go dark) -->
+  <Moon
+    id="icon-moon"
+    size={18}
+    aria-hidden="true"
+    class="theme-icon"
+  />
+</button>
+
+<script>
+  const btn = document.getElementById('theme-toggle');
+  const sunIcon = document.getElementById('icon-sun');
+  const moonIcon = document.getElementById('icon-moon');
+
+  function getTheme(): 'light' | 'dark' {
+    return (document.documentElement.getAttribute('data-theme') as 'light' | 'dark') ?? 'light';
+  }
+
+  function applyTheme(theme: 'light' | 'dark') {
+    document.documentElement.setAttribute('data-theme', theme);
+    localStorage.setItem('wm-theme', theme);
+
+    if (theme === 'dark') {
+      sunIcon?.classList.remove('hidden');
+      moonIcon?.classList.add('hidden');
+      btn?.setAttribute('aria-label', 'Switch to light mode');
+      btn?.setAttribute('title', 'Switch to light mode');
+    } else {
+      sunIcon?.classList.add('hidden');
+      moonIcon?.classList.remove('hidden');
+      btn?.setAttribute('aria-label', 'Switch to dark mode');
+      btn?.setAttribute('title', 'Switch to dark mode');
+    }
+  }
+
+  // Initialize icons from current theme
+  applyTheme(getTheme());
+
+  // Toggle on click
+  btn?.addEventListener('click', () => {
+    const current = getTheme();
+    applyTheme(current === 'light' ? 'dark' : 'light');
+  });
+</script>
+
+<style>
+  .theme-toggle-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    color: var(--color-body);
+    background: transparent;
+    border: 1px solid var(--color-hairline);
+    border-radius: var(--radius-full);
+    cursor: pointer;
+    transition: background-color var(--transition-fast), color var(--transition-fast),
+      border-color var(--transition-fast);
+  }
+
+  .theme-toggle-btn:hover {
+    background-color: var(--color-canvas-soft-2);
+    color: var(--color-ink);
+  }
+
+  .theme-toggle-btn:focus-visible {
+    outline: 2px solid var(--color-link);
+    outline-offset: 2px;
+  }
+
+  .theme-icon {
+    display: block;
+    flex-shrink: 0;
+  }
+
+  .theme-icon.hidden {
+    display: none;
+  }
+</style>

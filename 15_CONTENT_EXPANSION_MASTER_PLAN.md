@@ -1,0 +1,1 @@
+This would map every future topic cluster, calculator, guide, chart, comparison page, FAQ, and internal linking opportunity. It becomes the editorial roadmap that ensures the site grows systematically instead of randomly.

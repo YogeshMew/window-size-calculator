@@ -1,0 +1,345 @@
+---
+/**
+ * WindowMetrics — Tools Index
+ *
+ * Filter chips (anchor-link based, no JS needed for basic use).
+ * Category sections with icon + count + description.
+ */
+
+import Layout from '@/layouts/Layout.astro';
+import ToolCard from '@/components/content/ToolCard.astro';
+import ToolIcon from '@/components/ui/ToolIcon.astro';
+import Breadcrumbs from '@/components/global/Breadcrumbs.astro';
+import { getCanonical } from '@/lib/seo.js';
+import { TOOLS } from '@/data/tools.js';
+import { CATEGORIES } from '@/data/categories.js';
+import type { BreadcrumbItem } from '@/types/calculator.js';
+
+const canonical = getCanonical('/tools');
+
+const breadcrumbs: BreadcrumbItem[] = [
+  { label: 'Home', href: '/' },
+  { label: 'Tools', href: '/tools', current: true },
+];
+
+const toolsByCategory = CATEGORIES.map((cat) => ({
+  category: cat,
+  tools: TOOLS.filter((t) => t.category === cat.slug),
+})).filter((group) => group.tools.length > 0);
+
+const totalTools = TOOLS.length;
+const liveCount  = TOOLS.filter((t) => t.status === 'live').length;
+---
+
+<Layout
+  title="Window Calculators & Tools"
+  description="Professional window measurement calculators, replacement planning tools, and sizing guides. Free for homeowners, contractors, and installers."
+  canonical={canonical}
+>
+  <!-- Breadcrumbs -->
+  <div class="tools-topbar">
+    <div class="container-content">
+      <Breadcrumbs items={breadcrumbs} />
+    </div>
+  </div>
+
+  <div class="container-content tools-page">
+
+    <!-- Header -->
+    <header class="tools-header">
+      <div class="tools-header-copy">
+        <h1 class="tools-h1">Window Calculators & Tools</h1>
+        <p class="tools-lead">
+          Professional measurement tools for the entire window project lifecycle.
+          Free, no signup required.
+        </p>
+      </div>
+      <div class="tools-counts">
+        <div class="count-stat">
+          <span class="count-num">{totalTools}</span>
+          <span class="count-label">planned</span>
+        </div>
+        <div class="count-divider"></div>
+        <div class="count-stat">
+          <span class="count-num count-num--live">{liveCount}</span>
+          <span class="count-label">available</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- Filter chips -->
+    <nav class="filter-nav" aria-label="Filter by category">
+      <a href="#all-tools" class="filter-chip filter-chip--all">All</a>
+      {
+        CATEGORIES.map((cat) => {
+          const hasLive = TOOLS.some((t) => t.category === cat.slug && t.status === 'live');
+          return (
+            <a
+              href={`#cat-${cat.slug}`}
+              class:list={['filter-chip', { 'filter-chip--live': hasLive }]}
+              aria-label={`Jump to ${cat.title}`}
+            >
+              {cat.title.split(' ')[0]}
+              {hasLive && <span class="filter-live-dot" aria-hidden="true"></span>}
+            </a>
+          );
+        })
+      }
+    </nav>
+
+    <!-- Category sections -->
+    <div id="all-tools" class="tools-sections">
+      {
+        toolsByCategory.map(({ category, tools }) => {
+          const catLive = tools.filter((t) => t.status === 'live').length;
+          return (
+            <section
+              class="cat-section"
+              id={`cat-${category.slug}`}
+              aria-labelledby={`h-${category.slug}`}
+            >
+              <div class="cat-section-header">
+                <div class="cat-section-title-row">
+                  <div class="icon-container icon-container-sm">
+                    <ToolIcon name={category.icon ?? 'Ruler'} size={15} />
+                  </div>
+                  <h2 class="cat-section-heading" id={`h-${category.slug}`}>
+                    {category.title}
+                  </h2>
+                  <div class="cat-section-meta">
+                    <span class="cat-count-badge">{tools.length}</span>
+                    {catLive > 0 && (
+                      <span class="cat-live-badge">
+                        {catLive} live
+                      </span>
+                    )}
+                  </div>
+                </div>
+                {category.description && (
+                  <p class="cat-section-desc">{category.description}</p>
+                )}
+              </div>
+
+              <div class="tool-grid">
+                {tools.map((tool) => <ToolCard tool={tool} />)}
+              </div>
+            </section>
+          );
+        })
+      }
+    </div>
+
+  </div>
+</Layout>
+
+<style>
+  .tools-topbar {
+    padding: var(--spacing-sm) 0;
+    border-bottom: 1px solid var(--color-hairline);
+    background-color: var(--color-canvas-soft);
+  }
+
+  .tools-page {
+    padding-block: var(--spacing-2xl) var(--spacing-5xl);
+  }
+
+  /* Header */
+  .tools-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: var(--spacing-xl);
+    flex-wrap: wrap;
+    padding-bottom: var(--spacing-xl);
+    border-bottom: 1px solid var(--color-hairline);
+    margin-bottom: var(--spacing-xl);
+  }
+
+  .tools-h1 {
+    font-size: var(--font-size-display-md);
+    font-weight: 600;
+    letter-spacing: var(--tracking-display-md);
+    margin: 0 0 var(--spacing-xs);
+  }
+
+  .tools-lead {
+    font-size: var(--font-size-body-sm);
+    color: var(--color-body);
+    margin: 0;
+    max-width: 480px;
+    line-height: 1.6;
+  }
+
+  .tools-counts {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+    padding: var(--spacing-sm) var(--spacing-lg);
+    border: 1px solid var(--color-hairline);
+    border-radius: var(--radius-md);
+    background-color: var(--color-canvas-soft);
+    flex-shrink: 0;
+    align-self: flex-start;
+  }
+
+  .count-stat {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1px;
+  }
+
+  .count-num {
+    font-family: var(--font-family-mono);
+    font-size: var(--font-size-display-sm);
+    font-weight: 700;
+    color: var(--color-ink);
+    line-height: 1;
+  }
+
+  .count-num--live {
+    color: #16a34a;
+  }
+
+  [data-theme='dark'] .count-num--live {
+    color: #4ade80;
+  }
+
+  .count-label {
+    font-family: var(--font-family-mono);
+    font-size: 10px;
+    color: var(--color-muted);
+    letter-spacing: 0.05em;
+  }
+
+  .count-divider {
+    width: 1px;
+    height: 28px;
+    background-color: var(--color-hairline);
+  }
+
+  /* Filter chips */
+  .filter-nav {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--spacing-xs);
+    margin-bottom: var(--spacing-2xl);
+    padding-bottom: var(--spacing-lg);
+    border-bottom: 1px solid var(--color-hairline);
+  }
+
+  .filter-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    height: 28px;
+    padding: 0 var(--spacing-sm);
+    font-size: 12px;
+    font-family: var(--font-family-mono);
+    color: var(--color-muted);
+    background-color: var(--color-canvas-soft);
+    border: 1px solid var(--color-hairline);
+    border-radius: 4px;
+    text-decoration: none;
+    white-space: nowrap;
+    transition: border-color 150ms ease, color 150ms ease, background-color 150ms ease;
+    letter-spacing: 0.02em;
+  }
+
+  .filter-chip:hover {
+    border-color: var(--color-hairline-strong);
+    color: var(--color-ink);
+    background-color: var(--color-canvas);
+  }
+
+  .filter-chip--all {
+    font-weight: 500;
+    color: var(--color-ink);
+    border-color: var(--color-hairline-strong);
+  }
+
+  .filter-chip--live {
+    color: var(--color-body);
+  }
+
+  .filter-live-dot {
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background-color: #22c55e;
+    flex-shrink: 0;
+  }
+
+  /* Category sections */
+  .tools-sections {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-3xl);
+  }
+
+  .cat-section-header {
+    margin-bottom: var(--spacing-lg);
+  }
+
+  .cat-section-title-row {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    padding-bottom: var(--spacing-sm);
+    border-bottom: 1px solid var(--color-hairline);
+    margin-bottom: var(--spacing-sm);
+  }
+
+  .cat-section-heading {
+    font-size: var(--font-size-body-md);
+    font-weight: 600;
+    color: var(--color-ink);
+    margin: 0;
+    flex: 1;
+    letter-spacing: -0.01em;
+  }
+
+  .cat-section-meta {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    flex-shrink: 0;
+  }
+
+  .cat-count-badge {
+    font-family: var(--font-family-mono);
+    font-size: 11px;
+    color: var(--color-muted);
+    background-color: var(--color-canvas-soft-2);
+    border: 1px solid var(--color-hairline);
+    border-radius: 3px;
+    padding: 1px 5px;
+  }
+
+  .cat-live-badge {
+    font-family: var(--font-family-mono);
+    font-size: 10px;
+    color: #16a34a;
+    background-color: color-mix(in srgb, #22c55e 8%, transparent);
+    border: 1px solid color-mix(in srgb, #22c55e 15%, transparent);
+    border-radius: 3px;
+    padding: 1px 5px;
+  }
+
+  [data-theme='dark'] .cat-live-badge {
+    color: #4ade80;
+  }
+
+  .cat-section-desc {
+    font-size: var(--font-size-caption);
+    color: var(--color-muted);
+    margin: 0;
+    line-height: 1.5;
+  }
+
+  .tool-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: var(--spacing-sm);
+  }
+</style>

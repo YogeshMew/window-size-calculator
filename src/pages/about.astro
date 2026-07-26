@@ -1,0 +1,85 @@
+---
+/**
+ * WindowMetrics — About Page
+ */
+
+import Layout from '@/layouts/Layout.astro';
+import Breadcrumbs from '@/components/global/Breadcrumbs.astro';
+import { getCanonical } from '@/lib/seo.js';
+import type { BreadcrumbItem } from '@/types/calculator.js';
+
+const canonical = getCanonical('/about');
+const breadcrumbs: BreadcrumbItem[] = [
+  { label: 'Home', href: '/' },
+  { label: 'About', href: '/about', current: true },
+];
+---
+
+<Layout
+  title="About WindowMetrics"
+  description="WindowMetrics is the internet's most comprehensive platform for window measurements, replacement planning, and sizing decisions."
+  canonical={canonical}
+>
+  <div class="page-breadcrumbs">
+    <div class="container-content">
+      <Breadcrumbs items={breadcrumbs} />
+    </div>
+  </div>
+
+  <div class="container-narrow about-page">
+    <h1>About WindowMetrics</h1>
+
+    <p class="about-lead">
+      WindowMetrics exists to make window-related decisions simple, accurate, and trustworthy.
+    </p>
+
+    <p>
+      People don't want calculators. They want confidence. They don't want formulas — they want
+      answers. And they don't want to visit five different websites to measure a window, pick a
+      replacement, choose curtains, and order glass.
+    </p>
+
+    <p>
+      WindowMetrics is building the single platform that handles the entire workflow: from
+      measuring your first window to planning a full-home replacement project.
+    </p>
+
+    <h2>Our mission</h2>
+    <p>
+      Help homeowners, DIY users, contractors, architects, installers, builders, and interior
+      designers accurately measure windows and make better decisions — without visiting multiple
+      websites.
+    </p>
+
+    <h2>Our tools are free</h2>
+    <p>
+      Every calculator on WindowMetrics is free to use. We believe accurate measurements and
+      professional-quality tools should be accessible to everyone.
+    </p>
+  </div>
+</Layout>
+
+<style>
+  .page-breadcrumbs {
+    padding: var(--spacing-md) 0;
+    border-bottom: 1px solid var(--color-hairline);
+    background-color: var(--color-canvas-soft);
+    margin-bottom: var(--spacing-2xl);
+  }
+
+  .about-page {
+    padding-bottom: var(--spacing-5xl);
+  }
+
+  .about-lead {
+    font-size: var(--font-size-body-lg);
+    color: var(--color-ink);
+    font-weight: 500;
+    margin-bottom: var(--spacing-xl);
+  }
+
+  h2 {
+    margin-top: var(--spacing-2xl);
+    margin-bottom: var(--spacing-md);
+  }
+</style>
