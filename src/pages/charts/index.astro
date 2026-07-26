@@ -177,7 +177,7 @@ const upcomingCharts = [
     }
 
     <div class="charts-cta">
-      <p class="charts-cta-text">Use your measurements to find the right size</p>
+      <p class="charts-cta-text">Have your measurements? Find your standard size instantly.</p>
       <a href="/tools/window-size-calculator" class="charts-cta-link">Open Window Size Calculator →</a>
     </div>
 
@@ -407,8 +407,43 @@ const upcomingCharts = [
   }
 
   /* CTA bar */
-  .charts-cta { margin-top: var(--spacing-3xl); padding: var(--spacing-lg); border: 2px solid var(--color-ink); border-radius: var(--radius-md); display: flex; align-items: center; justify-content: space-between; gap: var(--spacing-lg); flex-wrap: wrap; }
-  .charts-cta-text { font-size: var(--font-size-body-sm); font-weight: 500; color: var(--color-ink); margin: 0; }
-  .charts-cta-link { font-family: var(--font-family-mono); font-size: 12px; font-weight: 600; color: var(--color-link); text-decoration: none; white-space: nowrap; }
-  .charts-cta-link:hover { opacity: 0.75; }
+  .charts-cta {
+    margin-top: var(--spacing-3xl);
+    padding: var(--spacing-lg) var(--spacing-xl);
+    border: 1px solid var(--color-hairline);
+    border-radius: var(--radius-md);
+    background-color: var(--color-canvas-soft);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--spacing-lg);
+    flex-wrap: wrap;
+  }
+
+  .charts-cta-text {
+    font-size: var(--font-size-body-sm);
+    font-weight: 500;
+    color: var(--color-ink);
+    margin: 0;
+    letter-spacing: -0.01em;
+  }
+
+  .charts-cta-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    height: 36px;
+    padding: 0 var(--spacing-md);
+    font-size: var(--font-size-body-sm);
+    font-weight: 500;
+    color: var(--color-canvas);
+    background-color: var(--color-ink);
+    border-radius: var(--radius-sm);
+    text-decoration: none;
+    white-space: nowrap;
+    transition: opacity 150ms ease;
+    letter-spacing: -0.01em;
+  }
+
+  .charts-cta-link:hover { opacity: 0.82; }
 </style>

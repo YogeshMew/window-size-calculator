@@ -114,12 +114,37 @@ const upcomingPosts = [
           )}
         </>
       ) : (
-        <div class="blog-empty">
-          <h2 class="blog-empty-title">No articles yet</h2>
-          <p class="blog-empty-desc">We're currently writing our first articles. In the meantime, check out our tools and charts.</p>
-          <div class="blog-empty-links">
-            <a href="/tools/window-size-calculator" class="blog-empty-link">Window Size Calculator</a>
-            <a href="/charts" class="blog-empty-link">Standard Size Charts</a>
+        <div class="blog-upcoming">
+          <div class="upcoming-bar">
+            <span class="upcoming-chip">Coming soon</span>
+            <span class="upcoming-note">We're writing our first articles — here's what's coming.</span>
+          </div>
+
+          <div class="upcoming-grid">
+            {upcomingPosts.map((post) => (
+              <div class="upcoming-card">
+                <div class="upcoming-card-meta">
+                  <span class="post-category">{post.category}</span>
+                  <span class="post-divider" aria-hidden="true">·</span>
+                  <span class="post-date">{post.readTime} read</span>
+                </div>
+                <h2 class="upcoming-title">{post.title}</h2>
+                <p class="upcoming-desc">{post.desc}</p>
+                <div class="upcoming-card-footer">
+                  <span class="upcoming-author">{post.author}</span>
+                  <span class="upcoming-coming">Coming soon</span>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div class="blog-cta-row">
+            <p class="blog-cta-text">While you wait, try our free calculators</p>
+            <div class="blog-cta-links">
+              <a href="/tools/window-size-calculator" class="blog-cta-link">Window Size Calculator →</a>
+              <a href="/charts" class="blog-cta-link">Standard Size Charts →</a>
+              <a href="/guides" class="blog-cta-link">Measurement Guides →</a>
+            </div>
           </div>
         </div>
       )
@@ -308,9 +333,152 @@ const upcomingPosts = [
   .blog-featured-excerpt { font-size: var(--font-size-body-md); color: var(--color-body); margin: 0 0 var(--spacing-lg); line-height: 1.6; }
   .blog-featured-link { font-family: var(--font-family-mono); font-size: 13px; font-weight: 600; color: var(--color-link); text-decoration: none; }
   
-  .blog-empty { text-align: center; padding: var(--spacing-3xl) var(--spacing-lg); background: var(--color-canvas-soft); border-radius: var(--radius-lg); border: 1px dashed var(--color-hairline-strong); margin-bottom: var(--spacing-3xl); }
-  .blog-empty-title { font-size: var(--font-size-display-sm); color: var(--color-ink); margin: 0 0 var(--spacing-xs); font-weight: 600; }
-  .blog-empty-desc { color: var(--color-body); margin: 0 0 var(--spacing-xl); font-size: var(--font-size-body-md); }
-  .blog-empty-links { display: flex; justify-content: center; gap: var(--spacing-xl); }
-  .blog-empty-link { font-family: var(--font-family-mono); font-size: 13px; font-weight: 600; color: var(--color-link); text-decoration: none; }
+  /* Upcoming posts — when no published articles yet */
+  .blog-upcoming {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-2xl);
+  }
+
+  .upcoming-bar {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+  }
+
+  .upcoming-chip {
+    font-family: var(--font-family-mono);
+    font-size: 11px;
+    color: var(--color-muted);
+    background-color: var(--color-canvas-soft-2);
+    border: 1px solid var(--color-hairline);
+    border-radius: 3px;
+    padding: 2px 7px;
+    letter-spacing: 0.03em;
+    flex-shrink: 0;
+  }
+
+  .upcoming-note {
+    font-size: var(--font-size-caption);
+    color: var(--color-muted);
+  }
+
+  .upcoming-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: var(--spacing-sm);
+  }
+
+  .upcoming-card {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-lg);
+    background-color: var(--color-canvas);
+    border: 1px solid var(--color-hairline);
+    border-radius: var(--radius-md);
+    opacity: 0.7;
+  }
+
+  .upcoming-card-meta {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+
+  .upcoming-title {
+    font-size: var(--font-size-body-sm);
+    font-weight: 600;
+    color: var(--color-ink);
+    margin: 0;
+    letter-spacing: -0.01em;
+    line-height: 1.35;
+  }
+
+  .upcoming-desc {
+    font-size: var(--font-size-caption);
+    color: var(--color-body);
+    margin: 0;
+    flex: 1;
+    line-height: 1.55;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .upcoming-card-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-top: var(--spacing-xs);
+    border-top: 1px solid var(--color-hairline);
+    margin-top: auto;
+  }
+
+  .upcoming-author {
+    font-family: var(--font-family-mono);
+    font-size: 10px;
+    color: var(--color-muted);
+    letter-spacing: 0.02em;
+  }
+
+  .upcoming-coming {
+    font-family: var(--font-family-mono);
+    font-size: 10px;
+    color: var(--color-muted);
+    background-color: var(--color-canvas-soft-2);
+    border: 1px solid var(--color-hairline);
+    border-radius: 3px;
+    padding: 1px 5px;
+    letter-spacing: 0.03em;
+  }
+
+  /* Blog CTA row at bottom of empty state */
+  .blog-cta-row {
+    padding: var(--spacing-xl);
+    border: 1px solid var(--color-hairline);
+    border-radius: var(--radius-md);
+    background-color: var(--color-canvas-soft);
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+  }
+
+  @media (min-width: 600px) {
+    .blog-cta-row {
+      flex-direction: row;
+      align-items: center;
+      justify-content: space-between;
+    }
+  }
+
+  .blog-cta-text {
+    font-size: var(--font-size-body-sm);
+    font-weight: 500;
+    color: var(--color-ink);
+    margin: 0;
+    letter-spacing: -0.01em;
+  }
+
+  .blog-cta-links {
+    display: flex;
+    gap: var(--spacing-lg);
+    flex-wrap: wrap;
+  }
+
+  .blog-cta-link {
+    font-family: var(--font-family-mono);
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--color-link);
+    text-decoration: none;
+    white-space: nowrap;
+    transition: opacity 150ms ease;
+  }
+
+  .blog-cta-link:hover {
+    opacity: 0.75;
+  }
 </style>

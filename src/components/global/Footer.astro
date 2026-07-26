@@ -10,24 +10,36 @@ const currentYear = new Date().getFullYear();
 
 const columns = [
   {
-    heading: 'Calculators',
+    heading: 'Popular Calculators',
     links: [
-      { label: 'Window Size Calculator',        href: '/tools/window-size-calculator' },
-      { label: 'Window Glass Calculator',        href: '/tools/window-glass-calculator' },
-      { label: 'Replacement Calculator',         href: '/tools/replacement-window-calculator' },
-      { label: 'Curtain Size Calculator',        href: '/tools/curtain-size-calculator' },
-      { label: 'Window AC Calculator',           href: '/tools/window-ac-calculator' },
-      { label: 'All Calculators →',              href: '/tools' },
+      { label: 'Window Size Calculator',     href: '/tools/window-size-calculator' },
+      { label: 'Window Glass Calculator',    href: '/tools/window-glass-calculator' },
+      { label: 'Replacement Calculator',     href: '/tools/replacement-window-calculator' },
+      { label: 'Curtain Size Calculator',    href: '/tools/curtain-size-calculator' },
+      { label: 'Window AC Calculator',       href: '/tools/window-ac-calculator' },
+      { label: 'All Calculators →',          href: '/tools' },
     ],
   },
   {
-    heading: 'Resources',
+    heading: 'Popular Guides',
     links: [
-      { label: 'Measurement Guides',  href: '/guides' },
-      { label: 'Standard Size Charts', href: '/charts' },
-      { label: 'US Window Sizes',     href: '/charts' },
-      { label: 'UK Window Sizes',     href: '/charts' },
-      { label: 'Blog',                href: '/blog' },
+      { label: 'How to Measure a Window',       href: '/guides' },
+      { label: 'Standard Sizes in the US',      href: '/guides' },
+      { label: 'How to Measure for Curtains',   href: '/guides' },
+      { label: 'Inside vs Outside Mount Blinds', href: '/guides' },
+      { label: 'Egress Window Requirements',    href: '/guides' },
+      { label: 'All Guides →',                  href: '/guides' },
+    ],
+  },
+  {
+    heading: 'Size Charts',
+    links: [
+      { label: 'US Window Size Chart',    href: '/charts' },
+      { label: 'UK Window Size Chart',    href: '/charts' },
+      { label: 'Canada Window Sizes',     href: '/charts' },
+      { label: 'Australia Window Sizes',  href: '/charts' },
+      { label: 'EU Window Sizes',         href: '/charts' },
+      { label: 'All Charts →',            href: '/charts' },
     ],
   },
   {
@@ -38,14 +50,16 @@ const columns = [
       { label: 'Casement Windows',       href: '/guides' },
       { label: 'Sliding Windows',        href: '/guides' },
       { label: 'Bay & Bow Windows',      href: '/guides' },
+      { label: 'Tilt & Turn Windows',    href: '/guides' },
     ],
   },
   {
     heading: 'Company',
     links: [
-      { label: 'About WindowMetrics',  href: '/about' },
-      { label: 'Privacy Policy',       href: '/privacy' },
-      { label: 'Contact',              href: '/contact' },
+      { label: 'About WindowMetrics', href: '/about' },
+      { label: 'Blog',                href: '/blog' },
+      { label: 'Privacy Policy',      href: '/privacy' },
+      { label: 'Contact',             href: '/contact' },
     ],
   },
 ];
@@ -143,7 +157,7 @@ const audiences = ['Homeowners', 'DIY Users', 'Contractors', 'Architects', 'Buil
 
   @media (min-width: 960px) {
     .footer-grid {
-      grid-template-columns: 2fr repeat(4, 1fr);
+      grid-template-columns: 1.6fr repeat(5, 1fr);
     }
   }
 

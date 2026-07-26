@@ -22,12 +22,12 @@ const breadcrumbs: BreadcrumbItem[] = [
 ];
 
 const upcomingGuides = [
-  { tag: 'Replacement',  readTime: '5 min', title: 'How to Measure a Window for Replacement', desc: 'Step-by-step guide to measuring your existing window frame for a new replacement window — including how to handle out-of-square walls.' },
-  { tag: 'Reference',    readTime: '3 min', title: 'Standard Window Sizes in the US',          desc: 'Complete reference for single-hung, double-hung, casement, awning, and picture window standard dimensions.' },
-  { tag: 'Curtains',     readTime: '4 min', title: 'How to Measure for Curtains',              desc: 'Measure window width, height, and rod placement for curtains that look professionally styled from the first install.' },
-  { tag: 'Energy',       readTime: '6 min', title: 'Window U-Factor Explained',                desc: 'What U-factor means for your windows, how to read energy performance labels, and which values are best for your climate.' },
-  { tag: 'Blinds',       readTime: '4 min', title: 'Inside vs Outside Mount Blinds',           desc: 'When to choose inside vs outside mount for blinds and shades — and how to measure correctly for each method.' },
-  { tag: 'Codes',        readTime: '5 min', title: 'Egress Window Requirements by State',      desc: 'IRC code requirements for egress windows in bedrooms and basements, including minimum opening dimensions.' },
+  { tag: 'Replacement', difficulty: 'Beginner', readTime: '5 min', title: 'How to Measure a Window for Replacement', desc: 'Step-by-step guide to measuring your existing window frame for a new replacement window — including how to handle out-of-square walls.' },
+  { tag: 'Reference',   difficulty: 'Beginner', readTime: '3 min', title: 'Standard Window Sizes in the US',          desc: 'Complete reference for single-hung, double-hung, casement, awning, and picture window standard dimensions.' },
+  { tag: 'Curtains',    difficulty: 'Beginner', readTime: '4 min', title: 'How to Measure for Curtains',              desc: 'Measure window width, height, and rod placement for curtains that look professionally styled from the first install.' },
+  { tag: 'Energy',      difficulty: 'Intermediate', readTime: '6 min', title: 'Window U-Factor Explained',            desc: 'What U-factor means for your windows, how to read energy performance labels, and which values are best for your climate.' },
+  { tag: 'Blinds',      difficulty: 'Beginner', readTime: '4 min', title: 'Inside vs Outside Mount Blinds',           desc: 'When to choose inside vs outside mount for blinds and shades — and how to measure correctly for each method.' },
+  { tag: 'Codes',       difficulty: 'Intermediate', readTime: '5 min', title: 'Egress Window Requirements by State',  desc: 'IRC code requirements for egress windows in bedrooms and basements, including minimum opening dimensions.' },
 ];
 ---
 
@@ -74,7 +74,7 @@ const upcomingGuides = [
             <span class="upcoming-sub">Guides are being written and reviewed</span>
           </div>
 
-          <div class="guides-grid">
+            <div class="guides-grid">
             {upcomingGuides.map((guide) => (
               <div class="guide-card guide-card--preview">
                 <div class="guide-card-meta">
@@ -83,7 +83,10 @@ const upcomingGuides = [
                 </div>
                 <h2 class="guide-title">{guide.title}</h2>
                 <p class="guide-desc">{guide.desc}</p>
-                <span class="guide-preview-note">Coming soon</span>
+                <div class="guide-card-footer">
+                  <span class="guide-difficulty" data-level={guide.difficulty.toLowerCase()}>{guide.difficulty}</span>
+                  <span class="guide-preview-note">Coming soon</span>
+                </div>
               </div>
             ))}
           </div>
@@ -243,11 +246,41 @@ const upcomingGuides = [
     margin-top: auto;
   }
 
+  .guide-card-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--spacing-xs);
+    margin-top: auto;
+    padding-top: var(--spacing-xs);
+    border-top: 1px solid var(--color-hairline);
+  }
+
+  .guide-difficulty {
+    font-family: var(--font-family-mono);
+    font-size: 10px;
+    padding: 1px 5px;
+    border-radius: 3px;
+    letter-spacing: 0.03em;
+    border: 1px solid var(--color-hairline);
+    background-color: var(--color-canvas-soft-2);
+    color: var(--color-muted);
+  }
+
+  .guide-difficulty[data-level='intermediate'] {
+    color: #b45309;
+    background-color: color-mix(in srgb, #f59e0b 8%, transparent);
+    border-color: color-mix(in srgb, #f59e0b 15%, transparent);
+  }
+
+  [data-theme='dark'] .guide-difficulty[data-level='intermediate'] {
+    color: #fbbf24;
+  }
+
   .guide-preview-note {
     font-family: var(--font-family-mono);
     font-size: 10px;
     color: var(--color-muted);
-    margin-top: auto;
     letter-spacing: 0.03em;
   }
 

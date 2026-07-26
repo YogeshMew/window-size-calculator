@@ -291,13 +291,24 @@ const faqs: FAQ[] = [
             <span class="rec-section-title">Smart recommendations</span>
           </div>
 
-          <!-- Nearest standard size -->
+          <!-- Nearest standard size — visual comparison -->
           <div class="rec-card">
             <div class="rec-card-top">
-              <span class="rec-card-label">Nearest standard size</span>
+              <span class="rec-card-label">Standard size match</span>
               <span id="rec-std-badge" class="rec-badge">—</span>
             </div>
-            <p id="rec-std-dims" class="rec-card-value">—</p>
+            <div class="std-comparison">
+              <div class="std-comp-row">
+                <span class="std-comp-key">Your window</span>
+                <span id="rec-your-dims" class="std-comp-val">—</span>
+              </div>
+              <div class="std-comp-arrow" aria-hidden="true">↓</div>
+              <div class="std-comp-row std-comp-row--highlight">
+                <span class="std-comp-key">Nearest standard</span>
+                <span id="rec-std-dims" class="std-comp-val std-comp-val--std">—</span>
+              </div>
+              <div class="std-comp-diff" id="rec-std-diff" hidden></div>
+            </div>
             <p id="rec-std-note" class="rec-card-note">US residential standard (AAMA)</p>
           </div>
 
@@ -357,18 +368,32 @@ const faqs: FAQ[] = [
 
   <!-- ── Sidebar: Related tools ─────────────────────────────────────── -->
   <div slot="sidebar" class="related-tools">
-    <p class="related-heading">Related tools</p>
+    <p class="related-heading">Use your measurements for</p>
     <ul class="related-list" role="list">
-      {
-        relatedTools.map((t) => (
-          <li>
-            <a href={t.href} class="related-link" aria-label={t.title}>
-              <span class="related-link-title">{t.title}</span>
-              <span class="related-link-desc">{t.description}</span>
-            </a>
-          </li>
-        ))
-      }
+      <li>
+        <a href="/tools/window-glass-calculator" class="related-link" aria-label="Window Glass Calculator">
+          <span class="related-link-title">Window Glass Calculator</span>
+          <span class="related-link-desc">Estimate glazing area and glass weight using your current width and height.</span>
+        </a>
+      </li>
+      <li>
+        <a href="/tools/replacement-window-calculator" class="related-link" aria-label="Replacement Window Calculator">
+          <span class="related-link-title">Replacement Calculator</span>
+          <span class="related-link-desc">Find the closest standard replacement size for your opening dimensions.</span>
+        </a>
+      </li>
+      <li>
+        <a href="/tools/curtain-size-calculator" class="related-link" aria-label="Curtain Size Calculator">
+          <span class="related-link-title">Curtain Calculator</span>
+          <span class="related-link-desc">Instantly size curtains using your measured width and drop height.</span>
+        </a>
+      </li>
+      <li>
+        <a href="/tools/window-ac-calculator" class="related-link" aria-label="Window AC Calculator">
+          <span class="related-link-title">AC Sizing Calculator</span>
+          <span class="related-link-desc">Use your window area to estimate the right BTU rating for cooling.</span>
+        </a>
+      </li>
     </ul>
 
     <!-- Quick tip card -->
@@ -378,6 +403,14 @@ const faqs: FAQ[] = [
         Measure at three points and always use the smallest dimension. Walls are rarely
         perfectly square.
       </p>
+    </div>
+
+    <!-- Related guide -->
+    <div class="sidebar-guide">
+      <p class="sidebar-guide-label">Related guide</p>
+      <a href="/guides" class="sidebar-guide-link">
+        How to measure a window for replacement →
+      </a>
     </div>
   </div>
 </ToolLayout>
@@ -509,10 +542,36 @@ const faqs: FAQ[] = [
     if (unitDisplay) unitDisplay.textContent = `${rawWidth} \u00d7 ${rawHeight} ${currentUnit}`;
 
     // ── Smart recommendations ────────────────────────────────────────────
-    // 1. Nearest standard size
+    // 1. Nearest standard size — visual comparison
     const std = findNearestStd(widthIn, heightIn);
-    const stdFt = (i: number) => `${Math.floor(i / 12)}'${i % 12 ? ` ${i % 12}\"` : ''}`;
-    setText('rec-std-dims', `${std.w}" \u00d7 ${std.h}" (${stdFt(std.w)} \u00d7 ${stdFt(std.h)})`);
+
+    // Your window dimensions (always displayed in inches for comparison)
+    const yourDimsEl = document.getElementById('rec-your-dims');
+    if (yourDimsEl) {
+      yourDimsEl.textContent = `${widthIn.toFixed(1)}" \u00d7 ${heightIn.toFixed(1)}"`;
+    }
+
+    // Standard size
+    setText('rec-std-dims', `${std.w}" \u00d7 ${std.h}"`);
+
+    // Difference
+    const diffEl = document.getElementById('rec-std-diff') as HTMLElement | null;
+    if (diffEl) {
+      const dw = std.w - widthIn;
+      const dh = std.h - heightIn;
+      if (!std.isExact) {
+        const fmt = (n: number) => {
+          const abs = Math.abs(n);
+          const sign = n > 0 ? '+' : '-';
+          return abs < 0.1 ? 'exact' : `${sign}${abs.toFixed(1)}"`;
+        };
+        diffEl.textContent = `Diff: ${fmt(dw)} width \u00b7 ${fmt(dh)} height`;
+        diffEl.hidden = false;
+      } else {
+        diffEl.hidden = true;
+      }
+    }
+
     const stdBadge = document.getElementById('rec-std-badge');
     const stdNoteEl = document.getElementById('rec-std-note');
     if (stdBadge) {
@@ -520,19 +579,19 @@ const faqs: FAQ[] = [
         stdBadge.textContent = 'Exact match';
         stdBadge.dataset.type = 'exact';
       } else if (std.isClose) {
-        stdBadge.textContent = `\u00b1${std.dist}\"  close`;
+        stdBadge.textContent = `\u00b1${std.dist}" close`;
         stdBadge.dataset.type = 'close';
       } else {
-        stdBadge.textContent = `${std.dist}\" away`;
+        stdBadge.textContent = `${std.dist}" away`;
         stdBadge.dataset.type = 'far';
       }
     }
     if (stdNoteEl) {
       stdNoteEl.textContent = std.isExact
-        ? 'Your window matches a standard US size exactly.'
+        ? 'Your window matches a US standard size exactly.'
         : std.isClose
-        ? 'Very close to a standard size — may be nominal measurement.'
-        : 'Custom size. Replacement will likely require special order.';
+        ? 'Very close to a standard — may be a nominal measurement.'
+        : 'Custom size. Replacement will likely require a special order.';
     }
 
     // 2. Curtain sizing (in current unit, rounded)
@@ -1073,6 +1132,34 @@ const faqs: FAQ[] = [
     margin: 0;
   }
 
+  .sidebar-guide {
+    padding: var(--spacing-md);
+    border-top: 1px solid var(--color-hairline);
+  }
+
+  .sidebar-guide-label {
+    font-family: var(--font-family-mono);
+    font-size: 10px;
+    font-weight: 500;
+    color: var(--color-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin: 0 0 6px;
+  }
+
+  .sidebar-guide-link {
+    font-size: var(--font-size-caption);
+    color: var(--color-link);
+    text-decoration: none;
+    line-height: 1.45;
+    display: block;
+    transition: opacity 150ms ease;
+  }
+
+  .sidebar-guide-link:hover {
+    opacity: 0.75;
+  }
+
   /* ── Smart Recommendations ────────────────────────────────────────── */
 
   .rec-section {
@@ -1183,6 +1270,70 @@ const faqs: FAQ[] = [
     background-color: var(--color-canvas-soft-2);
     color: var(--color-muted);
     border-color: var(--color-hairline);
+  }
+
+  /* ── Standard size visual comparison ─────────────────────────────── */
+
+  .std-comparison {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin: var(--spacing-xs) 0 var(--spacing-sm);
+    padding: var(--spacing-sm);
+    background-color: var(--color-canvas-soft);
+    border: 1px solid var(--color-hairline);
+    border-radius: var(--radius-sm);
+  }
+
+  .std-comp-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--spacing-sm);
+  }
+
+  .std-comp-row--highlight .std-comp-val {
+    color: var(--color-ink);
+    font-weight: 700;
+  }
+
+  .std-comp-key {
+    font-family: var(--font-family-mono);
+    font-size: 10px;
+    color: var(--color-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    flex-shrink: 0;
+  }
+
+  .std-comp-val {
+    font-family: var(--font-family-mono);
+    font-size: var(--font-size-body-sm);
+    font-weight: 500;
+    color: var(--color-body);
+    text-align: right;
+  }
+
+  .std-comp-val--std {
+    color: var(--color-ink);
+  }
+
+  .std-comp-arrow {
+    font-size: 14px;
+    color: var(--color-hairline-strong);
+    text-align: center;
+    line-height: 1;
+    padding: 1px 0;
+  }
+
+  .std-comp-diff {
+    font-family: var(--font-family-mono);
+    font-size: 10px;
+    color: var(--color-muted);
+    padding-top: 4px;
+    border-top: 1px solid var(--color-hairline);
+    margin-top: 2px;
+    letter-spacing: 0.03em;
   }
 
   /* Two-column rec grid */

@@ -625,6 +625,29 @@ const faqs = [
     .svg-badge-w { animation-delay: 0.8s; }
     .svg-badge-h { animation-delay: 1.0s; }
 
+    /* Corner anchor pulse */
+    .svg-anchor {
+      animation: anchor-pulse 3.5s ease-in-out infinite;
+    }
+
+    /* Stagger the anchor pulses using nth-of-type on circle elements */
+    circle.svg-anchor:nth-of-type(2) { animation-delay: 0.875s; }
+    circle.svg-anchor:nth-of-type(3) { animation-delay: 1.75s; }
+    circle.svg-anchor:nth-of-type(4) { animation-delay: 2.625s; }
+
+    /* Area badge fade-in */
+    .svg-area-bg {
+      animation: badge-appear 0.4s ease forwards;
+      opacity: 0;
+      animation-delay: 1.15s;
+    }
+
+    .svg-area-label, .svg-area-value {
+      animation: badge-appear 0.4s ease forwards;
+      opacity: 0;
+      animation-delay: 1.25s;
+    }
+
     @keyframes draw-line {
       to { stroke-dashoffset: 0; }
     }
@@ -632,6 +655,11 @@ const faqs = [
     @keyframes badge-appear {
       from { opacity: 0; transform: scale(0.85); transform-box: fill-box; transform-origin: center; }
       to   { opacity: 1; transform: scale(1); }
+    }
+
+    @keyframes anchor-pulse {
+      0%, 100% { opacity: 0.4; }
+      50%       { opacity: 1; }
     }
   }
 
@@ -763,8 +791,14 @@ const faqs = [
     transform: translateY(-50%);
     width: calc(var(--spacing-lg) * 2 + 2px);
     height: 1px;
-    background: var(--color-hairline);
+    background: linear-gradient(to right, var(--color-hairline), var(--color-hairline-strong), var(--color-hairline));
     z-index: 1;
+  }
+
+  @media (min-width: 640px) {
+    .how-connector {
+      display: block;
+    }
   }
 
   .how-title {
@@ -882,11 +916,17 @@ const faqs = [
     border: 1px solid var(--color-hairline);
     border-radius: var(--radius-md);
     background-color: var(--color-canvas-soft);
-    transition: border-color 150ms ease;
+    transition: border-color 150ms ease, box-shadow 150ms ease, transform 150ms ease;
   }
 
   .why-card:hover {
     border-color: var(--color-hairline-strong);
+    box-shadow: 0 2px 8px color-mix(in srgb, var(--color-ink) 4%, transparent);
+    transform: translateY(-1px);
+  }
+
+  .why-card:hover .icon-container {
+    background-color: color-mix(in srgb, var(--color-ink) 12%, transparent);
   }
 
   .why-title {
@@ -930,3 +970,28 @@ const faqs = [
     flex-direction: column;
   }
 </style>
+
+<script>
+  // Area counter animation — counts the area value up from 0 to 1728
+  if (window.matchMedia('(prefers-reduced-motion: no-preference)').matches) {
+    const areaEl = document.querySelector<SVGTextElement>('.svg-area-value');
+    if (areaEl) {
+      const target = 1728;
+      const duration = 900;
+      const delay   = 1350; // after draw-line + badge animations settle
+      let startTime: number | null = null;
+
+      setTimeout(() => {
+        const tick = (ts: number) => {
+          if (!startTime) startTime = ts;
+          const progress = Math.min((ts - startTime) / duration, 1);
+          const eased = 1 - Math.pow(1 - progress, 3);
+          const value  = Math.round(eased * target).toLocaleString();
+          areaEl.textContent = `${value} sq in`;
+          if (progress < 1) requestAnimationFrame(tick);
+        };
+        requestAnimationFrame(tick);
+      }, delay);
+    }
+  }
+</script>

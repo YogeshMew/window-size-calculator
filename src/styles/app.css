@@ -350,6 +350,11 @@
   main {
     min-height: calc(100vh - var(--height-nav));
   }
+
+  /* Scroll margin for anchor targets (so header doesn't cover them) */
+  [id] {
+    scroll-margin-top: calc(var(--height-nav) + var(--spacing-md));
+  }
 }
 
 /* =============================================================================
@@ -463,6 +468,8 @@
 
     &:hover {
       opacity: 0.85;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px color-mix(in srgb, var(--color-ink) 18%, transparent);
     }
   }
 
@@ -478,6 +485,8 @@
 
     &:hover {
       background-color: var(--color-canvas-soft);
+      border-color: var(--color-hairline-strong);
+      transform: translateY(-1px);
     }
   }
 
@@ -530,10 +539,11 @@
     border-radius: var(--radius-md);
     padding: var(--spacing-lg);
     box-shadow: var(--shadow-float);
-    transition: box-shadow var(--transition-base);
+    transition: box-shadow var(--transition-base), transform var(--transition-base);
 
     &:hover {
       box-shadow: var(--shadow-modal);
+      transform: translateY(-2px);
     }
   }
 
@@ -797,7 +807,7 @@
     border: 1px solid var(--color-hairline);
     border-radius: var(--radius-md);
     padding: var(--spacing-md) var(--spacing-lg);
-    transition: border-color 150ms ease;
+    transition: border-color 150ms ease, box-shadow 150ms ease;
   }
 
   .result-value {
