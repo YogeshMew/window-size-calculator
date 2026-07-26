@@ -415,20 +415,45 @@ const faqs: FAQ[] = [
   </div>
 </ToolLayout>
 
-<!-- Calculator logic — client-side island (all IDs preserved) -->
+<!-- Calculator logic — powered by the WindowMetrics engine -->
 <script>
-  import { toMm, parseFraction, formatDimension, formatArea, validateDimensions } from '@/engine/index.js';
-  import { calculateArea, calculatePerimeter, calculateAspectRatio } from '@/engine/calculations.js';
+  /**
+   * Window Size Calculator — Client Script
+   *
+   * All calculation logic is delegated to @/engine/*.
+   * This script is responsible only for:
+   * - Reading DOM input
+   * - Calling engine functions
+   * - Writing formatted results back to the DOM
+   */
+
+  import {
+    normalizeInput,
+    toMm,
+    formatArea,
+    formatDimension,
+    isMetricUnit,
+    validateDimensions,
+    calculateArea,
+    calculatePerimeter,
+    calculateAspectRatio,
+    calculateGlassArea,
+    calculateGlassWeight,
+    findNearestStandardSize,
+    calculateCurtainRecommendations,
+  } from '@/engine/index.js';
   import type { MeasurementUnit } from '@/types/calculator.js';
 
   let currentUnit: MeasurementUnit = 'in';
 
-  const widthInput  = document.getElementById('input-width')   as HTMLInputElement;
-  const heightInput = document.getElementById('input-height')  as HTMLInputElement;
-  const errorMsg    = document.getElementById('calc-error')    as HTMLElement;
-  const resultsEmpty = document.getElementById('results-empty') as HTMLElement;
-  const resultsGrid  = document.getElementById('results-grid')  as HTMLElement;
+  // ── DOM references ────────────────────────────────────────────────────────
+  const widthInput   = document.getElementById('input-width')          as HTMLInputElement;
+  const heightInput  = document.getElementById('input-height')         as HTMLInputElement;
+  const errorMsg     = document.getElementById('calc-error')           as HTMLElement;
+  const resultsEmpty = document.getElementById('results-empty')        as HTMLElement;
+  const resultsGrid  = document.getElementById('results-grid')         as HTMLElement;
   const unitDisplay  = document.getElementById('results-unit-display') as HTMLElement;
+  const recSection   = document.getElementById('rec-section')          as HTMLElement | null;
 
   const resultArea      = document.getElementById('result-area');
   const resultPerimeter = document.getElementById('result-perimeter');
@@ -436,6 +461,9 @@ const faqs: FAQ[] = [
   const resultWidthMm   = document.getElementById('result-width-mm');
   const resultHeightMm  = document.getElementById('result-height-mm');
 
+  // ── DOM helpers ───────────────────────────────────────────────────────────
+
+  /** Set the value and unit text inside a ResultCard */
   function setResult(el: HTMLElement | null, value: string, unit = '') {
     if (!el) return;
     const valueEl = el.querySelector('.result-value-text') as HTMLElement;
@@ -444,42 +472,39 @@ const faqs: FAQ[] = [
     if (unitEl)  unitEl.textContent  = unit;
   }
 
-  // ── Standard US residential window sizes [width_in, height_in] ────────────
-  const STD_SIZES: [number, number][] = [
-    [24, 36], [24, 48], [28, 54], [30, 36], [30, 54],
-    [32, 54], [36, 48], [36, 54], [36, 60], [36, 72],
-    [40, 54], [44, 54], [48, 54], [48, 60], [48, 72],
-    [60, 48], [60, 54], [60, 60],
-  ];
-
-  function findNearestStd(wIn: number, hIn: number) {
-    let nearest = STD_SIZES[0];
-    let minDist = Infinity;
-    for (const s of STD_SIZES) {
-      const d = Math.sqrt((s[0] - wIn) ** 2 + (s[1] - hIn) ** 2);
-      if (d < minDist) { minDist = d; nearest = s; }
-    }
-    const isExact = minDist < 0.5;
-    const isClose = minDist < 4;
-    return { w: nearest[0], h: nearest[1], dist: Math.round(minDist * 10) / 10, isExact, isClose };
-  }
-
+  /** Set textContent by element id */
   function setText(id: string, text: string) {
     const el = document.getElementById(id);
     if (el) el.textContent = text;
   }
 
+  // ── Formatting helper (uses engine formatDimension internally) ────────────
+
+  /**
+   * Format a mm value for display with ceiling rounding (used for curtain/blind recs
+   * where you always round up to ensure coverage).
+   */
+  function fmtCeil(mm: number, unit: MeasurementUnit): string {
+    if (unit === 'in') return `${Math.ceil(mm / 25.4)}"`;
+    if (unit === 'ft') return `${(Math.ceil((mm / 304.8) * 10) / 10)}'`;
+    if (unit === 'cm') return `${Math.ceil(mm / 10)} cm`;
+    if (unit === 'm')  return `${(Math.ceil((mm / 1000) * 10) / 10)} m`;
+    return `${Math.ceil(mm)} mm`;
+  }
+
+  // ── Main calculation ──────────────────────────────────────────────────────
+
   function calculate() {
     const rawWidth  = widthInput?.value.trim()  ?? '';
     const rawHeight = heightInput?.value.trim() ?? '';
 
+    // Reset error and invalid states
     errorMsg.textContent = '';
     errorMsg.removeAttribute('data-level');
     widthInput?.removeAttribute('aria-invalid');
     heightInput?.removeAttribute('aria-invalid');
 
-    const recSection = document.getElementById('rec-section') as HTMLElement | null;
-
+    // Empty state — show placeholder
     if (!rawWidth || !rawHeight) {
       resultsEmpty.hidden = false;
       resultsGrid.hidden  = true;
@@ -487,26 +512,28 @@ const faqs: FAQ[] = [
       return;
     }
 
-    const parsedWidth  = currentUnit === 'in' ? parseFraction(rawWidth)  : parseFloat(rawWidth);
-    const parsedHeight = currentUnit === 'in' ? parseFraction(rawHeight) : parseFloat(rawHeight);
+    // ── 1. Normalize & parse inputs via engine ────────────────────────────
+    const parsedWidth  = normalizeInput(rawWidth,  currentUnit);
+    const parsedHeight = normalizeInput(rawHeight, currentUnit);
 
     if (parsedWidth === null || isNaN(parsedWidth)) {
-      errorMsg.textContent = `"${rawWidth}" isn\'t a valid width. Try a number like 36, or a fraction like 36 1/2.`;
+      errorMsg.textContent = `"${rawWidth}" isn't a valid width. Try a number like 36, or a fraction like 36 1/2.`;
       widthInput?.setAttribute('aria-invalid', 'true');
       return;
     }
     if (parsedHeight === null || isNaN(parsedHeight)) {
-      errorMsg.textContent = `"${rawHeight}" isn\'t a valid height. Try a number like 48, or a fraction like 48 1/2.`;
+      errorMsg.textContent = `"${rawHeight}" isn't a valid height. Try a number like 48, or a fraction like 48 1/2.`;
       heightInput?.setAttribute('aria-invalid', 'true');
       return;
     }
 
+    // ── 2. Convert to mm (canonical internal unit) ────────────────────────
     const widthMm  = toMm(parsedWidth,  currentUnit);
     const heightMm = toMm(parsedHeight, currentUnit);
-
-    // Context-aware validation messages
-    const widthIn  = widthMm / 25.4;
+    const widthIn  = widthMm  / 25.4;
     const heightIn = heightMm / 25.4;
+
+    // ── 3. Soft advisory warnings (non-blocking) ──────────────────────────
     if (widthIn > 120) {
       errorMsg.textContent = 'This width is larger than most residential windows. Double-check your measurement or verify your unit selection.';
       errorMsg.dataset.level = 'warn';
@@ -518,6 +545,7 @@ const faqs: FAQ[] = [
       errorMsg.dataset.level = 'warn';
     }
 
+    // ── 4. Hard validation (engine) ───────────────────────────────────────
     const validation = validateDimensions({ widthMm, heightMm });
     if (!validation.valid) {
       errorMsg.textContent = validation.message ?? 'Invalid dimensions.';
@@ -526,12 +554,20 @@ const faqs: FAQ[] = [
       return;
     }
 
-    const areaMm2      = calculateArea({ widthMm, heightMm });
-    const perimeterMm  = calculatePerimeter({ widthMm, heightMm });
-    const aspectRatio  = calculateAspectRatio({ widthMm, heightMm });
+    const dims = { widthMm, heightMm };
 
-    const areaUnit = currentUnit === 'in' ? 'sq in' : currentUnit === 'ft' ? 'sq ft' : `${currentUnit}\u00b2`;
-    const dimUnit  = currentUnit === 'in' ? '"' : currentUnit === 'ft' ? "'" : currentUnit;
+    // ── 5. Core calculations (engine) ─────────────────────────────────────
+    const areaMm2     = calculateArea(dims);
+    const perimeterMm = calculatePerimeter(dims);
+    const aspectRatio = calculateAspectRatio(dims);
+
+    const areaUnit = currentUnit === 'in' ? 'sq in'
+                   : currentUnit === 'ft' ? 'sq ft'
+                   : `${currentUnit}\u00b2`;
+
+    const dimUnit = currentUnit === 'in' ? '"'
+                  : currentUnit === 'ft' ? "'"
+                  : currentUnit;
 
     setResult(resultArea,      formatArea(areaMm2, currentUnit).split(' ')[0], areaUnit);
     setResult(resultPerimeter, formatDimension(perimeterMm, currentUnit).replace(/[a-z\u00b2'"]+$/i, '').trim(), dimUnit);
@@ -541,51 +577,45 @@ const faqs: FAQ[] = [
 
     if (unitDisplay) unitDisplay.textContent = `${rawWidth} \u00d7 ${rawHeight} ${currentUnit}`;
 
-    // ── Smart recommendations ────────────────────────────────────────────
-    // 1. Nearest standard size — visual comparison
-    const std = findNearestStd(widthIn, heightIn);
+    // ── 6. Smart recommendations (engine) ────────────────────────────────
 
-    // Your window dimensions (always displayed in inches for comparison)
-    const yourDimsEl = document.getElementById('rec-your-dims');
-    if (yourDimsEl) {
-      yourDimsEl.textContent = `${widthIn.toFixed(1)}" \u00d7 ${heightIn.toFixed(1)}"`;
-    }
+    // 6a. Standard size match
+    const std = findNearestStandardSize(widthMm, heightMm, 'US');
 
-    // Standard size
-    setText('rec-std-dims', `${std.w}" \u00d7 ${std.h}"`);
+    setText('rec-your-dims', `${widthIn.toFixed(1)}" \u00d7 ${heightIn.toFixed(1)}"`);
+    setText('rec-std-dims',  `${std.nearest.widthIn}" \u00d7 ${std.nearest.heightIn}"`);
 
-    // Difference
     const diffEl = document.getElementById('rec-std-diff') as HTMLElement | null;
     if (diffEl) {
-      const dw = std.w - widthIn;
-      const dh = std.h - heightIn;
       if (!std.isExact) {
         const fmt = (n: number) => {
-          const abs = Math.abs(n);
+          const abs  = Math.abs(n);
           const sign = n > 0 ? '+' : '-';
           return abs < 0.1 ? 'exact' : `${sign}${abs.toFixed(1)}"`;
         };
-        diffEl.textContent = `Diff: ${fmt(dw)} width \u00b7 ${fmt(dh)} height`;
+        diffEl.textContent = `Diff: ${fmt(std.diffWidthIn)} width \u00b7 ${fmt(std.diffHeightIn)} height`;
         diffEl.hidden = false;
       } else {
         diffEl.hidden = true;
       }
     }
 
-    const stdBadge = document.getElementById('rec-std-badge');
+    const stdBadge  = document.getElementById('rec-std-badge');
     const stdNoteEl = document.getElementById('rec-std-note');
+
     if (stdBadge) {
       if (std.isExact) {
-        stdBadge.textContent = 'Exact match';
-        stdBadge.dataset.type = 'exact';
+        stdBadge.textContent   = 'Exact match';
+        stdBadge.dataset.type  = 'exact';
       } else if (std.isClose) {
-        stdBadge.textContent = `\u00b1${std.dist}" close`;
-        stdBadge.dataset.type = 'close';
+        stdBadge.textContent   = `\u00b1${std.distanceIn}" close`;
+        stdBadge.dataset.type  = 'close';
       } else {
-        stdBadge.textContent = `${std.dist}" away`;
-        stdBadge.dataset.type = 'far';
+        stdBadge.textContent   = `${std.distanceIn}" away`;
+        stdBadge.dataset.type  = 'far';
       }
     }
+
     if (stdNoteEl) {
       stdNoteEl.textContent = std.isExact
         ? 'Your window matches a US standard size exactly.'
@@ -594,41 +624,36 @@ const faqs: FAQ[] = [
         : 'Custom size. Replacement will likely require a special order.';
     }
 
-    // 2. Curtain sizing (in current unit, rounded)
-    const fmtDim = (mm: number) => {
-      if (currentUnit === 'in') return `${Math.ceil(mm / 25.4)}\"` ;
-      if (currentUnit === 'ft') return `${(Math.ceil(mm / 304.8 * 10) / 10)}\u2019`;
-      if (currentUnit === 'cm') return `${Math.ceil(mm / 10)} cm`;
-      if (currentUnit === 'm')  return `${(Math.ceil(mm / 100) / 10)} m`;
-      return `${Math.ceil(mm)} mm`;
-    };
-    const curtainMinMm  = widthMm * 1.5;
-    const curtainFullMm = widthMm * 2.0;
-    const curtainDropMm = heightMm + (currentUnit === 'in' ? 8 * 25.4 : 200);
-    setText('rec-curtain-min',  fmtDim(curtainMinMm));
-    setText('rec-curtain-full', fmtDim(curtainFullMm));
-    setText('rec-curtain-drop', `Drop: ${fmtDim(curtainDropMm)} (includes 8\" above-window allowance)`);
+    // 6b. Curtain sizing (engine: calculateCurtainRecommendations)
+    const curtain = calculateCurtainRecommendations(dims);
+    setText('rec-curtain-min',  fmtCeil(curtain.minWidthMm,  currentUnit));
+    setText('rec-curtain-full', fmtCeil(curtain.fullWidthMm, currentUnit));
+    setText('rec-curtain-drop',
+      `Drop: ${fmtCeil(curtain.dropMm, currentUnit)} (includes 8" above-window allowance)`);
 
-    // 3. Glass estimate (90% of frame area = glazing area)
-    const glassMm2  = areaMm2 * 0.9;
-    const glassSqFt = glassMm2 / (304.8 * 304.8);
-    const glassLbs  = glassSqFt * 2.13; // 4 mm single pane: 2.13 lbs/sq ft
-    const glassKg   = glassMm2 / 1_000_000 * 10.4; // 10.4 kg/m²
-    const isMetric  = currentUnit === 'mm' || currentUnit === 'cm' || currentUnit === 'm';
-    setText('rec-glass-area',   isMetric
-      ? `${(glassMm2 / 10_000).toFixed(2)} cm\u00b2`
-      : `${glassSqFt.toFixed(2)} sq ft`);
-    setText('rec-glass-weight', isMetric
-      ? `${glassKg.toFixed(1)} kg`
-      : `${glassLbs.toFixed(1)} lbs`);
+    // 6c. Glass estimate (engine: calculateGlassArea + calculateGlassWeight)
+    const glazingAreaMm2 = calculateGlassArea(dims);                   // 90% of frame area
+    const glass          = calculateGlassWeight(glazingAreaMm2);       // 4 mm single pane default
+    const metric         = isMetricUnit(currentUnit);
+
+    setText('rec-glass-area',
+      metric
+        ? `${(glazingAreaMm2 / 10_000).toFixed(2)} cm\u00b2`
+        : `${glass.glazingAreaSqFt.toFixed(2)} sq ft`);
+
+    setText('rec-glass-weight',
+      metric
+        ? `${glass.totalWeightKg.toFixed(1)} kg`
+        : `${glass.totalWeightLbs.toFixed(1)} lbs`);
 
     if (recSection) recSection.hidden = false;
-    // ────────────────────────────────────────────────────────────────────
 
+    // ── 7. Show results ───────────────────────────────────────────────────
     resultsEmpty.hidden = true;
     resultsGrid.hidden  = false;
   }
 
+  // ── Event listeners ───────────────────────────────────────────────────────
   widthInput?.addEventListener('input', calculate);
   heightInput?.addEventListener('input', calculate);
 

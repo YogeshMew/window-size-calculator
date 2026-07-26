@@ -161,3 +161,73 @@ export function getUnitName(unit: MeasurementUnit): string {
   };
   return names[unit];
 }
+
+// ---------------------------------------------------------------------------
+// Input normalization
+// ---------------------------------------------------------------------------
+
+/**
+ * Parse a raw string input from the user into a decimal number in the given unit.
+ *
+ * Handles:
+ * - Plain decimals: "36", "36.5"
+ * - Fractional inches: "36 1/2", "36-1/4", "0 3/8", "1/2"
+ * - Fractions work for all units, not just inches (e.g. "1 3/4 ft")
+ *
+ * Returns null for empty, invalid, or un-parseable inputs.
+ *
+ * @param raw   Raw string as typed by the user
+ * @param _unit Unit context (reserved for future locale-aware parsing)
+ * @returns     Decimal value in the given unit, or null if invalid
+ *
+ * @example normalizeInput("36 1/2", 'in') → 36.5
+ * @example normalizeInput("914.4", 'mm') → 914.4
+ * @example normalizeInput("", 'in') → null
+ * @example normalizeInput("abc", 'mm') → null
+ */
+export function normalizeInput(raw: string, _unit: MeasurementUnit): number | null {
+  if (!raw || typeof raw !== 'string') return null;
+  const trimmed = raw.trim();
+  if (!trimmed) return null;
+
+  // Try fractional parsing first (handles "36 1/2", "1/2", "36-3/4" etc.)
+  const fractional = parseFraction(trimmed);
+  if (fractional !== null && isFinite(fractional)) return fractional;
+
+  // Fall through to plain float
+  const plain = parseFloat(trimmed);
+  return isNaN(plain) ? null : plain;
+}
+
+/**
+ * Convert a value from one unit to another.
+ * Internally converts via millimeters.
+ *
+ * @param value  Numeric value in the source unit
+ * @param from   Source unit
+ * @param to     Target unit
+ * @returns      Value in the target unit
+ *
+ * @example convertUnits(36, 'in', 'mm') → 914.4
+ * @example convertUnits(1000, 'mm', 'm') → 1
+ * @example convertUnits(1, 'ft', 'in') → 12
+ */
+export function convertUnits(
+  value: number,
+  from: MeasurementUnit,
+  to: MeasurementUnit,
+): number {
+  if (from === to) return value;
+  return fromMm(toMm(value, from), to);
+}
+
+/**
+ * Determine if a unit is metric (mm, cm, m) or imperial (in, ft).
+ * Used to select appropriate display formatting.
+ *
+ * @example isMetricUnit('mm') → true
+ * @example isMetricUnit('in') → false
+ */
+export function isMetricUnit(unit: MeasurementUnit): boolean {
+  return unit === 'mm' || unit === 'cm' || unit === 'm';
+}
