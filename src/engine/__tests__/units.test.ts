@@ -142,6 +142,11 @@ describe('normalizeInput', () => {
     expect(normalizeInput('48 3/8', 'in')).toBeCloseTo(48.375, 5);
   });
 
+  it('parses hyphen-separated fractions', () => {
+    expect(normalizeInput('48-3/8', 'in')).toBeCloseTo(48.375, 5);
+    expect(normalizeInput('36-7/16', 'in')).toBeCloseTo(36.4375, 5);
+  });
+
   it('returns null for empty input', () => {
     expect(normalizeInput('', 'in')).toBeNull();
     expect(normalizeInput('   ', 'mm')).toBeNull();
@@ -154,6 +159,74 @@ describe('normalizeInput', () => {
 
   it('works for fractional feet too', () => {
     expect(normalizeInput('3 1/2', 'ft')).toBeCloseTo(3.5, 5);
+  });
+
+  // ── Strict whitelist validation ───────────────────────────────────────────
+  // These inputs MUST return null — the parser must never silently extract a
+  // leading numeric portion from garbage input.
+
+  it('rejects alphanumeric strings like "36abc"', () => {
+    expect(normalizeInput('36abc', 'mm')).toBeNull();
+  });
+
+  it('rejects "76ghgh"', () => {
+    expect(normalizeInput('76ghgh', 'mm')).toBeNull();
+  });
+
+  it('rejects "9i"', () => {
+    expect(normalizeInput('9i', 'mm')).toBeNull();
+  });
+
+  it('rejects "36 inches" (text after number)', () => {
+    expect(normalizeInput('36 inches', 'in')).toBeNull();
+  });
+
+  it('rejects scientific notation "1e3"', () => {
+    expect(normalizeInput('1e3', 'mm')).toBeNull();
+  });
+
+  it('rejects scientific notation "2E5"', () => {
+    expect(normalizeInput('2E5', 'mm')).toBeNull();
+  });
+
+  it('rejects multiple decimal points "36.5.6"', () => {
+    expect(normalizeInput('36.5.6', 'mm')).toBeNull();
+  });
+
+  it('rejects "...."`', () => {
+    expect(normalizeInput('....', 'mm')).toBeNull();
+  });
+
+  it('rejects double-slash fraction "3/5/7"', () => {
+    expect(normalizeInput('3/5/7', 'mm')).toBeNull();
+  });
+
+  it('rejects double-hyphen "36--3/8"', () => {
+    expect(normalizeInput('36--3/8', 'in')).toBeNull();
+  });
+
+  it('rejects zero denominator "36-1/0"', () => {
+    expect(normalizeInput('36-1/0', 'in')).toBeNull();
+  });
+
+  it('rejects improper fraction component "36-8/3" (8 >= 3)', () => {
+    expect(normalizeInput('36-8/3', 'in')).toBeNull();
+  });
+
+  it('rejects improper fraction component "36 8/3" (space form)', () => {
+    expect(normalizeInput('36 8/3', 'in')).toBeNull();
+  });
+
+  it('rejects negative values "-36"', () => {
+    expect(normalizeInput('-36', 'mm')).toBeNull();
+  });
+
+  it('rejects XSS-like input "<script>"', () => {
+    expect(normalizeInput('<script>', 'mm')).toBeNull();
+  });
+
+  it('accepts and trims leading/trailing whitespace "   36   "', () => {
+    expect(normalizeInput('   36   ', 'mm')).toBe(36);
   });
 });
 

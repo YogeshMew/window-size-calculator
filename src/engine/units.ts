@@ -166,37 +166,89 @@ export function getUnitName(unit: MeasurementUnit): string {
 // Input normalization
 // ---------------------------------------------------------------------------
 
+// Strict whitelisted patterns — must match the ENTIRE trimmed input.
+// Anything else (letters, scientific notation, double-dots, double-slash, etc.)
+// is rejected without attempting to extract a leading numeric portion.
+const RE_INTEGER   = /^\d+$/;
+const RE_DECIMAL   = /^\d+\.\d+$/;
+const RE_PURE_FRAC = /^(\d+)\/([1-9]\d*)$/;           // e.g. "1/2", "3/4"
+const RE_SPACE_MIX = /^(\d+)\s+(\d+)\/([1-9]\d*)$/;  // e.g. "36 1/2", "0 3/8"
+const RE_HYPH_MIX  = /^(\d+)-(\d+)\/([1-9]\d*)$/;    // e.g. "48-3/8", "36-7/16"
+
 /**
  * Parse a raw string input from the user into a decimal number in the given unit.
  *
- * Handles:
- * - Plain decimals: "36", "36.5"
- * - Fractional inches: "36 1/2", "36-1/4", "0 3/8", "1/2"
- * - Fractions work for all units, not just inches (e.g. "1 3/4 ft")
+ * **Strictly** accepts only these formats (all other inputs return null):
+ * - Integer:          `36`
+ * - Decimal:          `36.5`
+ * - Pure fraction:    `1/2`
+ * - Space fraction:   `36 1/2`
+ * - Hyphen fraction:  `48-3/8`
  *
- * Returns null for empty, invalid, or un-parseable inputs.
+ * Rejected examples: `36abc`, `1e3`, `36.5.6`, `3/5/7`, `36-8/3`,
+ * `36--3/8`, `36-1/0`, `-36`, `36 inches`, `<script>`.
+ *
+ * For mixed fractions the fractional part must be proper (numerator < denominator),
+ * so `36-8/3` is rejected even though 8 and 3 are both valid numbers.
+ *
+ * Leading/trailing whitespace is trimmed before matching.
  *
  * @param raw   Raw string as typed by the user
  * @param _unit Unit context (reserved for future locale-aware parsing)
  * @returns     Decimal value in the given unit, or null if invalid
  *
  * @example normalizeInput("36 1/2", 'in') → 36.5
- * @example normalizeInput("914.4", 'mm') → 914.4
- * @example normalizeInput("", 'in') → null
- * @example normalizeInput("abc", 'mm') → null
+ * @example normalizeInput("48-3/8", 'in') → 48.375
+ * @example normalizeInput("914.4",  'mm') → 914.4
+ * @example normalizeInput("36abc",  'mm') → null
+ * @example normalizeInput("1e3",    'mm') → null
+ * @example normalizeInput("36-8/3", 'in') → null  (improper fraction component)
  */
 export function normalizeInput(raw: string, _unit: MeasurementUnit): number | null {
   if (!raw || typeof raw !== 'string') return null;
-  const trimmed = raw.trim();
-  if (!trimmed) return null;
+  const s = raw.trim();
+  if (!s) return null;
 
-  // Try fractional parsing first (handles "36 1/2", "1/2", "36-3/4" etc.)
-  const fractional = parseFraction(trimmed);
-  if (fractional !== null && isFinite(fractional)) return fractional;
+  // Reject scientific notation early (e.g. "1e3", "2E5")
+  if (/[eE]/.test(s)) return null;
 
-  // Fall through to plain float
-  const plain = parseFloat(trimmed);
-  return isNaN(plain) ? null : plain;
+  // Integer
+  if (RE_INTEGER.test(s)) return parseInt(s, 10);
+
+  // Decimal (exactly one dot: "36.5" passes, "36.5.6" and ".5" do not)
+  if (RE_DECIMAL.test(s)) return parseFloat(s);
+
+  // Pure fraction: "1/2", "3/4" — any non-zero denominator allowed
+  const pureFrac = RE_PURE_FRAC.exec(s);
+  if (pureFrac) {
+    const num = parseInt(pureFrac[1], 10);
+    const den = parseInt(pureFrac[2], 10);
+    return num / den;
+  }
+
+  // Space-separated mixed fraction: "36 1/2"
+  // Require numerator < denominator (proper fraction component only)
+  const spaceMix = RE_SPACE_MIX.exec(s);
+  if (spaceMix) {
+    const whole = parseInt(spaceMix[1], 10);
+    const num   = parseInt(spaceMix[2], 10);
+    const den   = parseInt(spaceMix[3], 10);
+    if (num >= den) return null;          // e.g. "36 8/3" is not a valid fraction
+    return whole + num / den;
+  }
+
+  // Hyphen-separated mixed fraction: "48-3/8"
+  // Require numerator < denominator (proper fraction component only)
+  const hyphMix = RE_HYPH_MIX.exec(s);
+  if (hyphMix) {
+    const whole = parseInt(hyphMix[1], 10);
+    const num   = parseInt(hyphMix[2], 10);
+    const den   = parseInt(hyphMix[3], 10);
+    if (num >= den) return null;          // e.g. "36-8/3" is rejected
+    return whole + num / den;
+  }
+
+  return null; // no recognised pattern — reject without silent extraction
 }
 
 /**

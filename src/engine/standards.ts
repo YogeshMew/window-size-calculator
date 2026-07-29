@@ -244,4 +244,4 @@ export function isStandardSize(
 ): boolean {
   return findNearestStandardSize(widthMm, heightMm, region).isExact;
 }
-  
+    

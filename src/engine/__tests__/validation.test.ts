@@ -54,6 +54,14 @@ describe('validateDimension', () => {
     const r = validateDimension(-1, 'width');
     expect(r.message).toContain('width');
   });
+
+  it('classifies all dimension failures as hard errors (BUG 4)', () => {
+    expect(validateDimension(NaN,    'width').level).toBe('error');
+    expect(validateDimension(0,      'width').level).toBe('error');
+    expect(validateDimension(-100,   'height').level).toBe('error');
+    expect(validateDimension(10,     'width').level).toBe('error');   // below min
+    expect(validateDimension(10_000, 'height').level).toBe('error');  // above max
+  });
 });
 
 // ---------------------------------------------------------------------------
@@ -80,6 +88,12 @@ describe('validateDimensions', () => {
     const r = validateDimensions({ widthMm: 5000, heightMm: 100 });
     expect(r.valid).toBe(false);
     expect(r.message).toBeTruthy();
+  });
+
+  it('classifies extreme aspect ratio as a WARNING (not a hard error)', () => {
+    // Unusual proportions should warn but not block calculations (BUG 4)
+    const r = validateDimensions({ widthMm: 5000, heightMm: 100 });
+    expect(r.level).toBe('warning');
   });
 
   it('accepts near-limit aspect ratios (e.g. panoramic picture windows)', () => {

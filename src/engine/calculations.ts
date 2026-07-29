@@ -51,28 +51,52 @@ export function calculateDiagonal(dimensions: Dimensions): number {
 }
 
 /**
- * Calculate the aspect ratio of a window as a simplified integer ratio string.
+ * Calculate the aspect ratio of a window as a human-readable ratio string.
+ *
+ * Strategy:
+ * 1. Try to reduce integer millimeters — works for metric windows (900×1200 → 3:4).
+ * 2. Try to reduce integer inches — works for US inch-based sizes (914.4×1219.2 mm = 36"×48" → 3:4).
+ * 3. Fall back to a decimal "W:1" ratio (e.g. "0.75:1") when no clean integer ratio exists.
+ *    Both parts of the integer ratio must be ≤ 30 to be considered "readable".
  *
  * @param dimensions  Width and height in mm
- * @returns Aspect ratio string like "3:4" or "1:1"
+ * @returns Aspect ratio string like "3:4", "16:9", or "0.75:1"
  *
  * @example calculateAspectRatio({ widthMm: 900, heightMm: 1200 }) → "3:4"
+ * @example calculateAspectRatio({ widthMm: 914.4, heightMm: 1219.2 }) → "3:4"
+ * @example calculateAspectRatio({ widthMm: 927, heightMm: 1229 }) → "0.75:1"
  */
 export function calculateAspectRatio(dimensions: Dimensions): string {
   const { widthMm, heightMm } = dimensions;
 
   function gcd(a: number, b: number): number {
-    a = Math.round(a);
-    b = Math.round(b);
     return b === 0 ? a : gcd(b, a % b);
   }
 
-  // Work in integer millimeters for a clean simplified ratio
-  const w = Math.round(widthMm);
-  const h = Math.round(heightMm);
-  const divisor = gcd(w, h);
+  /**
+   * Try to express w:h as a simplified integer ratio.
+   * Returns the ratio string only if both simplified parts are ≤ 30 (readable).
+   */
+  function tryIntegerRatio(w: number, h: number): string | null {
+    const rw = Math.round(w);
+    const rh = Math.round(h);
+    if (rw <= 0 || rh <= 0) return null;
+    const d = gcd(rw, rh);
+    const sw = rw / d;
+    const sh = rh / d;
+    return sw <= 30 && sh <= 30 ? `${sw}:${sh}` : null;
+  }
 
-  return `${w / divisor}:${h / divisor}`;
+  // Pass 1: integer millimeters (e.g. 900×1200 mm → 3:4)
+  const mmRatio = tryIntegerRatio(widthMm, heightMm);
+  if (mmRatio) return mmRatio;
+
+  // Pass 2: integer inches (e.g. 914.4×1219.2 mm = 36"×48" → 3:4)
+  const inchRatio = tryIntegerRatio(widthMm / 25.4, heightMm / 25.4);
+  if (inchRatio) return inchRatio;
+
+  // Pass 3: decimal W:1 ratio — always readable (e.g. "0.75:1", "1.33:1")
+  return `${(widthMm / heightMm).toFixed(2)}:1`;
 }
 
 // ---------------------------------------------------------------------------

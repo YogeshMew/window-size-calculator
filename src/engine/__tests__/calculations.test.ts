@@ -97,11 +97,24 @@ describe('calculateAspectRatio', () => {
     expect(calculateAspectRatio({ widthMm: 500, heightMm: 1000 })).toBe('1:2');
   });
 
-  it('handles non-round GCD values', () => {
-    // 914 × 1219 — GCD ≈ 1 (prime-ish), should give back near-original numbers
+  it('handles non-round GCD values — falls back to inch lookup or decimal (BUG 3)', () => {
+    // 914 × 1219 mm ≈ 36" × 48" → inch lookup should give "3:4"
     const ratio = calculateAspectRatio({ widthMm: 914, heightMm: 1219 });
     expect(ratio).toBeTruthy();
     expect(ratio).toContain(':');
+    // Must never produce unreadable numbers like "914:1219"
+    const [left, right] = ratio.split(':');
+    expect(parseFloat(left)).toBeLessThan(100);
+    expect(parseFloat(right)).toBeLessThan(100);
+  });
+
+  it('produces readable decimal ratio for truly irregular sizes (BUG 3)', () => {
+    // 927 × 1229 mm — no clean integer ratio in mm or inches
+    const ratio = calculateAspectRatio({ widthMm: 927, heightMm: 1229 });
+    expect(ratio).toContain(':');
+    const [left, right] = ratio.split(':');
+    expect(parseFloat(left)).toBeLessThan(100);
+    expect(parseFloat(right)).toBeLessThan(100);
   });
 });
 

@@ -92,6 +92,13 @@ export interface ValidationResult {
   message?: string;
   /** Which field has the error */
   field?: 'width' | 'height' | 'unit' | 'general';
+  /**
+   * Severity of the validation result.
+   * - 'error'   → blocks calculation entirely; results panel is hidden
+   * - 'warning' → allows calculation to continue; advisory shown alongside results
+   * Omitted (undefined) for valid results and treated as 'error' when valid is false.
+   */
+  level?: 'error' | 'warning';
 }
 
 // ---------------------------------------------------------------------------

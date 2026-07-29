@@ -42,6 +42,7 @@ export function validateDimension(
   if (isNaN(valueMm) || !isFinite(valueMm)) {
     return {
       valid: false,
+      level: 'error',
       field,
       message: `Please enter a valid ${label} measurement.`,
     };
@@ -50,6 +51,7 @@ export function validateDimension(
   if (valueMm <= 0) {
     return {
       valid: false,
+      level: 'error',
       field,
       message: `The ${label} must be greater than zero.`,
     };
@@ -58,6 +60,7 @@ export function validateDimension(
   if (valueMm < MIN_DIMENSION_MM) {
     return {
       valid: false,
+      level: 'error',
       field,
       message: `The ${label} seems too small. Please check your measurement.`,
     };
@@ -66,6 +69,7 @@ export function validateDimension(
   if (valueMm > MAX_DIMENSION_MM) {
     return {
       valid: false,
+      level: 'error',
       field,
       message: `The ${label} seems unusually large. Please check your measurement — the maximum supported is 30 feet (9,144 mm).`,
     };
@@ -85,11 +89,12 @@ export function validateDimensions(dimensions: Dimensions): ValidationResult {
   const heightResult = validateDimension(dimensions.heightMm, 'height');
   if (!heightResult.valid) return heightResult;
 
-  // Check aspect ratio — extreme proportions are likely input errors
+  // Unusual proportions are a warning — calculations continue, advisory shown
   const ratio = dimensions.widthMm / dimensions.heightMm;
   if (ratio > MAX_ASPECT_RATIO || ratio < 1 / MAX_ASPECT_RATIO) {
     return {
       valid: false,
+      level: 'warning',
       field: 'general',
       message:
         'The proportions of this window seem unusual. Please double-check your width and height measurements.',
@@ -111,6 +116,7 @@ export function validateRange(
   if (valueMm < minMm) {
     return {
       valid: false,
+      level: 'error',
       field: 'general',
       message: `This measurement is below the required minimum.`,
     };
@@ -119,6 +125,7 @@ export function validateRange(
   if (valueMm > maxMm) {
     return {
       valid: false,
+      level: 'error',
       field: 'general',
       message: `This measurement exceeds the allowed maximum.`,
     };

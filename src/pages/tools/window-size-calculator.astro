@@ -430,8 +430,8 @@ const faqs: FAQ[] = [
   import {
     normalizeInput,
     toMm,
+    fromMm,
     formatArea,
-    formatDimension,
     isMetricUnit,
     validateDimensions,
     calculateArea,
@@ -445,6 +445,9 @@ const faqs: FAQ[] = [
   import type { MeasurementUnit } from '@/types/calculator.js';
 
   let currentUnit: MeasurementUnit = 'in';
+
+  // Maximum supported dimension (engine constant, mirrored here for UI messages)
+  const MAX_DIM_MM = 9_144;
 
   // ── DOM references ────────────────────────────────────────────────────────
   const widthInput   = document.getElementById('input-width')          as HTMLInputElement;
@@ -461,7 +464,7 @@ const faqs: FAQ[] = [
   const resultWidthMm   = document.getElementById('result-width-mm');
   const resultHeightMm  = document.getElementById('result-height-mm');
 
-  // ── DOM helpers ───────────────────────────────────────────────────────────
+  // ── Formatting helpers ────────────────────────────────────────────────────
 
   /** Set the value and unit text inside a ResultCard */
   function setResult(el: HTMLElement | null, value: string, unit = '') {
@@ -478,11 +481,49 @@ const faqs: FAQ[] = [
     if (el) el.textContent = text;
   }
 
-  // ── Formatting helper (uses engine formatDimension internally) ────────────
+  /**
+   * Format a mm value as a clean display number in the given unit (no unit label).
+   * Trailing zeros are removed. Used for the panel header and reference dimensions.
+   * Examples: fmtVal(1219.2, 'mm') → "1219",  fmtVal(914.4, 'in') → "36"
+   */
+  function fmtVal(mm: number, unit: MeasurementUnit): string {
+    const v = fromMm(mm, unit);
+    if (unit === 'mm') return Math.round(v).toString();
+    if (unit === 'cm') return parseFloat((Math.round(v * 10) / 10).toFixed(1)).toString();
+    if (unit === 'm')  return parseFloat(v.toFixed(3)).toString();
+    if (unit === 'ft') return parseFloat(v.toFixed(2)).toString();  // 2 decimal ft
+    return parseFloat(v.toFixed(1)).toString();   // 1 decimal in
+  }
 
   /**
-   * Format a mm value for display with ceiling rounding (used for curtain/blind recs
-   * where you always round up to ensure coverage).
+   * Format a mm value for writing back into a text input field after a unit switch.
+   * Similar to fmtVal but retains a minimum number of decimals for unambiguous entry.
+   * Examples: fmtInput(1219.2, 'mm') → "1219",  fmtInput(914.4, 'in') → "36"
+   */
+  function fmtInput(mm: number, unit: MeasurementUnit): string {
+    const v = fromMm(mm, unit);
+    if (unit === 'mm') return Math.round(v).toString();
+    if (unit === 'cm') return (Math.round(v * 10) / 10).toFixed(1);
+    if (unit === 'm')  return v.toFixed(3);
+    return parseFloat(v.toFixed(2)).toString();   // in / ft — strip trailing zeros
+  }
+
+  /**
+   * Return the maximum allowed dimension expressed in the current unit.
+   * Used in user-facing error messages so the limit is always in the active unit.
+   */
+  function maxLimitLabel(unit: MeasurementUnit): string {
+    const v = fromMm(MAX_DIM_MM, unit);
+    if (unit === 'mm') return `${Math.round(v)} mm`;
+    if (unit === 'cm') return `${v.toFixed(1)} cm`;
+    if (unit === 'm')  return `${v.toFixed(3)} m`;
+    if (unit === 'in') return `${Math.round(v)}"`;
+    return `${v.toFixed(0)}'`;   // ft
+  }
+
+  /**
+   * Ceiling-round a mm value and format it in the given unit (for curtain recommendations
+   * where you always round up to ensure full coverage).
    */
   function fmtCeil(mm: number, unit: MeasurementUnit): string {
     if (unit === 'in') return `${Math.ceil(mm / 25.4)}"`;
@@ -492,74 +533,185 @@ const faqs: FAQ[] = [
     return `${Math.ceil(mm)} mm`;
   }
 
+  /**
+   * Format a signed inch difference for the standard-size comparison row.
+   * In metric mode the value is converted to the current unit.
+   * Returns 'exact' when the absolute difference is below 0.05 inches.
+   */
+  function fmtDiff(diffIn: number, unit: MeasurementUnit): string {
+    if (Math.abs(diffIn) < 0.05) return 'exact';
+    const sign = diffIn > 0 ? '+' : '-';
+    if (!isMetricUnit(unit)) return `${sign}${Math.abs(diffIn).toFixed(1)}"`;
+    const absMm = Math.abs(diffIn) * 25.4;
+    if (unit === 'mm') return `${sign}${Math.round(absMm)} mm`;
+    if (unit === 'cm') return `${sign}${(absMm / 10).toFixed(1)} cm`;
+    return `${sign}${(absMm / 1000).toFixed(3)} m`;
+  }
+
+  /**
+   * Format a Euclidean distance (in inches) for the standard-size badge.
+   * In metric mode the value is converted to the current unit.
+   */
+  function fmtDistance(distIn: number, unit: MeasurementUnit): string {
+    if (!isMetricUnit(unit)) return `${distIn.toFixed(1)}"`;
+    const distMm = distIn * 25.4;
+    if (unit === 'mm') return `${Math.round(distMm)} mm`;
+    if (unit === 'cm') return `${(distMm / 10).toFixed(1)} cm`;
+    return `${(distMm / 1000).toFixed(3)} m`;
+  }
+
+  // ── State helpers ─────────────────────────────────────────────────────────
+
+  /** Restore the empty state to the neutral "Enter dimensions" prompt. */
+  function resetEmptyState() {
+    const titleEl = resultsEmpty.querySelector('.empty-title') as HTMLElement;
+    const subEl   = resultsEmpty.querySelector('.empty-sub')   as HTMLElement;
+    if (titleEl) titleEl.textContent = 'Enter dimensions';
+    if (subEl)   subEl.textContent   = 'Results will appear here as you type';
+  }
+
+  /**
+   * Show a blocking error: update the error banner, hide the results grid,
+   * show the "Fix your input" empty state, and mark the offending field.
+   * Accessibility: sets aria-invalid and extends aria-describedby to include
+   * the error element so screen readers announce the message.
+   */
+  function showErrorState(msg: string, field: 'width' | 'height' | null = null) {
+    errorMsg.textContent = msg;
+    delete errorMsg.dataset.level;
+
+    // Reset both inputs, then apply to the errored field
+    widthInput?.removeAttribute('aria-invalid');
+    heightInput?.removeAttribute('aria-invalid');
+    widthInput?.setAttribute('aria-describedby', 'input-width-hint');
+    heightInput?.setAttribute('aria-describedby', 'input-height-hint');
+
+    if (field === 'width') {
+      widthInput?.setAttribute('aria-invalid', 'true');
+      widthInput?.setAttribute('aria-describedby', 'input-width-hint calc-error');
+    }
+    if (field === 'height') {
+      heightInput?.setAttribute('aria-invalid', 'true');
+      heightInput?.setAttribute('aria-describedby', 'input-height-hint calc-error');
+    }
+
+    const titleEl = resultsEmpty.querySelector('.empty-title') as HTMLElement;
+    const subEl   = resultsEmpty.querySelector('.empty-sub')   as HTMLElement;
+    if (titleEl) titleEl.textContent = 'Fix your input';
+    if (subEl)   subEl.textContent   = 'Fix the highlighted measurement(s) to see calculations.';
+
+    resultsEmpty.hidden = false;
+    resultsGrid.hidden  = true;
+    if (recSection) recSection.hidden = true;
+  }
+
+  /** Show a non-blocking advisory warning — calculations still run. */
+  function showWarningMessage(msg: string) {
+    errorMsg.textContent = msg;
+    errorMsg.dataset.level = 'warn';
+  }
+
   // ── Main calculation ──────────────────────────────────────────────────────
 
   function calculate() {
     const rawWidth  = widthInput?.value.trim()  ?? '';
     const rawHeight = heightInput?.value.trim() ?? '';
 
-    // Reset error and invalid states
+    // Reset all error/invalid states on every recalculation
     errorMsg.textContent = '';
     errorMsg.removeAttribute('data-level');
     widthInput?.removeAttribute('aria-invalid');
     heightInput?.removeAttribute('aria-invalid');
+    widthInput?.setAttribute('aria-describedby', 'input-width-hint');
+    heightInput?.setAttribute('aria-describedby', 'input-height-hint');
 
-    // Empty state — show placeholder
+    // Empty fields — show neutral placeholder
     if (!rawWidth || !rawHeight) {
+      resetEmptyState();
       resultsEmpty.hidden = false;
       resultsGrid.hidden  = true;
       if (recSection) recSection.hidden = true;
       return;
     }
 
-    // ── 1. Normalize & parse inputs via engine ────────────────────────────
+    // ── 1. Strict parse — whitelist-validated BEFORE any calculation ──────────
+    //    normalizeInput rejects "36abc", "1e3", "36-8/3", "-36", etc.
     const parsedWidth  = normalizeInput(rawWidth,  currentUnit);
     const parsedHeight = normalizeInput(rawHeight, currentUnit);
 
-    if (parsedWidth === null || isNaN(parsedWidth)) {
-      errorMsg.textContent = `"${rawWidth}" isn't a valid width. Try a number like 36, or a fraction like 36 1/2.`;
-      widthInput?.setAttribute('aria-invalid', 'true');
+    if (parsedWidth === null) {
+      showErrorState(
+        `"${rawWidth}" is not a valid width. Use a number (36), decimal (36.5), or fraction (36 1/2 or 48-3/8).`,
+        'width',
+      );
       return;
     }
-    if (parsedHeight === null || isNaN(parsedHeight)) {
-      errorMsg.textContent = `"${rawHeight}" isn't a valid height. Try a number like 48, or a fraction like 48 1/2.`;
-      heightInput?.setAttribute('aria-invalid', 'true');
+    if (parsedHeight === null) {
+      showErrorState(
+        `"${rawHeight}" is not a valid height. Use a number (48), decimal (48.5), or fraction (48 3/8 or 48-7/16).`,
+        'height',
+      );
       return;
     }
 
-    // ── 2. Convert to mm (canonical internal unit) ────────────────────────
+    // ── 2. Convert to mm — all subsequent checks operate only on mm ───────────
     const widthMm  = toMm(parsedWidth,  currentUnit);
     const heightMm = toMm(parsedHeight, currentUnit);
     const widthIn  = widthMm  / 25.4;
     const heightIn = heightMm / 25.4;
 
-    // ── 3. Soft advisory warnings (non-blocking) ──────────────────────────
-    if (widthIn > 120) {
-      errorMsg.textContent = 'This width is larger than most residential windows. Double-check your measurement or verify your unit selection.';
-      errorMsg.dataset.level = 'warn';
-    } else if (heightIn > 120) {
-      errorMsg.textContent = 'This height is larger than most residential windows. Double-check your measurement or verify your unit selection.';
-      errorMsg.dataset.level = 'warn';
-    } else if (widthIn < 6) {
-      errorMsg.textContent = 'This width seems smaller than a standard window pane. Are you measuring in the right unit?';
-      errorMsg.dataset.level = 'warn';
+    // ── 3. Hard limit check with unit-specific message ────────────────────────
+    //    (mirrors the engine's MAX_DIMENSION_MM = 9144; done here so the
+    //     message names the limit in the user's active unit, not "30 feet")
+    if (widthMm > MAX_DIM_MM) {
+      showErrorState(
+        `Width is too large — maximum supported is ${maxLimitLabel(currentUnit)}.`,
+        'width',
+      );
+      return;
+    }
+    if (heightMm > MAX_DIM_MM) {
+      showErrorState(
+        `Height is too large — maximum supported is ${maxLimitLabel(currentUnit)}.`,
+        'height',
+      );
+      return;
     }
 
-    // ── 4. Hard validation (engine) ───────────────────────────────────────
+    // ── 4. Soft advisory warnings (non-blocking — calculations continue) ──────
+    if (widthIn > 120) {
+      showWarningMessage('This width is larger than most residential windows. Double-check your measurement or unit selection.');
+    } else if (heightIn > 120) {
+      showWarningMessage('This height is larger than most residential windows. Double-check your measurement or unit selection.');
+    } else if (widthIn < 6 && widthMm >= 25) {
+      showWarningMessage('This width is smaller than a typical window pane. Are you measuring in the right unit?');
+    }
+
+    // ── 5. Engine validation (NaN, ≤0, below min, unusual aspect ratio) ──────
     const validation = validateDimensions({ widthMm, heightMm });
     if (!validation.valid) {
-      errorMsg.textContent = validation.message ?? 'Invalid dimensions.';
-      if (validation.field === 'width')  widthInput?.setAttribute('aria-invalid',  'true');
-      if (validation.field === 'height') heightInput?.setAttribute('aria-invalid', 'true');
-      return;
+      if (validation.level === 'warning') {
+        // Unusual proportions: show advisory but let calculations run
+        showWarningMessage(validation.message ?? 'Unusual window proportions — double-check measurements.');
+      } else {
+        // Hard engine error (e.g. zero, below minimum, NaN)
+        showErrorState(
+          validation.message ?? 'Invalid dimensions.',
+          validation.field === 'width'  ? 'width'
+          : validation.field === 'height' ? 'height'
+          : null,
+        );
+        return;
+      }
     }
 
     const dims = { widthMm, heightMm };
 
-    // ── 5. Core calculations (engine) ─────────────────────────────────────
+    // ── 6. Core calculations ──────────────────────────────────────────────────
     const areaMm2     = calculateArea(dims);
     const perimeterMm = calculatePerimeter(dims);
     const aspectRatio = calculateAspectRatio(dims);
+    const metric      = isMetricUnit(currentUnit);
 
     const areaUnit = currentUnit === 'in' ? 'sq in'
                    : currentUnit === 'ft' ? 'sq ft'
@@ -569,31 +721,43 @@ const faqs: FAQ[] = [
                   : currentUnit === 'ft' ? "'"
                   : currentUnit;
 
+    // Area: number from split, unit from areaUnit — .result-unit span always exists
     setResult(resultArea,      formatArea(areaMm2, currentUnit).split(' ')[0], areaUnit);
-    setResult(resultPerimeter, formatDimension(perimeterMm, currentUnit).replace(/[a-z\u00b2'"]+$/i, '').trim(), dimUnit);
+    // Perimeter: fmtVal applies correct per-unit rounding (no regex fragility)
+    setResult(resultPerimeter, fmtVal(perimeterMm, currentUnit), dimUnit);
     setResult(resultAspect,    aspectRatio, '');
-    setResult(resultWidthMm,   Math.round(widthMm).toString(),  'mm');
-    setResult(resultHeightMm,  Math.round(heightMm).toString(), 'mm');
+    // Reference dimensions — always follow the active unit, not hardcoded mm
+    setResult(resultWidthMm,  fmtVal(widthMm,  currentUnit), dimUnit);
+    setResult(resultHeightMm, fmtVal(heightMm, currentUnit), dimUnit);
 
-    if (unitDisplay) unitDisplay.textContent = `${rawWidth} \u00d7 ${rawHeight} ${currentUnit}`;
+    // Panel header: show clean rounded dimensions in the active unit (no raw float)
+    if (unitDisplay) {
+      unitDisplay.textContent = `${fmtVal(widthMm, currentUnit)} \u00d7 ${fmtVal(heightMm, currentUnit)} ${currentUnit}`;
+    }
 
-    // ── 6. Smart recommendations (engine) ────────────────────────────────
+    // ── 7. Smart recommendations ──────────────────────────────────────────────
 
-    // 6a. Standard size match
-    const std = findNearestStandardSize(widthMm, heightMm, 'US');
+    // 7a. Standard size match
+    const std      = findNearestStandardSize(widthMm, heightMm, 'US');
+    const stdWmm   = toMm(std.nearest.widthIn,  'in');
+    const stdHmm   = toMm(std.nearest.heightIn, 'in');
 
-    setText('rec-your-dims', `${widthIn.toFixed(1)}" \u00d7 ${heightIn.toFixed(1)}"`);
-    setText('rec-std-dims',  `${std.nearest.widthIn}" \u00d7 ${std.nearest.heightIn}"`);
+    // "Your window" — always in current unit (no mixing)
+    setText('rec-your-dims',
+      metric
+        ? `${fmtVal(widthMm, currentUnit)} \u00d7 ${fmtVal(heightMm, currentUnit)} ${currentUnit}`
+        : `${widthIn.toFixed(1)}" \u00d7 ${heightIn.toFixed(1)}"`);
+
+    // "Nearest standard" — convert to current unit in metric mode; label in imperial
+    setText('rec-std-dims',
+      metric
+        ? `${fmtVal(stdWmm, currentUnit)} \u00d7 ${fmtVal(stdHmm, currentUnit)} ${currentUnit}`
+        : `${std.nearest.widthIn}" \u00d7 ${std.nearest.heightIn}"`);
 
     const diffEl = document.getElementById('rec-std-diff') as HTMLElement | null;
     if (diffEl) {
       if (!std.isExact) {
-        const fmt = (n: number) => {
-          const abs  = Math.abs(n);
-          const sign = n > 0 ? '+' : '-';
-          return abs < 0.1 ? 'exact' : `${sign}${abs.toFixed(1)}"`;
-        };
-        diffEl.textContent = `Diff: ${fmt(std.diffWidthIn)} width \u00b7 ${fmt(std.diffHeightIn)} height`;
+        diffEl.textContent = `Diff: ${fmtDiff(std.diffWidthIn, currentUnit)} width \u00b7 ${fmtDiff(std.diffHeightIn, currentUnit)} height`;
         diffEl.hidden = false;
       } else {
         diffEl.hidden = true;
@@ -605,14 +769,14 @@ const faqs: FAQ[] = [
 
     if (stdBadge) {
       if (std.isExact) {
-        stdBadge.textContent   = 'Exact match';
-        stdBadge.dataset.type  = 'exact';
+        stdBadge.textContent  = 'Exact match';
+        stdBadge.dataset.type = 'exact';
       } else if (std.isClose) {
-        stdBadge.textContent   = `\u00b1${std.distanceIn}" close`;
-        stdBadge.dataset.type  = 'close';
+        stdBadge.textContent  = `\u00b1${fmtDistance(std.distanceIn, currentUnit)} close`;
+        stdBadge.dataset.type = 'close';
       } else {
-        stdBadge.textContent   = `${std.distanceIn}" away`;
-        stdBadge.dataset.type  = 'far';
+        stdBadge.textContent  = `${fmtDistance(std.distanceIn, currentUnit)} away`;
+        stdBadge.dataset.type = 'far';
       }
     }
 
@@ -624,22 +788,24 @@ const faqs: FAQ[] = [
         : 'Custom size. Replacement will likely require a special order.';
     }
 
-    // 6b. Curtain sizing (engine: calculateCurtainRecommendations)
+    // 7b. Curtain sizing — all values in current unit
     const curtain = calculateCurtainRecommendations(dims);
+    const curtainAllowance =
+      currentUnit === 'cm' ? '~20 cm'
+      : currentUnit === 'm'  ? '~0.2 m'
+      : currentUnit === 'ft' ? "~0.7'"
+      : currentUnit === 'mm' ? '~200 mm'
+      : '8"';
     setText('rec-curtain-min',  fmtCeil(curtain.minWidthMm,  currentUnit));
     setText('rec-curtain-full', fmtCeil(curtain.fullWidthMm, currentUnit));
     setText('rec-curtain-drop',
-      `Drop: ${fmtCeil(curtain.dropMm, currentUnit)} (includes 8" above-window allowance)`);
+      `Drop: ${fmtCeil(curtain.dropMm, currentUnit)} (incl. ${curtainAllowance} above-window allowance)`);
 
-    // 6c. Glass estimate (engine: calculateGlassArea + calculateGlassWeight)
-    const glazingAreaMm2 = calculateGlassArea(dims);                   // 90% of frame area
-    const glass          = calculateGlassWeight(glazingAreaMm2);       // 4 mm single pane default
-    const metric         = isMetricUnit(currentUnit);
+    // 7c. Glass estimate — area uses formatArea (same unit as calculator), weight in metric/imperial
+    const glazingAreaMm2 = calculateGlassArea(dims);
+    const glass          = calculateGlassWeight(glazingAreaMm2);
 
-    setText('rec-glass-area',
-      metric
-        ? `${(glazingAreaMm2 / 10_000).toFixed(2)} cm\u00b2`
-        : `${glass.glazingAreaSqFt.toFixed(2)} sq ft`);
+    setText('rec-glass-area', formatArea(glazingAreaMm2, currentUnit));
 
     setText('rec-glass-weight',
       metric
@@ -648,18 +814,37 @@ const faqs: FAQ[] = [
 
     if (recSection) recSection.hidden = false;
 
-    // ── 7. Show results ───────────────────────────────────────────────────
+    // ── 8. Show results ───────────────────────────────────────────────────────
     resultsEmpty.hidden = true;
     resultsGrid.hidden  = false;
   }
 
   // ── Event listeners ───────────────────────────────────────────────────────
-  widthInput?.addEventListener('input', calculate);
+
+  widthInput?.addEventListener('input',  calculate);
   heightInput?.addEventListener('input', calculate);
 
   document.getElementById('unit-selector')?.addEventListener('unitchange', (e) => {
-    const event = e as CustomEvent<{ unit: MeasurementUnit }>;
-    currentUnit = event.detail.unit;
+    const event   = e as CustomEvent<{ unit: MeasurementUnit }>;
+    const newUnit = event.detail.unit;
+    if (newUnit === currentUnit) return;
+
+    // Convert existing field values from the old unit into the new unit.
+    // This ensures "48-3/8" in inches becomes "1229 mm" (not "48 mm").
+    const rawW = widthInput?.value.trim()  ?? '';
+    const rawH = heightInput?.value.trim() ?? '';
+
+    const parsedW = normalizeInput(rawW, currentUnit);
+    const parsedH = normalizeInput(rawH, currentUnit);
+
+    if (parsedW !== null && widthInput) {
+      widthInput.value = fmtInput(toMm(parsedW, currentUnit), newUnit);
+    }
+    if (parsedH !== null && heightInput) {
+      heightInput.value = fmtInput(toMm(parsedH, currentUnit), newUnit);
+    }
+
+    currentUnit = newUnit;
     calculate();
   });
 </script>

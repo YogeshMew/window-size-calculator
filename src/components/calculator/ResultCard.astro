@@ -45,9 +45,7 @@ const {
 >
   <p class="result-card-label">{label}</p>
   <p class="result-card-value">
-    <span class="result-value-text">{value}</span>{
-      unit && <span class="result-unit">{unit}</span>
-    }
+    <span class="result-value-text">{value}</span><span class="result-unit">{unit ?? ''}</span>
   </p>
   {sublabel && <p class="result-card-sublabel">{sublabel}</p>}
   {
