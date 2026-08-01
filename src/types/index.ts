@@ -6,5 +6,13 @@
  */
 
 export type * from './calculator.js';
-export type * from './content.js';
+export type {
+  ToolCategory,
+  ToolStatus,
+  Tool,
+  Category,
+  Author,
+  RelatedContent,
+  NavigationItem,
+} from './content.js';
 export type * from './dataset.js';

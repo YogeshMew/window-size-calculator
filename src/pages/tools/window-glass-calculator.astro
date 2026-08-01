@@ -450,7 +450,7 @@ const faqs: FAQ[] = [
 
   <!-- ── Share + History ────────────────────────────────────────── -->
   <div class="calc-extras">
-    <ShareExportBar />
+    <ShareExportBar calculatorTitle="Window Glass Calculator" />
     <HistoryPanel slug="window-glass-calculator" />
   </div>
 
@@ -1238,7 +1238,7 @@ const faqs: FAQ[] = [
         totalWeightKg:     result.totalWeightKg,
         shippingWeightKg:  result.shippingWeightKg,
         handlingClass:     result.handlingClass,
-        customFabRequired: result.customFabRequired,
+        customFabRequired: result.customFabRequired ? 'Yes' : 'No',
         recommendedThicknessMm: result.recommendedThicknessMm,
       },
     );

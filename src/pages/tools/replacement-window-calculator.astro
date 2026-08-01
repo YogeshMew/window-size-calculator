@@ -417,7 +417,7 @@ const breadcrumbSchema = {
       },
     ]}
     tip={{
-      title: 'Supplier Tip',
+      label: 'Supplier Tip',
       text: 'Always present net frame dimensions and rough opening measurements when placing window orders at Home Depot or Lowe’s.',
     }}
   />
@@ -700,10 +700,10 @@ const breadcrumbSchema = {
       exportState,
       {
         nearestStandard: stdSizeFormatted,
-        topMatches: result.topMatches.map(m => formatStandardSize(m.nearest, currentUnit, currentRegion)),
+        topMatches: result.topMatches.map(m => formatStandardSize(m.nearest, currentUnit, currentRegion)).join(', '),
         matchPercentage: result.matchPercentage,
         confidence: recs.starText,
-        requiresCustomOrder: result.requiresCustomOrder,
+        requiresCustomOrder: result.requiresCustomOrder ? 'Yes' : 'No',
         roughOpeningWidthMm: result.roughOpeningWidthMm,
         shimSpaceMm: result.shimSpaceMm,
       },

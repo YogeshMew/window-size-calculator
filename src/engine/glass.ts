@@ -212,8 +212,8 @@ export const MIN_GLASS_DIM_MM = 50;
 /** Maximum single-pane practical dimension, mm. */
 export const MAX_GLASS_DIM_MM = 6000;
 
-/** Single-person safe lift limit, kg. */
-export const SOLO_LIFT_KG = 15;
+/** Single-person safe lift limit, kg (ISO 11228-1 / ergonomic standard). */
+export const SOLO_LIFT_KG = 20;
 
 /** Two-person safe lift limit, kg. */
 export const TWO_PERSON_LIFT_KG = 40;

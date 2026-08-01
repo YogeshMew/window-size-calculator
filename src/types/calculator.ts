@@ -290,10 +290,6 @@ export interface ACBTUResult {
   note: string;
 }
 
-  /** Human-readable notes */
-  notes: string[];
-}
-
 /** Measurement input profile for replacement calculation */
 export type ReplacementMeasurementType = 'existing-window' | 'rough-opening' | 'frame-size' | 'glass-only';
 

@@ -75,8 +75,8 @@ describe('findNearestStandardSize (UK)', () => {
   it('finds a UK standard size close to 630 × 1050 mm', () => {
     const result = findNearestStandardSize(630, 1050, 'UK');
     expect(result.isExact).toBe(true);
-    // 630 mm = 24.8" ≈ nearest UK standard
-    expect(result.nearest.widthIn).toBeCloseTo(630 / 25.4, 3);
+    expect(result.nearest.widthMm).toBe(630);
+    expect(result.nearest.widthIn).toBe(25);
   });
 });
 
