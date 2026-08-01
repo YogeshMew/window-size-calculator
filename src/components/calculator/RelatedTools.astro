@@ -1,9 +1,12 @@
 ---
 /**
- * WindowMetrics — Related Tools
+ * WindowMetrics — Related Tools (v2)
  *
  * Sidebar widget listing related calculators and tools.
- * Used in the ToolLayout "sidebar" slot.
+ * Enhanced with: icon support, arrow indicator, hover animation,
+ * WHY descriptions, and better visual hierarchy.
+ *
+ * Interface is backward-compatible with v1.
  *
  * Props:
  *   heading — Section heading text (default: "Related tools")
@@ -12,10 +15,14 @@
  *   guide   — Optional "Related guide" link at the bottom
  */
 
+import ToolIcon from '@/components/ui/ToolIcon.astro';
+
 interface ToolLink {
   title: string;
   description: string;
   href: string;
+  /** Lucide icon name */
+  icon?: string;
   ariaLabel?: string;
 }
 
@@ -39,8 +46,31 @@ const { heading = 'Related tools', links, tip, guide } = Astro.props;
           class="related-link"
           aria-label={link.ariaLabel ?? link.title}
         >
-          <span class="related-link-title">{link.title}</span>
-          <span class="related-link-desc">{link.description}</span>
+          {link.icon && (
+            <div class="related-link-icon" aria-hidden="true">
+              <ToolIcon name={link.icon} size={14} />
+            </div>
+          )}
+          <div class="related-link-body">
+            <span class="related-link-title">{link.title}</span>
+            <span class="related-link-desc">{link.description}</span>
+          </div>
+          <svg
+            width="12"
+            height="12"
+            viewBox="0 0 12 12"
+            fill="none"
+            class="related-link-arrow"
+            aria-hidden="true"
+          >
+            <path
+              d="M1 6h10M7 2l4 4-4 4"
+              stroke="currentColor"
+              stroke-width="1.3"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+          </svg>
         </a>
       </li>
     ))}
@@ -92,8 +122,8 @@ const { heading = 'Related tools', links, tip, guide } = Astro.props;
 
   .related-link {
     display: flex;
-    flex-direction: column;
-    gap: 2px;
+    align-items: center;
+    gap: var(--spacing-sm);
     padding: var(--spacing-md);
     border-bottom: 1px solid var(--color-hairline);
     text-decoration: none;
@@ -107,6 +137,39 @@ const { heading = 'Related tools', links, tip, guide } = Astro.props;
 
   .related-link:hover {
     background-color: var(--color-canvas-soft);
+  }
+
+  .related-link:focus-visible {
+    outline: 2px solid var(--color-link);
+    outline-offset: -2px;
+  }
+
+  /* Icon */
+  .related-link-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border-radius: var(--radius-sm);
+    background-color: color-mix(in srgb, var(--color-ink) 6%, transparent);
+    border: 1px solid color-mix(in srgb, var(--color-ink) 8%, transparent);
+    color: var(--color-ink);
+    flex-shrink: 0;
+    transition: background-color 150ms ease;
+  }
+
+  .related-link:hover .related-link-icon {
+    background-color: color-mix(in srgb, var(--color-ink) 10%, transparent);
+  }
+
+  /* Body */
+  .related-link-body {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    flex: 1;
+    min-width: 0;
   }
 
   .related-link-title {
@@ -123,6 +186,18 @@ const { heading = 'Related tools', links, tip, guide } = Astro.props;
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
+  }
+
+  /* Arrow */
+  .related-link-arrow {
+    color: var(--color-muted);
+    flex-shrink: 0;
+    transition: transform 150ms ease, color 150ms ease;
+  }
+
+  .related-link:hover .related-link-arrow {
+    transform: translateX(2px);
+    color: var(--color-link);
   }
 
   /* Pro tip card */

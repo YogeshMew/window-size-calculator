@@ -1,0 +1,525 @@
+/* =============================================================================
+   WindowMetrics — Calculator Shared Styles
+   ─────────────────────────────────────────
+   Applied globally via app.css → affects all calculator pages.
+   Uses ONLY System A (WindowMetrics) design tokens:
+     --spacing-*, --font-size-*, --color-*, --radius-*, --font-family-*
+   ============================================================================= */
+
+/* ── Dashboard Grid ──────────────────────────────────────────────────────── */
+
+.calc-dashboard {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--spacing-lg);
+  align-items: start;
+  margin-bottom: var(--spacing-3xl);
+}
+
+@media (min-width: 768px) {
+  .calc-dashboard {
+    grid-template-columns: 340px 1fr;
+  }
+}
+
+/* ── Panels ──────────────────────────────────────────────────────────────── */
+
+.calc-panel {
+  background-color: var(--color-canvas);
+  border: 1px solid var(--color-hairline);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+
+.panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-bottom: 1px solid var(--color-hairline);
+  background-color: var(--color-canvas-soft);
+}
+
+.panel-section-header {
+  display: flex;
+  align-items: center;
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-top: 1px solid var(--color-hairline);
+  border-bottom: 1px solid var(--color-hairline);
+  background-color: var(--color-canvas-soft-2);
+  margin-top: 0;
+}
+
+.panel-label {
+  font-family: var(--font-family-mono);
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--color-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.panel-hint {
+  font-family: var(--font-family-mono);
+  font-size: 11px;
+  color: var(--color-muted);
+}
+
+/* ── Panel layout variants ───────────────────────────────────────────────── */
+
+.calc-panel-inputs,
+.calc-panel-results {
+  display: flex;
+  flex-direction: column;
+}
+
+/* InputCard strip inside an input panel — remove card borders, flush layout */
+.calc-panel-inputs .input-card {
+  border: none;
+  border-bottom: 1px solid var(--color-hairline);
+  border-radius: 0;
+  box-shadow: none;
+  background: transparent;
+}
+
+/* ── Unit row ────────────────────────────────────────────────────────────── */
+
+.unit-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-md);
+  padding: var(--spacing-md);
+  border-bottom: 1px solid var(--color-hairline);
+}
+
+.unit-row-label {
+  font-size: var(--font-size-body-sm);
+  font-weight: 500;
+  color: var(--color-ink);
+}
+
+/* ── Select input ────────────────────────────────────────────────────────── */
+
+.input-select {
+  width: 100%;
+  height: 36px;
+  padding: 0 var(--spacing-sm);
+  font-family: var(--font-family-sans);
+  font-size: var(--font-size-body-sm);
+  color: var(--color-ink);
+  background-color: var(--color-canvas);
+  border: 1px solid var(--color-hairline-strong);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+}
+
+.input-select:focus {
+  outline: 2px solid var(--color-link);
+  outline-offset: 1px;
+  border-color: var(--color-link);
+}
+
+[data-theme='dark'] .input-select {
+  background-color: var(--color-canvas-soft);
+  color: var(--color-ink);
+  border-color: var(--color-hairline-strong);
+}
+
+/* ── Option selector (button group) ─────────────────────────────────────── */
+
+.option-selector {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.option-btn {
+  padding: 6px 10px;
+  min-height: 36px;
+  font-size: 12px;
+  font-family: var(--font-family-sans);
+  font-weight: 500;
+  background: none;
+  border: 1px solid var(--color-hairline-strong);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  color: var(--color-body);
+  transition: background-color 100ms ease, color 100ms ease, border-color 100ms ease;
+  line-height: 1.4;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.option-btn:hover {
+  border-color: var(--color-ink);
+  color: var(--color-ink);
+  background-color: var(--color-canvas-soft);
+}
+
+.option-btn:focus-visible {
+  outline: 2px solid var(--color-link);
+  outline-offset: 2px;
+}
+
+.option-btn[aria-pressed='true'] {
+  background-color: var(--color-ink);
+  color: var(--color-canvas);
+  border-color: var(--color-ink);
+}
+
+[data-theme='dark'] .option-btn[aria-pressed='true'] {
+  background-color: var(--color-canvas-soft-2);
+  color: var(--color-ink);
+  border-color: var(--color-hairline-strong);
+}
+
+.option-btn--wide {
+  flex: 1;
+  min-width: 80px;
+  text-align: center;
+}
+
+/* ── Quantity / Occupants stepper ────────────────────────────────────────── */
+
+.occupants-stepper {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  width: 100%;
+}
+
+.stepper-btn {
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  font-weight: 400;
+  background: none;
+  border: 1px solid var(--color-hairline-strong);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  color: var(--color-body);
+  line-height: 1;
+  flex-shrink: 0;
+  transition: background-color 100ms ease, border-color 100ms ease, color 100ms ease;
+}
+
+.stepper-btn:hover {
+  background-color: var(--color-canvas-soft);
+  border-color: var(--color-ink);
+  color: var(--color-ink);
+}
+
+.stepper-btn:focus-visible {
+  outline: 2px solid var(--color-link);
+  outline-offset: 2px;
+}
+
+.stepper-input {
+  width: 60px;
+  text-align: center;
+  font-family: var(--font-family-mono);
+  font-size: var(--font-size-body-sm);
+  font-weight: 600;
+  color: var(--color-ink);
+  background-color: var(--color-canvas);
+  border: 1px solid var(--color-hairline-strong);
+  border-radius: var(--radius-sm);
+  padding: 6px var(--spacing-xs);
+  -moz-appearance: textfield;
+}
+
+.stepper-input::-webkit-outer-spin-button,
+.stepper-input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+}
+
+[data-theme='dark'] .stepper-input {
+  background-color: var(--color-canvas-soft);
+}
+
+/* ── Warning banner (JS-created by Glass & Curtain rec engine) ──────────── */
+
+.warning-banner {
+  padding: var(--spacing-xs) var(--spacing-md);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-body-sm);
+  line-height: 1.5;
+  border: 1px solid transparent;
+}
+
+.warning-banner[data-level='warning'] {
+  background: color-mix(in srgb, var(--color-warning) 10%, transparent);
+  color: color-mix(in srgb, var(--color-warning) 80%, #000);
+  border-color: color-mix(in srgb, var(--color-warning) 30%, transparent);
+}
+
+.warning-banner[data-level='error'] {
+  background: color-mix(in srgb, var(--color-error) 8%, transparent);
+  color: var(--color-error);
+  border-color: color-mix(in srgb, var(--color-error) 20%, transparent);
+}
+
+/* ── Calculate button (Glass & Curtain) ──────────────────────────────────── */
+
+.btn-primary {
+  width: 100%;
+  padding: 10px var(--spacing-md);
+  min-height: 40px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-ink);
+  background-color: var(--color-ink);
+  color: var(--color-canvas);
+  font-family: var(--font-family-sans);
+  font-size: var(--font-size-body-sm);
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  cursor: pointer;
+  transition: opacity 100ms ease;
+}
+
+.btn-primary:hover  { opacity: 0.82; }
+.btn-primary:active { transform: translateY(1px); }
+
+.btn-primary:focus-visible {
+  outline: 2px solid var(--color-link);
+  outline-offset: 2px;
+}
+
+[data-theme='dark'] .btn-primary {
+  background-color: var(--color-canvas-soft-2);
+  border-color: var(--color-hairline-strong);
+  color: var(--color-ink);
+}
+
+/* When btn-primary sits directly inside a panel (no wrapper), give it edge padding */
+.calc-panel-inputs > .btn-primary {
+  margin: var(--spacing-md);
+  width: calc(100% - 2 * var(--spacing-md));
+}
+
+/* ── Results container ───────────────────────────────────────────────────── */
+
+.results-grid-container {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+/* Two-column card row: flush borders, no gap */
+.results-secondary-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  border-bottom: 1px solid var(--color-hairline);
+}
+
+.results-secondary-row .result-card {
+  border: none;
+  border-right: 1px solid var(--color-hairline);
+  border-radius: 0;
+  padding: var(--spacing-md);
+}
+
+.results-secondary-row .result-card:last-child {
+  border-right: none;
+}
+
+/* ── Share/Export + History extras row ───────────────────────────────────── */
+
+.calc-extras {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+  margin-bottom: var(--spacing-xl);
+}
+
+/* ── FAQ wrapper ─────────────────────────────────────────────────────────── */
+
+.calc-faq {
+  margin-top: var(--spacing-3xl);
+  padding-top: var(--spacing-2xl);
+  border-top: 1px solid var(--color-hairline);
+}
+
+/* ── Smart Recommendations section ──────────────────────────────────────── */
+
+.rec-section {
+  border-top: 1px solid var(--color-hairline);
+  margin-top: var(--spacing-md);
+}
+
+.rec-section-header {
+  padding: var(--spacing-sm) var(--spacing-md);
+  background-color: var(--color-canvas-soft);
+  border-bottom: 1px solid var(--color-hairline);
+}
+
+.rec-section-title {
+  font-family: var(--font-family-mono);
+  font-size: 10px;
+  font-weight: 500;
+  color: var(--color-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+/* Column grids inside recommendation cards */
+.rec-two-col {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-xs);
+}
+
+.rec-col {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.rec-col-label {
+  font-family: var(--font-family-mono);
+  font-size: 10px;
+  color: var(--color-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.rec-col-value {
+  font-family: var(--font-family-mono);
+  font-size: var(--font-size-body-sm);
+  font-weight: 600;
+  color: var(--color-ink);
+}
+
+/* Dynamic recommendation cards (created by JS innerHTML) */
+.rec-dynamic-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.dyn-rec-card {
+  padding: var(--spacing-md);
+  border-bottom: 1px solid var(--color-hairline);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+}
+
+.dyn-rec-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--spacing-md);
+}
+
+.dyn-rec-label {
+  font-family: var(--font-family-mono);
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--color-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  flex-shrink: 0;
+}
+
+.dyn-rec-value {
+  font-family: var(--font-family-mono);
+  font-size: var(--font-size-body-sm);
+  font-weight: 600;
+  color: var(--color-ink);
+  text-align: right;
+}
+
+.dyn-rec-body {
+  font-size: var(--font-size-body-sm);
+  color: var(--color-body);
+  margin: 0;
+  line-height: 1.55;
+  white-space: pre-line;
+}
+
+.dyn-rec-note {
+  font-size: var(--font-size-caption);
+  color: var(--color-muted);
+  margin: 0;
+  line-height: 1.5;
+}
+
+.dyn-rec-tip {
+  font-size: var(--font-size-caption);
+  color: var(--color-link);
+  margin: 0;
+  line-height: 1.5;
+  font-style: italic;
+}
+
+/* Next-step recommendation link */
+.rec-next-link {
+  font-family: var(--font-family-mono);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--color-link);
+  text-decoration: none;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: opacity 150ms ease;
+}
+
+.rec-next-link:hover { opacity: 0.75; }
+
+/* ── Error input highlight ───────────────────────────────────────────────── */
+
+.input--error {
+  border-color: var(--color-error) !important;
+  background-color: var(--color-error-soft) !important;
+}
+
+/* ── Mobile responsive ───────────────────────────────────────────────────── */
+
+@media (max-width: 767px) {
+  .calc-dashboard {
+    gap: var(--spacing-md);
+    margin-bottom: var(--spacing-xl);
+  }
+
+  /* Larger touch targets */
+  .option-btn {
+    min-height: 44px;
+    padding: 10px 14px;
+    font-size: 14px;
+  }
+
+  .stepper-btn {
+    width: 44px;
+    height: 44px;
+  }
+
+  /* Stack 2-col result rows */
+  .results-secondary-row {
+    grid-template-columns: 1fr;
+  }
+
+  .results-secondary-row .result-card {
+    border-right: none;
+    border-bottom: 1px solid var(--color-hairline);
+  }
+
+  .results-secondary-row .result-card:last-child {
+    border-bottom: none;
+  }
+}
+
+/* ── Print ───────────────────────────────────────────────────────────────── */
+
+@media print {
+  .calc-panel-inputs { display: none !important; }
+  .calc-extras       { display: none !important; }
+  .calc-faq          { display: none !important; }
+  .calc-dashboard    { grid-template-columns: 1fr; }
+  .btn-primary       { display: none; }
+}

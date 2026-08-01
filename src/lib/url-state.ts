@@ -73,6 +73,10 @@ export function readUrlState(): UrlParams {
   return decodeUrlState(window.location.search);
 }
 
+/** Alias for readUrlState */
+export const parseUrlParams = readUrlState;
+
+
 /**
  * Write params to the URL using `history.replaceState` (no page reload).
  * Clears the query string when `params` is empty.

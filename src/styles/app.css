@@ -11,6 +11,9 @@
 @import '@fontsource-variable/geist';
 @import '@fontsource-variable/geist-mono';
 
+/* 3. Calculator shared layout — panel, grid, option-btn, stepper, results */
+@import './calculator-shared.css';
+
 /* =============================================================================
    3. Design Tokens — @theme generates Tailwind utility classes
    Rules: @theme variables MUST be top-level, never nested under selectors.
@@ -1002,6 +1005,66 @@
     max-width: 380px;
     line-height: 1.6;
     margin: 0;
+  }
+
+  /* --- Reduced Motion -------------------------------------------------------- */
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+
+  /* --- Overflow Safeguards -------------------------------------------------- */
+
+  /* Prevent horizontal scrollbars from content overflow */
+  body {
+    overflow-x: hidden;
+  }
+
+  /* Ensure images never break layout */
+  img,
+  video,
+  svg {
+    max-width: 100%;
+    height: auto;
+  }
+
+  /* --- Improved Focus Rings ------------------------------------------------- */
+
+  /* Default focus ring for all interactive elements */
+  :focus-visible {
+    outline: 2px solid var(--color-link);
+    outline-offset: 2px;
+    border-radius: var(--radius-xs);
+  }
+
+  /* Input fields: inset focus ring */
+  input:focus-visible,
+  textarea:focus-visible,
+  select:focus-visible {
+    outline: 2px solid var(--color-link);
+    outline-offset: 0;
+    border-radius: var(--radius-sm);
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--color-link) 12%, transparent);
+  }
+
+  /* --- Responsive Base ------------------------------------------------------- */
+
+  /* Ensure content never clips below 320px */
+  @media (max-width: 375px) {
+    .container-page {
+      padding-inline: var(--spacing-md);
+    }
+
+    .container-content {
+      padding-inline: var(--spacing-md);
+    }
   }
 }
 

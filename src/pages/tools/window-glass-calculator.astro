@@ -16,17 +16,16 @@ import WarningBanner from '@/components/calculator/WarningBanner.astro';
 import RecommendationCard from '@/components/calculator/RecommendationCard.astro';
 import RelatedTools from '@/components/calculator/RelatedTools.astro';
 import FAQSection from '@/components/content/FAQSection.astro';
-import ToolIcon from '@/components/ui/ToolIcon.astro';
-import TrustStrip from '@/components/ui/TrustStrip.astro';
+import CalculatorHero from '@/components/calculator/CalculatorHero.astro';
 import HistoryPanel from '@/components/calculator/HistoryPanel.astro';
 import ShareExportBar from '@/components/calculator/ShareExportBar.astro';
-import FavoriteButton from '@/components/ui/FavoriteButton.astro';
 
-import { getToolBySlug, getRelatedTools } from '@/data/tools.js';
+import { getToolBySlug } from '@/data/tools.js';
+
 import type { BreadcrumbItem, FAQ } from '@/types/calculator.js';
 
 const tool = getToolBySlug('window-glass-calculator')!;
-const relatedTools = getRelatedTools('window-glass-calculator');
+
 
 const breadcrumbs: BreadcrumbItem[] = [
   { label: 'Home', href: '/' },
@@ -81,35 +80,22 @@ const faqs: FAQ[] = [
 <ToolLayout tool={tool} breadcrumbs={breadcrumbs} faqs={faqs}>
 
   <!-- ── Page Hero ──────────────────────────────────────────────────── -->
-  <header class="calc-hero">
-    <div class="calc-hero-left">
-      <div class="icon-container icon-container-lg">
-        <ToolIcon name={tool.icon ?? 'PanelTop'} size={22} />
-      </div>
-      <div>
-        <div class="calc-status-badge">
-          <span class="calc-status-dot" aria-hidden="true"></span>
-          Available
-        </div>
-        <h1 class="calc-hero-title">{tool.title}</h1>
-        <p class="calc-hero-desc">
-          Enter your glass dimensions and type. Get weight, area, handling requirements,
-          ordering quantities — and a live illustration that updates as you type.
-        </p>
-        <TrustStrip
-          compact
-          items={[
-            { label: '5 shapes supported' },
-            { label: '6 glass types' },
-            { label: 'Handling guidance' },
-            { label: 'No signup' },
-          ]}
-          class="calc-trust"
-        />
-      </div>
-    </div>
-    <FavoriteButton slug="window-glass-calculator" label="Favorite this calculator" />
-  </header>
+  <CalculatorHero
+    tool={tool}
+    description="Calculate exact glass area, weight, and glazing requirements for single, double, or triple pane windows — all from your window dimensions."
+    features={[
+      'Glass area by pane count',
+      'Weight estimate by thickness',
+      'Double & triple pane support',
+      'Waste percentage calculator',
+    ]}
+    trustItems={[
+      { label: 'Industry formulas' },
+      { label: 'All units' },
+      { label: 'No signup' },
+      { label: 'Weight estimates' },
+    ]}
+  />
 
   <!-- ── Dashboard Grid ─────────────────────────────────────────── -->
   <div class="calc-dashboard">
@@ -509,11 +495,26 @@ const faqs: FAQ[] = [
   <!-- ── Related Tools ─────────────────────────────────────────── -->
   <RelatedTools
     heading="Related calculators"
-    links={relatedTools.map((t) => ({
-      title:       t.title,
-      description: t.description,
-      href:        t.href,
-    }))}
+    links={[
+      {
+        title: 'Window Size Calculator',
+        description: 'Measure your window opening dimensions before ordering glass.',
+        href: '/tools/window-size-calculator',
+        icon: 'Ruler',
+      },
+      {
+        title: 'Window AC Calculator',
+        description: 'Calculate the BTU cooling capacity your window needs.',
+        href: '/tools/window-ac-calculator',
+        icon: 'Thermometer',
+      },
+      {
+        title: 'Curtain Size Calculator',
+        description: 'Find the right curtain dimensions for your window.',
+        href: '/tools/curtain-size-calculator',
+        icon: 'Blinds',
+      },
+    ]}
   />
 
   <!-- ── FAQ ───────────────────────────────────────────────────── -->
@@ -1258,152 +1259,336 @@ const faqs: FAQ[] = [
 </script>
 
 <style>
-  /* ── Layout ─────────────────────────────────────────────────────────────── */
-  .calc-hero { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--space-4); margin-bottom: var(--space-6); }
-  .calc-hero-left { display: flex; align-items: flex-start; gap: var(--space-4); flex: 1; min-width: 0; }
-  .calc-hero-title { font-size: var(--font-2xl); font-weight: 700; color: var(--color-text-primary); margin: 0 0 var(--space-2); }
-  .calc-hero-desc  { color: var(--color-text-secondary); font-size: var(--font-sm); margin: 0 0 var(--space-3); line-height: 1.5; }
-  .calc-status-badge { display: inline-flex; align-items: center; gap: var(--space-1-5); font-size: var(--font-xs); font-weight: 500; color: var(--color-success); margin-bottom: var(--space-2); }
-  .calc-status-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--color-success); animation: pulse 2s ease-in-out infinite; }
+  /*
+   * Shared layout (calc-dashboard, calc-panel, panel-header, option-btn,
+   * stepper, results-secondary-row, rec-section, dyn-rec-card, etc.)
+   * comes from calculator-shared.css via app.css.
+   *
+   * Only Glass-specific styles are defined here.
+   */
 
-  .calc-dashboard { display: grid; grid-template-columns: 380px 1fr; gap: var(--space-4); align-items: start; }
-  .calc-panel { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: var(--space-5); display: flex; flex-direction: column; gap: var(--space-3); }
-  .calc-extras { margin-top: var(--space-4); display: flex; flex-direction: column; gap: var(--space-3); }
+  /* ── Primary result cards: highlighted pair ──────────────────────────── */
 
-  /* ── Panel headers ──────────────────────────────────────────────────────── */
-  .panel-header { display: flex; align-items: baseline; justify-content: space-between; gap: var(--space-2); margin-bottom: var(--space-1); }
-  .panel-section-header { margin-top: var(--space-2); padding-top: var(--space-3); border-top: 1px solid var(--color-border); }
-  .panel-label { font-size: var(--font-xs); font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--color-text-muted); }
-  .panel-hint  { font-size: var(--font-xs); color: var(--color-text-muted); }
+  .results-grid-container > #result-area,
+  .results-grid-container > #result-weight {
+    background-color: var(--color-canvas-soft);
+  }
 
-  /* ── Unit row ───────────────────────────────────────────────────────────── */
-  .unit-row { display: flex; align-items: center; gap: var(--space-3); }
-  .unit-row-label { font-size: var(--font-sm); font-weight: 500; color: var(--color-text-secondary); min-width: 2.5rem; }
+  /* ── Handling card ───────────────────────────────────────────────────── */
 
-  /* ── Shape hint ─────────────────────────────────────────────────────────── */
-  .shape-hint { font-size: var(--font-xs); color: var(--color-primary); background: color-mix(in srgb, var(--color-primary) 8%, transparent); padding: var(--space-2) var(--space-3); border-radius: var(--radius-md); border: 1px solid color-mix(in srgb, var(--color-primary) 20%, transparent); }
+  .handling-card {
+    padding: var(--spacing-md);
+    border-bottom: 1px solid var(--color-hairline);
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-xs);
+  }
 
-  /* ── Option selectors ───────────────────────────────────────────────────── */
-  .option-selector { display: flex; flex-wrap: wrap; gap: var(--space-1-5); }
-  .option-btn { padding: var(--space-1-5) var(--space-3); border-radius: var(--radius-md); border: 1px solid var(--color-border); background: var(--color-surface); color: var(--color-text-secondary); font-size: var(--font-sm); font-weight: 500; cursor: pointer; transition: all 0.15s ease; line-height: 1.4; }
-  .option-btn:hover { border-color: var(--color-primary); color: var(--color-primary); }
-  .option-btn[aria-pressed="true"] { background: var(--color-primary); border-color: var(--color-primary); color: white; }
-  .option-btn--wide { flex: 1; min-width: 80px; text-align: center; }
+  .handling-card[data-handling='two-person'] {
+    background-color: color-mix(in srgb, #f59e0b 5%, transparent);
+  }
 
-  /* ── Quantity stepper ───────────────────────────────────────────────────── */
-  .occupants-stepper { display: flex; align-items: center; gap: var(--space-2); }
-  .stepper-btn { width: 36px; height: 36px; border-radius: var(--radius-md); border: 1px solid var(--color-border); background: var(--color-surface); color: var(--color-text-primary); font-size: var(--font-lg); font-weight: 400; cursor: pointer; display: flex; align-items: center; justify-content: center; line-height: 1; }
-  .stepper-btn:hover { border-color: var(--color-primary); }
-  .stepper-input { width: 60px; text-align: center; padding: var(--space-2); border-radius: var(--radius-md); border: 1px solid var(--color-border); font-size: var(--font-base); }
+  .handling-card[data-handling='mechanical'] {
+    background-color: color-mix(in srgb, #ef4444 5%, transparent);
+  }
 
-  /* ── Calculate button ───────────────────────────────────────────────────── */
-  .btn-primary { width: 100%; padding: var(--space-3) var(--space-4); border-radius: var(--radius-md); border: none; background: var(--color-primary); color: white; font-size: var(--font-sm); font-weight: 600; cursor: pointer; transition: background 0.15s ease; margin-top: var(--space-2); }
-  .btn-primary:hover { background: var(--color-primary-hover, #1d4ed8); }
-  .btn-primary:active { transform: translateY(1px); }
+  [data-theme='dark'] .handling-card[data-handling='two-person'] {
+    background-color: color-mix(in srgb, #f59e0b 8%, transparent);
+  }
 
-  /* ── Results ─────────────────────────────────────────────────────────────── */
-  .results-grid-container { display: flex; flex-direction: column; gap: var(--space-3); }
-  .results-secondary-row { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3); }
+  [data-theme='dark'] .handling-card[data-handling='mechanical'] {
+    background-color: color-mix(in srgb, #ef4444 8%, transparent);
+  }
 
-  /* ── Handling card ──────────────────────────────────────────────────────── */
-  .handling-card { padding: var(--space-4); border-radius: var(--radius-md); border: 1px solid var(--color-border); background: var(--color-surface); }
-  .handling-card[data-handling="solo"]       { border-color: var(--color-success); background: color-mix(in srgb, var(--color-success) 6%, transparent); }
-  .handling-card[data-handling="two-person"] { border-color: #f59e0b; background: color-mix(in srgb, #f59e0b 6%, transparent); }
-  .handling-card[data-handling="mechanical"] { border-color: #ef4444; background: color-mix(in srgb, #ef4444 6%, transparent); }
-  .handling-icon-row { display: flex; align-items: flex-start; gap: var(--space-3); }
-  .handling-icon     { font-size: 2rem; line-height: 1; }
-  .handling-title    { font-size: var(--font-sm); font-weight: 700; color: var(--color-text-primary); margin-bottom: var(--space-1); }
-  .handling-note     { font-size: var(--font-xs); color: var(--color-text-secondary); line-height: 1.5; }
+  .handling-icon-row {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--spacing-sm);
+  }
 
-  /* ── Order card ─────────────────────────────────────────────────────────── */
-  .order-card { padding: var(--space-3) var(--space-4); background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-md); }
-  .order-card-label { font-size: var(--font-xs); font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--color-text-muted); margin-bottom: var(--space-2); }
-  .order-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-3); }
-  .order-item { display: flex; flex-direction: column; gap: 2px; }
-  .order-val  { font-size: var(--font-lg); font-weight: 700; color: var(--color-text-primary); }
-  .order-key  { font-size: var(--font-xs); color: var(--color-text-muted); }
+  .handling-icon {
+    font-size: 1.25rem;
+    line-height: 1;
+    flex-shrink: 0;
+    width: 28px;
+    text-align: center;
+  }
 
-  /* ── Badge row ──────────────────────────────────────────────────────────── */
-  .badge-row { display: grid; grid-template-columns: repeat(2, 1fr); gap: var(--space-2); }
-  .badge-item { padding: var(--space-2) var(--space-3); background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-md); display: flex; flex-direction: column; gap: 2px; }
-  .badge-label { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--color-text-muted); }
-  .badge-val   { font-size: var(--font-sm); font-weight: 700; color: var(--color-text-primary); }
+  .handling-title {
+    font-size: var(--font-size-body-sm);
+    font-weight: 600;
+    color: var(--color-ink);
+    margin-bottom: 2px;
+  }
 
-  /* ── SVG card ───────────────────────────────────────────────────────────── */
-  .svg-card { border: 1px solid var(--color-border); border-radius: var(--radius-md); padding: var(--space-3); background: var(--color-surface); }
-  .svg-card-label { font-size: var(--font-xs); font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--color-text-muted); margin-bottom: var(--space-2); }
-  #glass-svg { width: 100%; height: auto; }
+  .handling-note {
+    font-size: var(--font-size-caption);
+    color: var(--color-body);
+    line-height: 1.5;
+  }
 
-  /* SVG classes */
-  .svg-bg          { fill: #f4f4f5; }
-  .svg-glass       { fill: #bfdbfe; stroke: #3b82f6; stroke-width: 1.5; opacity: 0.85; }
-  .svg-glass-shine { fill: white; opacity: 0.4; }
+  /* ── Order planning card ─────────────────────────────────────────────── */
+
+  .order-card {
+    padding: var(--spacing-md);
+    border-bottom: 1px solid var(--color-hairline);
+    background-color: var(--color-canvas-soft);
+  }
+
+  .order-card-label {
+    font-family: var(--font-family-mono);
+    font-size: 10px;
+    font-weight: 500;
+    color: var(--color-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin: 0 0 var(--spacing-sm);
+  }
+
+  .order-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--spacing-sm);
+  }
+
+  .order-item {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .order-val {
+    font-family: var(--font-family-mono);
+    font-size: var(--font-size-body-md);
+    font-weight: 700;
+    color: var(--color-ink);
+  }
+
+  .order-key {
+    font-size: var(--font-size-caption);
+    color: var(--color-muted);
+    line-height: 1.4;
+  }
+
+  /* ── Recommendation badge row ────────────────────────────────────────── */
+
+  .badge-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    border-bottom: 1px solid var(--color-hairline);
+  }
+
+  .badge-item {
+    padding: var(--spacing-sm) var(--spacing-md);
+    border-right: 1px solid var(--color-hairline);
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .badge-item:nth-child(even) {
+    border-right: none;
+  }
+
+  .badge-item:nth-child(3),
+  .badge-item:nth-child(4) {
+    border-top: 1px solid var(--color-hairline);
+  }
+
+  .badge-label {
+    font-family: var(--font-family-mono);
+    font-size: 10px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--color-muted);
+  }
+
+  .badge-val {
+    font-family: var(--font-family-mono);
+    font-size: var(--font-size-body-sm);
+    font-weight: 600;
+    color: var(--color-ink);
+  }
+
+  /* ── SVG illustration card ───────────────────────────────────────────── */
+
+  .svg-card {
+    padding: var(--spacing-md);
+    border-bottom: 1px solid var(--color-hairline);
+    background-color: var(--color-canvas-soft);
+  }
+
+  .svg-card-label {
+    font-family: var(--font-family-mono);
+    font-size: 10px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--color-muted);
+    margin: 0 0 var(--spacing-sm);
+  }
+
+  #glass-svg {
+    width: 100%;
+    height: auto;
+    display: block;
+  }
+
+  /* SVG element classes */
+  .svg-bg            { fill: var(--color-canvas-soft-2); }
+  .svg-glass         { fill: #bfdbfe; stroke: #3b82f6; stroke-width: 1.5; opacity: 0.85; }
+  .svg-glass-shine   { fill: white; opacity: 0.4; }
   .svg-shape-overlay { fill: #bfdbfe; stroke: #3b82f6; stroke-width: 1.5; opacity: 0.85; }
-  .svg-stack-pane  { fill: #93c5fd; stroke: #60a5fa; stroke-width: 1; opacity: 0.5; }
-  .svg-dim-line    { stroke: #374151; stroke-width: 1; }
-  .svg-dim-arrow   { fill: #374151; }
-  .svg-dim-text    { font-size: 9px; fill: #4b5563; font-family: sans-serif; }
+  .svg-stack-pane    { fill: #93c5fd; stroke: #60a5fa; stroke-width: 1; opacity: 0.5; }
+  .svg-dim-line      { stroke: var(--color-muted); stroke-width: 1; }
+  .svg-dim-arrow     { fill: var(--color-muted); }
+  .svg-dim-text      { font-size: 9px; fill: var(--color-body); font-family: sans-serif; }
   .svg-dim-text--center { text-anchor: middle; dominant-baseline: middle; }
-  .svg-label-bg    { fill: rgba(59,130,246,0.85); rx: 3; }
-  .svg-label-text  { font-size: 9px; fill: white; font-family: sans-serif; font-weight: 700; }
-  .svg-area-text   { font-size: 10px; fill: #1e40af; font-family: sans-serif; font-weight: 600; text-anchor: middle; dominant-baseline: middle; }
-  .svg-qty-text    { font-size: 10px; fill: #6366f1; font-family: sans-serif; font-weight: 700; text-anchor: end; }
+  .svg-label-bg      { fill: rgba(59,130,246,0.85); }
+  .svg-label-text    { font-size: 9px; fill: white; font-family: sans-serif; font-weight: 700; }
+  .svg-area-text     { font-size: 10px; fill: #1e40af; font-family: sans-serif; font-weight: 600; text-anchor: middle; dominant-baseline: middle; }
+  .svg-qty-text      { font-size: 10px; fill: #6366f1; font-family: sans-serif; font-weight: 700; text-anchor: end; }
 
-  /* ── Recommendations ────────────────────────────────────────────────────── */
-  .rec-section-header { display: flex; align-items: center; margin-top: var(--space-6); margin-bottom: var(--space-4); padding-top: var(--space-4); border-top: 1px solid var(--color-border); }
-  .rec-section-title  { font-size: var(--font-xl); font-weight: 700; color: var(--color-text-primary); margin: 0; }
-  .rec-warnings-list  { display: flex; flex-direction: column; gap: var(--space-2); margin-top: var(--space-4); }
-  .warning-banner { padding: var(--space-2) var(--space-3); border-radius: var(--radius-md); font-size: var(--font-sm); }
-  .warning-banner[data-level="warning"] { background: #fef3c7; color: #92400e; border: 1px solid #fcd34d; }
-  .warning-banner[data-level="error"]   { background: #fee2e2; color: #991b1b; border: 1px solid #fca5a5; }
+  [data-theme='dark'] .svg-bg { fill: var(--color-canvas-soft-2); }
 
-  .rec-cards-grid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3); margin-top: var(--space-3); }
-  .dyn-rec-card   { padding: var(--space-4); background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-md); }
-  .dyn-rec-top    { margin-bottom: var(--space-2); }
-  .dyn-rec-label  { font-size: var(--font-sm); font-weight: 600; color: var(--color-text-primary); }
-  .dyn-rec-body   { font-size: var(--font-xs); color: var(--color-text-secondary); line-height: 1.6; margin: 0 0 var(--space-2); }
-  .dyn-rec-tip    { font-size: var(--font-xs); color: var(--color-primary); line-height: 1.5; margin: 0; font-style: italic; }
+  /* ── Dynamic rec card grid (2-col for glass) ─────────────────────────── */
 
-  /* ── Buying guide ───────────────────────────────────────────────────────── */
-  .buying-guide { margin-top: var(--space-6); padding: var(--space-5); background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg); }
-  .buying-guide-title { font-size: var(--font-lg); font-weight: 700; color: var(--color-text-primary); margin: 0 0 var(--space-2); }
-  .buying-guide-desc  { font-size: var(--font-sm); color: var(--color-text-secondary); margin: 0 0 var(--space-4); line-height: 1.6; }
-  .buying-guide-grid  { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-4); margin-bottom: var(--space-4); }
-  .buying-col-label   { font-size: var(--font-xs); font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--color-text-muted); margin-bottom: var(--space-2); }
-  .buying-list        { margin: 0; padding-left: var(--space-4); display: flex; flex-direction: column; gap: var(--space-1); }
-  .buying-list li     { font-size: var(--font-xs); color: var(--color-text-secondary); line-height: 1.5; }
-  .buying-uses        { margin-bottom: var(--space-4); }
-  .buying-uses-chips  { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-top: var(--space-2); }
-  .use-chip           { padding: var(--space-1) var(--space-2-5); background: color-mix(in srgb, var(--color-primary) 10%, transparent); color: var(--color-primary); border-radius: var(--radius-full); font-size: var(--font-xs); font-weight: 500; }
-  .buying-flags       { display: flex; gap: var(--space-3); flex-wrap: wrap; }
-  .buying-flag        { font-size: var(--font-xs); font-weight: 600; padding: var(--space-1) var(--space-2-5); border-radius: var(--radius-md); }
-  .buying-flag[data-state="yes"] { background: color-mix(in srgb, var(--color-success) 12%, transparent); color: var(--color-success); }
-  .buying-flag[data-state="no"]  { background: color-mix(in srgb, #ef4444 12%, transparent); color: #ef4444; }
+  .rec-cards-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-md);
+  }
 
-  /* ── Pulse animation ─────────────────────────────────────────────────────── */
-  @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+  .rec-warnings-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-xs);
+    padding: 0 var(--spacing-md) var(--spacing-xs);
+  }
 
-  /* ── Mobile ─────────────────────────────────────────────────────────────── */
-  @media (max-width: 900px) { .calc-dashboard { grid-template-columns: 1fr; } }
+  /* ── Buying guide ────────────────────────────────────────────────────── */
+
+  .buying-guide {
+    margin-top: var(--spacing-lg);
+    border-top: 1px solid var(--color-hairline);
+  }
+
+  .buying-guide-title {
+    font-family: var(--font-family-mono);
+    font-size: 10px;
+    font-weight: 500;
+    color: var(--color-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    padding: var(--spacing-sm) var(--spacing-md);
+    background-color: var(--color-canvas-soft);
+    border-bottom: 1px solid var(--color-hairline);
+    margin: 0;
+  }
+
+  .buying-guide-desc {
+    font-size: var(--font-size-body-sm);
+    color: var(--color-body);
+    margin: 0;
+    line-height: 1.6;
+    padding: var(--spacing-md);
+    border-bottom: 1px solid var(--color-hairline);
+  }
+
+  .buying-guide-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    border-bottom: 1px solid var(--color-hairline);
+  }
+
+  .buying-col-label {
+    font-family: var(--font-family-mono);
+    font-size: 10px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--color-muted);
+    margin: 0 0 var(--spacing-xs);
+  }
+
+  .buying-list {
+    margin: 0;
+    padding: var(--spacing-md);
+    padding-left: calc(var(--spacing-md) + 16px);
+    list-style: disc;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    border-right: 1px solid var(--color-hairline);
+  }
+
+  .buying-list:last-child { border-right: none; }
+
+  .buying-list li {
+    font-size: var(--font-size-caption);
+    color: var(--color-body);
+    line-height: 1.5;
+  }
+
+  .buying-uses {
+    padding: var(--spacing-md);
+    border-bottom: 1px solid var(--color-hairline);
+  }
+
+  .buying-uses-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin-top: var(--spacing-xs);
+  }
+
+  .use-chip {
+    padding: 2px 8px;
+    background: color-mix(in srgb, var(--color-link) 10%, transparent);
+    color: var(--color-link);
+    border-radius: 3px;
+    font-size: var(--font-size-caption);
+    font-weight: 500;
+    font-family: var(--font-family-mono);
+  }
+
+  .buying-flags {
+    display: flex;
+    gap: var(--spacing-sm);
+    flex-wrap: wrap;
+    padding: var(--spacing-md);
+  }
+
+  .buying-flag {
+    font-family: var(--font-family-mono);
+    font-size: var(--font-size-caption);
+    font-weight: 500;
+    padding: 2px 8px;
+    border-radius: 3px;
+  }
+
+  .buying-flag[data-state='yes'] {
+    background: color-mix(in srgb, #22c55e 10%, transparent);
+    color: #16a34a;
+  }
+
+  .buying-flag[data-state='no'] {
+    background: color-mix(in srgb, var(--color-error) 10%, transparent);
+    color: var(--color-error);
+  }
+
+  /* ── Mobile ──────────────────────────────────────────────────────────── */
 
   @media (max-width: 640px) {
-    .calc-hero { flex-direction: column; }
-    .calc-hero-left { flex-direction: column; }
-    .calc-hero-title { font-size: var(--font-xl); }
-    .results-secondary-row { grid-template-columns: 1fr; }
-    .order-grid  { grid-template-columns: 1fr 1fr; }
-    .badge-row   { grid-template-columns: 1fr 1fr; }
-    .rec-cards-grid { grid-template-columns: 1fr; }
-    .buying-guide-grid { grid-template-columns: 1fr; }
-    .option-btn { padding: var(--space-2) var(--space-2-5); }
+    .order-grid         { grid-template-columns: 1fr 1fr; }
+    .badge-row          { grid-template-columns: 1fr; }
+    .buying-guide-grid  { grid-template-columns: 1fr; }
+    .rec-cards-grid     { grid-template-columns: 1fr; }
+    .buying-list        { border-right: none; border-bottom: 1px solid var(--color-hairline); }
+    .badge-item:nth-child(3),
+    .badge-item:nth-child(4) { border-top: 1px solid var(--color-hairline); }
   }
 
-  /* ── Print ──────────────────────────────────────────────────────────────── */
-  @media print {
-    .calc-panel-inputs { display: none; }
-    .calc-dashboard { grid-template-columns: 1fr; }
-    .calc-extras { display: none; }
-    .btn-primary { display: none; }
-    .rec-cards-grid { grid-template-columns: 1fr; }
-  }
 </style>

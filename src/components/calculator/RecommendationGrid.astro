@@ -1,0 +1,95 @@
+---
+/**
+ * WindowMetrics — Recommendation Grid
+ *
+ * Two-column responsive wrapper for Smart Recommendation cards.
+ * Replaces the inline rec-section div pattern used in calculators.
+ *
+ * Named slots:
+ *   (default) — RecommendationCard children
+ *   header    — Optional override for the section header row
+ *
+ * Props:
+ *   id       — HTML id (for JS show/hide, default: 'rec-section')
+ *   title    — Section heading (default: 'Smart recommendations')
+ *   columns  — Number of columns at md breakpoint (1 | 2, default: 1)
+ *   hidden   — Start hidden (JS will show when results are ready)
+ */
+
+interface Props {
+  id?: string;
+  title?: string;
+  columns?: 1 | 2;
+  hidden?: boolean;
+  class?: string;
+}
+
+const {
+  id = 'rec-section',
+  title = 'Smart recommendations',
+  columns = 1,
+  hidden = true,
+  class: className,
+} = Astro.props;
+---
+
+<section
+  class:list={['rec-grid-section', { 'rec-grid-section--2col': columns === 2 }, className]}
+  id={id}
+  hidden={hidden}
+  aria-label={title}
+>
+  <div class="rgs-header">
+    <slot name="header">
+      <span class="rgs-title">{title}</span>
+    </slot>
+  </div>
+
+  <div class="rgs-body">
+    <slot />
+  </div>
+</section>
+
+<style>
+  .rec-grid-section {
+    background-color: var(--color-canvas);
+    border-top: 1px solid var(--color-hairline);
+  }
+
+  .rgs-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--spacing-sm) var(--spacing-md);
+    border-bottom: 1px solid var(--color-hairline);
+    background-color: var(--color-canvas-soft);
+  }
+
+  .rgs-title {
+    font-family: var(--font-family-mono);
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--color-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+  }
+
+  /* Body — single column by default, 2-col variant */
+  .rgs-body {
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* 2-column variant: cards display in a responsive grid */
+  @media (min-width: 540px) {
+    .rec-grid-section--2col .rgs-body {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+    }
+
+    /* Cards inside 2-col grid: right-side border */
+    .rec-grid-section--2col .rgs-body :global(.rec-card:nth-child(odd)) {
+      border-right: 1px solid var(--color-hairline);
+    }
+  }
+</style>

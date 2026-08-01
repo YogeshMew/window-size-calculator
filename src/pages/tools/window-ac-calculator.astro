@@ -19,11 +19,9 @@ import WarningBanner from '@/components/calculator/WarningBanner.astro';
 import RecommendationCard from '@/components/calculator/RecommendationCard.astro';
 import RelatedTools from '@/components/calculator/RelatedTools.astro';
 import FAQSection from '@/components/content/FAQSection.astro';
-import ToolIcon from '@/components/ui/ToolIcon.astro';
-import TrustStrip from '@/components/ui/TrustStrip.astro';
 import HistoryPanel from '@/components/calculator/HistoryPanel.astro';
 import ShareExportBar from '@/components/calculator/ShareExportBar.astro';
-import FavoriteButton from '@/components/ui/FavoriteButton.astro';
+import CalculatorHero from '@/components/calculator/CalculatorHero.astro';
 
 import { getToolBySlug } from '@/data/tools.js';
 import type { BreadcrumbItem, FAQ } from '@/types/calculator.js';
@@ -67,36 +65,22 @@ const faqs: FAQ[] = [
 
 <ToolLayout tool={tool} breadcrumbs={breadcrumbs} faqs={faqs}>
 
-  <!-- ── Page Hero ─────────────────────────────────────────────────── -->
-  <header class="calc-hero">
-    <div class="calc-hero-left">
-      <div class="icon-container icon-container-lg">
-        <ToolIcon name={tool.icon ?? 'AirVent'} size={22} />
-      </div>
-      <div>
-        <div class="calc-status-badge">
-          <span class="calc-status-dot" aria-hidden="true"></span>
-          Available
-        </div>
-        <h1 class="calc-hero-title">{tool.title}</h1>
-        <p class="calc-hero-desc">
-          Enter your room size and conditions. Get a precise BTU recommendation,
-          energy cost estimate, and cooling suitability rating — instantly.
-        </p>
-        <TrustStrip
-          compact
-          items={[
-            { label: 'HVAC-accurate' },
-            { label: 'All units' },
-            { label: 'No signup' },
-            { label: 'Energy cost estimate' },
-          ]}
-          class="calc-trust"
-        />
-      </div>
-    </div>
-    <FavoriteButton slug="window-ac-calculator" label="Favorite this calculator" />
-  </header>
+  <CalculatorHero
+    tool={tool}
+    description="Enter your room size and conditions. Get a precise BTU recommendation, energy cost estimate, and cooling suitability rating — instantly."
+    features={[
+      'Precise BTU calculation',
+      'Climate zone adjustment',
+      'Sun exposure factor',
+      'Energy cost estimate',
+    ]}
+    trustItems={[
+      { label: 'HVAC-accurate' },
+      { label: 'All units' },
+      { label: 'No signup' },
+      { label: 'Energy cost estimate' },
+    ]}
+  />
 
   <!-- ── Dashboard Grid ─────────────────────────────────────────────── -->
   <div class="calc-dashboard">
@@ -402,24 +386,28 @@ const faqs: FAQ[] = [
         description: 'Measure your window opening to verify your AC unit will physically fit.',
         href: '/tools/window-size-calculator',
         ariaLabel: 'Window Size Calculator',
+        icon: 'Ruler',
       },
       {
         title: 'Window Insulation Calculator',
         description: 'Estimate how much better insulation can reduce your cooling requirements.',
         href: '/tools/window-insulation-calculator',
         ariaLabel: 'Window Insulation Calculator',
+        icon: 'Thermometer',
       },
       {
         title: 'Curtain Size Calculator',
         description: 'Thermal curtains reduce solar heat gain, cutting your BTU needs by up to 15%.',
         href: '/tools/curtain-size-calculator',
         ariaLabel: 'Curtain Size Calculator',
+        icon: 'Blinds',
       },
       {
         title: 'Blind Size Calculator',
         description: 'Cellular blinds provide good insulation, especially on south-facing windows.',
         href: '/tools/blind-size-calculator',
         ariaLabel: 'Blind Size Calculator',
+        icon: 'PanelTop',
       },
     ]}
     tip={{
@@ -1002,79 +990,9 @@ const faqs: FAQ[] = [
 </script>
 
 <style>
-  /* ── Hero ─────────────────────────────────────────────────────────── */
-
-  .calc-hero {
-    display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    gap: var(--spacing-xl);
-    margin-bottom: var(--spacing-xl);
-    padding-bottom: var(--spacing-lg);
-    border-bottom: 1px solid var(--color-hairline);
-  }
-
-  .calc-hero-left {
-    display: flex;
-    align-items: flex-start;
-    gap: var(--spacing-md);
-    flex: 1;
-  }
-
-  .calc-status-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    font-size: 11px;
-    font-family: var(--font-family-mono);
-    font-weight: 500;
-    color: #16a34a;
-    background-color: color-mix(in srgb, #22c55e 8%, transparent);
-    border: 1px solid color-mix(in srgb, #22c55e 18%, transparent);
-    border-radius: 4px;
-    padding: 2px 7px;
-    margin-bottom: var(--spacing-xs);
-    letter-spacing: 0.02em;
-  }
-
-  :global([data-theme='dark']) .calc-status-badge {
-    color: #4ade80;
-    background-color: color-mix(in srgb, #22c55e 10%, transparent);
-    border-color: color-mix(in srgb, #22c55e 20%, transparent);
-  }
-
-  .calc-status-dot {
-    width: 5px;
-    height: 5px;
-    border-radius: 50%;
-    background-color: #22c55e;
-    flex-shrink: 0;
-    animation: blink-dot 2.5s ease-in-out infinite;
-  }
-
-  @keyframes blink-dot {
-    0%, 100% { opacity: 1; }
-    50%       { opacity: 0.4; }
-  }
-
-  .calc-hero-title {
-    font-size: var(--font-size-display-md);
-    font-weight: 600;
-    color: var(--color-ink);
-    letter-spacing: var(--tracking-display-md);
-    margin: 0 0 var(--spacing-xs);
-    line-height: 1.15;
-  }
-
-  .calc-hero-desc {
-    font-size: var(--font-size-body-sm);
-    color: var(--color-body);
-    margin: 0;
-    max-width: 520px;
-    line-height: 1.6;
-  }
 
   /* ── Dashboard Grid ───────────────────────────────────────────────── */
+
 
   .calc-dashboard {
     display: grid;

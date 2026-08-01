@@ -16,11 +16,9 @@ import WarningBanner from '@/components/calculator/WarningBanner.astro';
 import RecommendationCard from '@/components/calculator/RecommendationCard.astro';
 import RelatedTools from '@/components/calculator/RelatedTools.astro';
 import FAQSection from '@/components/content/FAQSection.astro';
-import ToolIcon from '@/components/ui/ToolIcon.astro';
-import TrustStrip from '@/components/ui/TrustStrip.astro';
+import CalculatorHero from '@/components/calculator/CalculatorHero.astro';
 import HistoryPanel from '@/components/calculator/HistoryPanel.astro';
 import ShareExportBar from '@/components/calculator/ShareExportBar.astro';
-import FavoriteButton from '@/components/ui/FavoriteButton.astro';
 
 import { getToolBySlug, getRelatedTools } from '@/data/tools.js';
 import type { BreadcrumbItem, FAQ } from '@/types/calculator.js';
@@ -76,35 +74,22 @@ const faqs: FAQ[] = [
 <ToolLayout tool={tool} breadcrumbs={breadcrumbs} faqs={faqs}>
 
   <!-- ── Page Hero ──────────────────────────────────────────────────── -->
-  <header class="calc-hero">
-    <div class="calc-hero-left">
-      <div class="icon-container icon-container-lg">
-        <ToolIcon name={tool.icon ?? 'Blinds'} size={22} />
-      </div>
-      <div>
-        <div class="calc-status-badge">
-          <span class="calc-status-dot" aria-hidden="true"></span>
-          Available
-        </div>
-        <h1 class="calc-hero-title">{tool.title}</h1>
-        <p class="calc-hero-desc">
-          Enter your window size and preferences. Get curtain width, drop, rod length,
-          and fabric needed — with a live illustration that updates as you type.
-        </p>
-        <TrustStrip
-          compact
-          items={[
-            { label: 'Industry-standard sizing' },
-            { label: 'All units' },
-            { label: 'Live SVG preview' },
-            { label: 'No signup' },
-          ]}
-          class="calc-trust"
-        />
-      </div>
-    </div>
-    <FavoriteButton slug="curtain-size-calculator" label="Favorite this calculator" />
-  </header>
+  <CalculatorHero
+    tool={tool}
+    description="Enter your window dimensions to get precise curtain width, drop, and fullness recommendations for inside and outside mount installations."
+    features={[
+      'Curtain width & drop',
+      'Inside & outside mount',
+      'Fullness ratio support',
+      'Lining & fabric estimates',
+    ]}
+    trustItems={[
+      { label: 'Instant sizing' },
+      { label: 'All units' },
+      { label: 'No signup' },
+      { label: 'Rod size included' },
+    ]}
+  />
 
   <!-- ── Dashboard Grid ─────────────────────────────────────────── -->
   <div class="calc-dashboard">
@@ -1182,236 +1167,208 @@ const faqs: FAQ[] = [
 </script>
 
 <style>
-  /* ── Layout ─────────────────────────────────────────────────────────────── */
-  .calc-hero {
-    display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    gap: var(--space-4);
-    margin-bottom: var(--space-6);
-  }
-  .calc-hero-left { display: flex; align-items: flex-start; gap: var(--space-4); flex: 1; min-width: 0; }
-  .calc-hero-title { font-size: var(--font-2xl); font-weight: 700; color: var(--color-text-primary); margin: 0 0 var(--space-2); }
-  .calc-hero-desc  { color: var(--color-text-secondary); font-size: var(--font-sm); margin: 0 0 var(--space-3); line-height: 1.5; }
+  /*
+   * Shared layout (calc-dashboard, calc-panel, panel-header, option-btn,
+   * stepper, results-secondary-row, rec-section, dyn-rec-card, btn-primary, etc.)
+   * comes from calculator-shared.css via app.css.
+   *
+   * Only Curtain-specific styles are defined here.
+   */
 
-  .calc-status-badge {
-    display: inline-flex; align-items: center; gap: var(--space-1-5);
-    font-size: var(--font-xs); font-weight: 500;
-    color: var(--color-success); margin-bottom: var(--space-2);
-  }
-  .calc-status-dot {
-    width: 6px; height: 6px; border-radius: 50%;
-    background: var(--color-success);
-    animation: pulse 2s ease-in-out infinite;
-  }
+  /* ── Width range card ────────────────────────────────────────────────── */
 
-  .calc-dashboard {
-    display: grid;
-    grid-template-columns: 380px 1fr;
-    gap: var(--space-4);
-    align-items: start;
-  }
-
-  .calc-panel {
-    background: var(--color-surface);
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-lg);
-    padding: var(--space-5);
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-3);
-  }
-
-  .calc-extras {
-    margin-top: var(--space-4);
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-3);
-  }
-
-  /* ── Panel headers ──────────────────────────────────────────────────────── */
-  .panel-header { display: flex; align-items: baseline; justify-content: space-between; gap: var(--space-2); margin-bottom: var(--space-1); }
-  .panel-section-header { margin-top: var(--space-2); padding-top: var(--space-3); border-top: 1px solid var(--color-border); }
-  .panel-label { font-size: var(--font-xs); font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--color-text-muted); }
-  .panel-hint  { font-size: var(--font-xs); color: var(--color-text-muted); }
-
-  /* ── Unit row ───────────────────────────────────────────────────────────── */
-  .unit-row { display: flex; align-items: center; gap: var(--space-3); }
-  .unit-row-label { font-size: var(--font-sm); font-weight: 500; color: var(--color-text-secondary); min-width: 2.5rem; }
-
-  /* ── Option selectors ───────────────────────────────────────────────────── */
-  .option-selector { display: flex; flex-wrap: wrap; gap: var(--space-1-5); }
-  .option-btn {
-    padding: var(--space-1-5) var(--space-3);
-    border-radius: var(--radius-md);
-    border: 1px solid var(--color-border);
-    background: var(--color-surface);
-    color: var(--color-text-secondary);
-    font-size: var(--font-sm);
-    font-weight: 500;
-    cursor: pointer;
-    transition: all 0.15s ease;
-    line-height: 1.4;
-  }
-  .option-btn:hover { border-color: var(--color-primary); color: var(--color-primary); }
-  .option-btn[aria-pressed="true"] {
-    background: var(--color-primary);
-    border-color: var(--color-primary);
-    color: white;
-  }
-  .option-btn--wide { flex: 1; min-width: 90px; text-align: center; }
-
-  /* ── Calculate button ───────────────────────────────────────────────────── */
-  .btn-primary {
-    width: 100%;
-    padding: var(--space-3) var(--space-4);
-    border-radius: var(--radius-md);
-    border: none;
-    background: var(--color-primary);
-    color: white;
-    font-size: var(--font-sm);
-    font-weight: 600;
-    cursor: pointer;
-    transition: background 0.15s ease;
-    margin-top: var(--space-2);
-  }
-  .btn-primary:hover  { background: var(--color-primary-hover, #1d4ed8); }
-  .btn-primary:active { transform: translateY(1px); }
-
-  /* ── Results ─────────────────────────────────────────────────────────────── */
-  .results-grid-container { display: flex; flex-direction: column; gap: var(--space-3); }
-
-  .results-secondary-row {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: var(--space-3);
-  }
-
-  /* ── Width range card ───────────────────────────────────────────────────── */
   .width-range-card {
-    padding: var(--space-4);
-    border-radius: var(--radius-md);
-    border: 2px solid var(--color-primary);
-    background: color-mix(in srgb, var(--color-primary) 5%, transparent);
+    padding: var(--spacing-md);
+    border-bottom: 1px solid var(--color-hairline);
+    background-color: var(--color-canvas-soft);
   }
+
   .width-range-label {
-    font-size: var(--font-xs);
-    font-weight: 600;
+    font-family: var(--font-family-mono);
+    font-size: 10px;
+    font-weight: 500;
     text-transform: uppercase;
-    letter-spacing: 0.05em;
-    color: var(--color-primary);
-    margin-bottom: var(--space-3);
+    letter-spacing: 0.06em;
+    color: var(--color-muted);
+    margin: 0 0 var(--spacing-sm);
   }
-  .width-range-row { display: grid; grid-template-columns: 1fr auto 1fr; gap: var(--space-2); align-items: center; }
-  .width-range-item { display: flex; flex-direction: column; align-items: center; gap: var(--space-1); }
-  .width-range-item--ideal { padding: var(--space-2); }
-  .width-range-val { font-size: var(--font-lg); font-weight: 700; color: var(--color-text-primary); }
-  .width-range-val--ideal { font-size: var(--font-2xl); color: var(--color-primary); }
-  .width-range-sub { font-size: var(--font-xs); color: var(--color-text-muted); text-align: center; }
 
-  /* ── Fabric section ─────────────────────────────────────────────────────── */
+  .width-range-row {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    gap: var(--spacing-sm);
+    align-items: center;
+  }
+
+  .width-range-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    text-align: center;
+  }
+
+  .width-range-item--ideal {
+    padding: var(--spacing-xs) var(--spacing-sm);
+    background-color: var(--color-canvas);
+    border: 1px solid var(--color-hairline-strong);
+    border-radius: var(--radius-sm);
+  }
+
+  .width-range-val {
+    font-family: var(--font-family-mono);
+    font-size: var(--font-size-body-md);
+    font-weight: 700;
+    color: var(--color-ink);
+  }
+
+  .width-range-val--ideal {
+    font-size: var(--font-size-display-sm, 1.5rem);
+  }
+
+  .width-range-sep {
+    font-size: var(--font-size-caption);
+    color: var(--color-muted);
+    text-align: center;
+  }
+
+  .width-range-sub {
+    font-family: var(--font-family-mono);
+    font-size: 10px;
+    color: var(--color-muted);
+    text-align: center;
+  }
+
+  /* ── Fabric section ──────────────────────────────────────────────────── */
+
   .fabric-section {
-    padding: var(--space-3) var(--space-4);
-    background: var(--color-surface-2, var(--color-muted));
-    border-radius: var(--radius-md);
-    border: 1px solid var(--color-border);
+    padding: var(--spacing-md);
+    background-color: var(--color-canvas-soft);
+    border-bottom: 1px solid var(--color-hairline);
   }
-  .fabric-section-label { font-size: var(--font-xs); font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--color-text-muted); margin-bottom: var(--space-2); }
-  .fabric-row { display: flex; align-items: center; gap: var(--space-3); }
-  .fabric-item { display: flex; flex-direction: column; align-items: center; gap: 2px; }
-  .fabric-val  { font-size: var(--font-xl); font-weight: 700; color: var(--color-text-primary); }
-  .fabric-key  { font-size: var(--font-xs); color: var(--color-text-muted); }
-  .fabric-sep  { font-size: var(--font-xl); font-weight: 300; color: var(--color-text-muted); }
-  .fabric-total { margin-top: var(--space-2); font-size: var(--font-xs); color: var(--color-text-secondary); border-top: 1px solid var(--color-border); padding-top: var(--space-2); }
 
-  /* ── SVG Card ─────────────────────────────────────────────────────────────  */
+  .fabric-section-label {
+    font-family: var(--font-family-mono);
+    font-size: 10px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--color-muted);
+    margin: 0 0 var(--spacing-sm);
+  }
+
+  .fabric-row {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+  }
+
+  .fabric-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+  }
+
+  .fabric-val {
+    font-family: var(--font-family-mono);
+    font-size: var(--font-size-body-md);
+    font-weight: 700;
+    color: var(--color-ink);
+  }
+
+  .fabric-key {
+    font-family: var(--font-family-mono);
+    font-size: 10px;
+    color: var(--color-muted);
+  }
+
+  .fabric-sep {
+    font-size: var(--font-size-body-md);
+    font-weight: 300;
+    color: var(--color-muted);
+  }
+
+  .fabric-total {
+    margin-top: var(--spacing-xs);
+    font-size: var(--font-size-caption);
+    color: var(--color-body);
+    border-top: 1px solid var(--color-hairline);
+    padding-top: var(--spacing-xs);
+    font-family: var(--font-family-mono);
+  }
+
+  /* ── SVG illustration card ───────────────────────────────────────────── */
+
   .svg-card {
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-md);
-    padding: var(--space-3);
-    background: var(--color-surface);
+    padding: var(--spacing-md);
+    border-bottom: 1px solid var(--color-hairline);
+    background-color: var(--color-canvas-soft);
   }
-  .svg-card-label { font-size: var(--font-xs); font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--color-text-muted); margin-bottom: var(--space-2); }
-  #curtain-svg { width: 100%; height: auto; }
 
-  /* ── SVG elements ────────────────────────────────────────────────────────── */
-  .svg-wall     { fill: #f4f4f5; }
-  .svg-floor    { stroke: #71717a; stroke-width: 1.5; stroke-dasharray: 6 3; }
-  .svg-win-shadow { fill: rgba(0,0,0,0.08); }
-  .svg-win-frame  { fill: #d4d4d8; stroke: #a1a1aa; stroke-width: 1; }
-  .svg-win-glass  { fill: #bfdbfe; opacity: 0.7; }
-  .svg-pane       { stroke: #a1a1aa; stroke-width: 0.75; }
-  .svg-sill-line  { stroke: #71717a; stroke-width: 1; stroke-dasharray: 3 2; }
-  .svg-rod        { stroke: #374151; stroke-width: 2.5; stroke-linecap: round; }
-  .svg-rod-cap    { fill: #374151; }
-  .svg-bracket    { stroke: #6b7280; stroke-width: 1; }
-  .svg-curtain    { fill: #6366f1; opacity: 0.75; }
-  .svg-fold       { stroke: #4338ca; stroke-width: 0.5; opacity: 0.5; }
-  .svg-ext-line   { stroke: #f59e0b; stroke-width: 1.5; stroke-dasharray: 4 2; }
-  .svg-measure-line  { stroke: #374151; stroke-width: 1; }
-  .svg-measure-arrow { fill: #374151; }
-  .svg-measure-text  { font-size: 7px; fill: #4b5563; font-family: sans-serif; }
+  .svg-card-label {
+    font-family: var(--font-family-mono);
+    font-size: 10px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--color-muted);
+    margin: 0 0 var(--spacing-sm);
+  }
+
+  #curtain-svg {
+    width: 100%;
+    height: auto;
+    display: block;
+  }
+
+  /* SVG element styles */
+  .svg-wall        { fill: var(--color-canvas-soft-2); }
+  .svg-floor       { stroke: var(--color-muted); stroke-width: 1.5; stroke-dasharray: 6 3; }
+  .svg-win-shadow  { fill: rgba(0, 0, 0, 0.06); }
+  .svg-win-frame   { fill: #d4d4d8; stroke: #a1a1aa; stroke-width: 1; }
+  .svg-win-glass   { fill: #bfdbfe; opacity: 0.65; }
+  .svg-pane        { stroke: #a1a1aa; stroke-width: 0.75; }
+  .svg-sill-line   { stroke: var(--color-muted); stroke-width: 1; stroke-dasharray: 3 2; }
+  .svg-rod         { stroke: var(--color-ink); stroke-width: 2.5; stroke-linecap: round; }
+  .svg-rod-cap     { fill: var(--color-ink); }
+  .svg-bracket     { stroke: var(--color-body); stroke-width: 1; }
+  .svg-curtain     { fill: #6366f1; opacity: 0.75; }
+  .svg-fold        { stroke: #4338ca; stroke-width: 0.5; opacity: 0.5; }
+  .svg-ext-line    { stroke: #f59e0b; stroke-width: 1.5; stroke-dasharray: 4 2; }
+  .svg-measure-line  { stroke: var(--color-body); stroke-width: 1; }
+  .svg-measure-arrow { fill: var(--color-body); }
+  .svg-measure-text  { font-size: 7px; fill: var(--color-body); font-family: sans-serif; }
   .svg-measure-text--center { text-anchor: middle; dominant-baseline: auto; }
 
-  /* ── Recommendations ────────────────────────────────────────────────────── */
-  .rec-section-header {
-    display: flex; align-items: center; justify-content: space-between;
-    margin-top: var(--space-6); margin-bottom: var(--space-4);
-    padding-top: var(--space-4); border-top: 1px solid var(--color-border);
-  }
-  .rec-section-title { font-size: var(--font-xl); font-weight: 700; color: var(--color-text-primary); margin: 0; }
+  /* Dark mode SVG overrides */
+  [data-theme='dark'] .svg-wall       { fill: var(--color-canvas-soft-2); }
+  [data-theme='dark'] .svg-win-frame  { fill: #3f3f46; stroke: #52525b; }
+  [data-theme='dark'] .svg-win-glass  { fill: #1e3a5f; }
 
-  .rec-warnings-list { display: flex; flex-direction: column; gap: var(--space-2); margin-bottom: var(--space-3); }
-  .warning-banner { padding: var(--space-2) var(--space-3); border-radius: var(--radius-md); font-size: var(--font-sm); }
-  .warning-banner[data-level="warning"] { background: #fef3c7; color: #92400e; border: 1px solid #fcd34d; }
-  .warning-banner[data-level="error"]   { background: #fee2e2; color: #991b1b; border: 1px solid #fca5a5; }
+  /* ── Dynamic rec cards (2-col grid) ─────────────────────────────────── */
 
-  .rec-cards-grid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3); }
-
-  .dyn-rec-card {
-    padding: var(--space-4);
-    background: var(--color-surface);
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-md);
-  }
-  .dyn-rec-top  { margin-bottom: var(--space-2); }
-  .dyn-rec-label { font-size: var(--font-sm); font-weight: 600; color: var(--color-text-primary); }
-  .dyn-rec-body  { font-size: var(--font-xs); color: var(--color-text-secondary); line-height: 1.6; margin: 0 0 var(--space-2); white-space: pre-line; }
-  .dyn-rec-tip   { font-size: var(--font-xs); color: var(--color-primary); line-height: 1.5; margin: 0; font-style: italic; }
-
-  /* ── Pulse animation ─────────────────────────────────────────────────────── */
-  @keyframes pulse {
-    0%, 100% { opacity: 1; }
-    50%       { opacity: 0.4; }
+  .rec-cards-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-md);
   }
 
-  /* ── Mobile ─────────────────────────────────────────────────────────────── */
-  @media (max-width: 900px) {
-    .calc-dashboard { grid-template-columns: 1fr; }
+  .rec-warnings-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-xs);
+    padding: 0 var(--spacing-md) var(--spacing-xs);
   }
+
+  /* ── Mobile ──────────────────────────────────────────────────────────── */
 
   @media (max-width: 640px) {
-    .calc-hero { flex-direction: column; }
-    .calc-hero-left { flex-direction: column; }
-    .calc-hero-title { font-size: var(--font-xl); }
-
-    .results-secondary-row { grid-template-columns: 1fr; }
-    .width-range-row { grid-template-columns: 1fr 1fr 1fr; }
-    .rec-cards-grid { grid-template-columns: 1fr; }
-
-    .fabric-row { flex-direction: column; gap: var(--space-2); text-align: center; }
-    .fabric-sep { display: none; }
-
-    .btn-primary { font-size: var(--font-base); padding: var(--space-3-5) var(--space-4); }
-    .option-btn  { padding: var(--space-2) var(--space-2-5); }
+    .rec-cards-grid   { grid-template-columns: 1fr; }
+    .fabric-row       { flex-direction: column; gap: var(--spacing-sm); text-align: center; }
+    .fabric-sep       { display: none; }
+    .width-range-row  { grid-template-columns: 1fr 1fr 1fr; }
   }
 
-  /* ── Print ──────────────────────────────────────────────────────────────── */
-  @media print {
-    .calc-panel-inputs { display: none; }
-    .calc-dashboard { grid-template-columns: 1fr; }
-    .calc-extras { display: none; }
-    .btn-primary { display: none; }
-    .rec-cards-grid { grid-template-columns: 1fr; }
-  }
 </style>

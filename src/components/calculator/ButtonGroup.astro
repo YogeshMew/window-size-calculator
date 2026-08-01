@@ -1,0 +1,261 @@
+---
+/**
+ * WindowMetrics — Button Group
+ *
+ * Multi-option selector with full keyboard accessibility.
+ * Used for: shape selector, glass thickness, floor number,
+ * rod type, mount type, sun exposure, insulation, fullness.
+ *
+ * Renders as a visually styled button row backed by a hidden
+ * radio/checkbox input. Dispatches native `change` events.
+ *
+ * Props:
+ *   name      — Input name attribute (required, used by JS)
+ *   label     — Visible group label
+ *   options   — Array of { value, label, hint? }
+ *   value     — Initially selected value (default: first option)
+ *   multiple  — Allow multiple selections (checkbox semantics)
+ *   id        — Container id (default: name + '-group')
+ *   required  — Whether selection is required
+ *   class     — Additional class name on wrapper
+ */
+
+interface Option {
+  value: string;
+  label: string;
+  /** Optional tooltip / description shown below the button */
+  hint?: string;
+  /** Optional icon name (Lucide) — not rendered here, just reserved */
+  icon?: string;
+}
+
+interface Props {
+  name: string;
+  label?: string;
+  options: Option[];
+  value?: string | string[];
+  multiple?: boolean;
+  id?: string;
+  required?: boolean;
+  class?: string;
+  compact?: boolean;
+}
+
+const {
+  name,
+  label,
+  options,
+  value,
+  multiple = false,
+  id,
+  required = false,
+  class: className,
+  compact = false,
+} = Astro.props;
+
+const groupId    = id ?? `${name}-group`;
+const labelId    = `${groupId}-label`;
+const inputType  = multiple ? 'checkbox' : 'radio';
+
+// Normalize selected to a Set for easy lookup
+const selectedValues = new Set<string>(
+  Array.isArray(value) ? value : value != null ? [value] : options.length > 0 ? [options[0]!.value] : [],
+);
+---
+
+<div
+  class:list={['btn-group-wrap', { 'btn-group-wrap--compact': compact }, className]}
+  id={groupId}
+  role={multiple ? 'group' : 'radiogroup'}
+  aria-labelledby={label ? labelId : undefined}
+  aria-required={required}
+>
+  {label && (
+    <span class="btn-group-label" id={labelId}>{label}</span>
+  )}
+
+  <div class="btn-group" data-name={name} data-multiple={multiple}>
+    {options.map((opt) => {
+      const isSelected = selectedValues.has(opt.value);
+      const btnId = `${groupId}-${opt.value}`;
+      return (
+        <label
+          class:list={['bg-btn', { 'bg-btn--active': isSelected }]}
+          for={btnId}
+          title={opt.hint}
+          data-value={opt.value}
+        >
+          <input
+            type={inputType}
+            id={btnId}
+            name={name}
+            value={opt.value}
+            checked={isSelected}
+            class="bg-input"
+            aria-label={opt.label}
+          />
+          <span class="bg-btn-text">{opt.label}</span>
+          {opt.hint && <span class="bg-btn-hint">{opt.hint}</span>}
+        </label>
+      );
+    })}
+  </div>
+</div>
+
+<script>
+  /**
+   * ButtonGroup interactive behaviour.
+   * Syncs visual active state with native input state.
+   * Dispatches a `wm:button-group-change` custom event on the wrapper.
+   */
+  document.querySelectorAll<HTMLElement>('.btn-group').forEach((group) => {
+    const name = group.dataset.name!;
+    const isMultiple = group.dataset.multiple === 'true';
+
+    group.querySelectorAll<HTMLInputElement>(`input[name="${name}"]`).forEach((input) => {
+      input.addEventListener('change', () => {
+        // Update visual active states
+        group.querySelectorAll<HTMLElement>('.bg-btn').forEach((btn) => {
+          const relInput = btn.querySelector<HTMLInputElement>('input');
+          btn.classList.toggle('bg-btn--active', relInput?.checked ?? false);
+        });
+
+        // Emit custom event for calculator JS
+        const selected = isMultiple
+          ? [...group.querySelectorAll<HTMLInputElement>('input:checked')].map((i) => i.value)
+          : group.querySelector<HTMLInputElement>('input:checked')?.value ?? null;
+
+        group.closest<HTMLElement>('.btn-group-wrap')?.dispatchEvent(
+          new CustomEvent('wm:button-group-change', {
+            detail: { name, value: selected },
+            bubbles: true,
+          }),
+        );
+      });
+    });
+
+    // Keyboard navigation: arrow keys for radio groups
+    if (!isMultiple) {
+      group.addEventListener('keydown', (e: KeyboardEvent) => {
+        const inputs = [...group.querySelectorAll<HTMLInputElement>('input')];
+        const idx    = inputs.findIndex((i) => i === document.activeElement);
+        if (idx === -1) return;
+
+        let next = -1;
+        if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+          next = (idx + 1) % inputs.length;
+        } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+          next = (idx - 1 + inputs.length) % inputs.length;
+        }
+
+        if (next !== -1) {
+          e.preventDefault();
+          inputs[next]!.focus();
+          inputs[next]!.click();
+        }
+      });
+    }
+  });
+</script>
+
+<style>
+  .btn-group-wrap {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-xs);
+  }
+
+  .btn-group-label {
+    font-family: var(--font-family-mono);
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--color-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+  }
+
+  .btn-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+
+  /* Hidden native input */
+  .bg-input {
+    position: absolute;
+    opacity: 0;
+    width: 0;
+    height: 0;
+    pointer-events: none;
+  }
+
+  /* Visible button */
+  .bg-btn {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    cursor: pointer;
+    padding: 6px 12px;
+    border: 1px solid var(--color-hairline);
+    border-radius: var(--radius-sm);
+    background-color: var(--color-canvas);
+    color: var(--color-body);
+    font-size: var(--font-size-caption);
+    font-family: var(--font-family-sans);
+    font-weight: 500;
+    line-height: 1.2;
+    white-space: nowrap;
+    transition: border-color 120ms ease, background-color 120ms ease, color 120ms ease,
+      box-shadow 120ms ease;
+    user-select: none;
+  }
+
+  .bg-btn:hover {
+    border-color: var(--color-hairline-strong);
+    background-color: var(--color-canvas-soft);
+  }
+
+  .bg-btn--active {
+    border-color: var(--color-ink);
+    background-color: var(--color-ink);
+    color: var(--color-canvas);
+  }
+
+  .bg-btn--active:hover {
+    background-color: color-mix(in srgb, var(--color-ink) 85%, transparent);
+  }
+
+  /* Focus ring on the hidden input — visible on the label */
+  .bg-input:focus-visible + .bg-btn-text {
+    outline: 2px solid var(--color-link);
+    outline-offset: 2px;
+    border-radius: 2px;
+  }
+
+  .bg-btn:has(.bg-input:focus-visible) {
+    outline: 2px solid var(--color-link);
+    outline-offset: 2px;
+  }
+
+  .bg-btn-text {
+    display: block;
+  }
+
+  .bg-btn-hint {
+    font-size: 9px;
+    color: var(--color-muted);
+    font-family: var(--font-family-mono);
+    letter-spacing: 0.03em;
+  }
+
+  .bg-btn--active .bg-btn-hint {
+    color: color-mix(in srgb, var(--color-canvas) 60%, transparent);
+  }
+
+  /* Compact variant — smaller padding */
+  .btn-group-wrap--compact .bg-btn {
+    padding: 4px 9px;
+    font-size: 11px;
+  }
+</style>

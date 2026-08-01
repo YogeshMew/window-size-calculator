@@ -1,0 +1,269 @@
+---
+/**
+ * WindowMetrics — Calculator Hero
+ *
+ * Shared hero section used by every calculator page.
+ * Replaces the inline `<header class="calc-hero">` pattern.
+ *
+ * Props:
+ *   tool         — Tool object from the registry
+ *   features     — Short feature pills (max 4–5)
+ *   description  — Override description (falls back to tool.description)
+ */
+
+import ToolIcon from '@/components/ui/ToolIcon.astro';
+import FavoriteButton from '@/components/ui/FavoriteButton.astro';
+import TrustStrip from '@/components/ui/TrustStrip.astro';
+import type { Tool } from '@/types/content.js';
+
+interface Props {
+  tool: Tool;
+  features?: string[];
+  description?: string;
+  /** Additional trust strip items */
+  trustItems?: { label: string }[];
+}
+
+const {
+  tool,
+  features,
+  description,
+  trustItems = [
+    { label: 'Instant results' },
+    { label: 'All units' },
+    { label: 'No signup' },
+    { label: 'Free forever' },
+  ],
+} = Astro.props;
+
+const isLive = tool.status === 'live';
+const displayDesc = description ?? tool.description;
+---
+
+<header class="calc-hero">
+  <div class="calc-hero-inner">
+    <!-- Left: icon + meta -->
+    <div class="calc-hero-left">
+      <div class="ch-icon-wrap" aria-hidden="true">
+        <ToolIcon name={tool.icon ?? 'Ruler'} size={24} />
+      </div>
+
+      <div class="ch-meta">
+        <div class="ch-status-row">
+          {isLive ? (
+            <span class="ch-badge ch-badge--live">
+              <span class="ch-status-dot" aria-hidden="true"></span>
+              Available
+            </span>
+          ) : (
+            <span class="ch-badge ch-badge--pending">Coming soon</span>
+          )}
+          <span class="ch-category">{tool.category}</span>
+        </div>
+
+        <h1 class="ch-title">{tool.title}</h1>
+
+        <p class="ch-desc">{displayDesc}</p>
+
+        {features && features.length > 0 && (
+          <div class="ch-features" aria-label="Calculator features">
+            {features.map((f) => (
+              <span class="ch-feature-pill">
+                <svg width="9" height="9" viewBox="0 0 9 9" fill="none" aria-hidden="true">
+                  <path d="M1 4.5L3.5 7L8 1.5" stroke="currentColor" stroke-width="1.4"
+                    stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                {f}
+              </span>
+            ))}
+          </div>
+        )}
+
+        <TrustStrip compact items={trustItems} class="ch-trust" />
+      </div>
+    </div>
+
+    <!-- Right: favorite button -->
+    <div class="calc-hero-right">
+      <FavoriteButton slug={tool.slug} label={tool.title} />
+    </div>
+  </div>
+</header>
+
+<style>
+  .calc-hero {
+    padding: var(--spacing-xl) var(--spacing-xl) var(--spacing-lg);
+    border-bottom: 1px solid var(--color-hairline);
+    background-color: var(--color-canvas-soft);
+  }
+
+  .calc-hero-inner {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: var(--spacing-lg);
+  }
+
+  .calc-hero-left {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--spacing-md);
+    min-width: 0;
+    flex: 1;
+  }
+
+  /* Icon */
+  .ch-icon-wrap {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    border-radius: var(--radius-md);
+    background-color: color-mix(in srgb, var(--color-ink) 6%, transparent);
+    border: 1px solid color-mix(in srgb, var(--color-ink) 10%, transparent);
+    color: var(--color-ink);
+    flex-shrink: 0;
+  }
+
+  /* Meta block */
+  .ch-meta {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-xs);
+    min-width: 0;
+  }
+
+  .ch-status-row {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+  }
+
+  .ch-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-family: var(--font-family-mono);
+    font-size: 10px;
+    font-weight: 500;
+    padding: 2px 7px;
+    border-radius: 3px;
+    letter-spacing: 0.03em;
+    flex-shrink: 0;
+  }
+
+  .ch-badge--live {
+    color: #16a34a;
+    background-color: color-mix(in srgb, #22c55e 10%, transparent);
+    border: 1px solid color-mix(in srgb, #22c55e 18%, transparent);
+  }
+
+  [data-theme='dark'] .ch-badge--live {
+    color: #4ade80;
+    background-color: color-mix(in srgb, #22c55e 12%, transparent);
+    border-color: color-mix(in srgb, #22c55e 22%, transparent);
+  }
+
+  .ch-badge--pending {
+    color: var(--color-muted);
+    background-color: var(--color-canvas-soft-2);
+    border: 1px solid var(--color-hairline);
+  }
+
+  .ch-status-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background-color: #22c55e;
+    flex-shrink: 0;
+  }
+
+  .ch-category {
+    font-family: var(--font-family-mono);
+    font-size: 10px;
+    color: var(--color-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+
+  .ch-title {
+    font-size: var(--font-size-display-md);
+    font-weight: 600;
+    color: var(--color-ink);
+    letter-spacing: var(--tracking-display-md);
+    line-height: 1.2;
+    margin: 2px 0 0;
+  }
+
+  .ch-desc {
+    font-size: var(--font-size-body-sm);
+    color: var(--color-body);
+    line-height: 1.55;
+    margin: 0;
+    max-width: 560px;
+  }
+
+  /* Feature pills */
+  .ch-features {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 4px;
+  }
+
+  .ch-feature-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-family: var(--font-family-mono);
+    font-size: 10px;
+    color: var(--color-body);
+    background-color: var(--color-canvas-soft-2);
+    border: 1px solid var(--color-hairline);
+    border-radius: 3px;
+    padding: 2px 7px;
+    letter-spacing: 0.02em;
+    white-space: nowrap;
+  }
+
+  .ch-feature-pill svg {
+    color: #16a34a;
+    flex-shrink: 0;
+  }
+
+  [data-theme='dark'] .ch-feature-pill svg {
+    color: #4ade80;
+  }
+
+  /* Trust strip */
+  .ch-trust {
+    margin-top: 6px;
+  }
+
+  /* Right: favorite button */
+  .calc-hero-right {
+    flex-shrink: 0;
+    padding-top: 2px;
+  }
+
+  /* Responsive */
+  @media (max-width: 480px) {
+    .calc-hero {
+      padding: var(--spacing-md);
+    }
+
+    .calc-hero-inner {
+      flex-direction: column-reverse;
+      gap: var(--spacing-sm);
+    }
+
+    .calc-hero-right {
+      align-self: flex-end;
+    }
+
+    .ch-title {
+      font-size: var(--font-size-display-sm, 1.25rem);
+    }
+  }
+</style>

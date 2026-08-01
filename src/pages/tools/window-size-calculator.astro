@@ -19,11 +19,10 @@ import WarningBanner from '@/components/calculator/WarningBanner.astro';
 import RecommendationCard from '@/components/calculator/RecommendationCard.astro';
 import RelatedTools from '@/components/calculator/RelatedTools.astro';
 import FAQSection from '@/components/content/FAQSection.astro';
-import ToolIcon from '@/components/ui/ToolIcon.astro';
-import TrustStrip from '@/components/ui/TrustStrip.astro';
 import HistoryPanel from '@/components/calculator/HistoryPanel.astro';
 import ShareExportBar from '@/components/calculator/ShareExportBar.astro';
-import FavoriteButton from '@/components/ui/FavoriteButton.astro';
+import CalculatorHero from '@/components/calculator/CalculatorHero.astro';
+import RecommendationGrid from '@/components/calculator/RecommendationGrid.astro';
 
 import { getToolBySlug, getRelatedTools } from '@/data/tools.js';
 import type { BreadcrumbItem, FAQ } from '@/types/calculator.js';
@@ -67,36 +66,23 @@ const faqs: FAQ[] = [
 ---
 
 <ToolLayout tool={tool} breadcrumbs={breadcrumbs} faqs={faqs}>
-  <!-- ── Page Hero ─────────────────────────────────────────────────── -->
-  <header class="calc-hero">
-    <div class="calc-hero-left">
-      <div class="icon-container icon-container-lg">
-        <ToolIcon name={tool.icon ?? 'Ruler'} size={22} />
-      </div>
-      <div>
-        <div class="calc-status-badge">
-          <span class="calc-status-dot" aria-hidden="true"></span>
-          Available
-        </div>
-        <h1 class="calc-hero-title">{tool.title}</h1>
-        <p class="calc-hero-desc">
-          Enter your window dimensions once. Get area, perimeter, aspect ratio, nearest standard
-          size, curtain recommendations, and glass estimates — all instantly.
-        </p>
-        <TrustStrip
-          compact
-          items={[
-            { label: 'Instant results' },
-            { label: 'All units' },
-            { label: 'No signup' },
-            { label: 'Standard size lookup' },
-          ]}
-          class="calc-trust"
-        />
-      </div>
-    </div>
-    <FavoriteButton slug="window-size-calculator" label="Favorite this calculator" />
-  </header>
+  <!-- ── Page Hero ─────────────────────────────────────────────────────── -->
+  <CalculatorHero
+    tool={tool}
+    description="Enter your window dimensions once. Get area, perimeter, aspect ratio, nearest standard size, curtain recommendations, and glass estimates — all instantly."
+    features={[
+      'Window area & perimeter',
+      'Nearest standard size match',
+      'Curtain & blind sizing',
+      'Glass area & weight estimate',
+    ]}
+    trustItems={[
+      { label: 'Instant results' },
+      { label: 'All units' },
+      { label: 'No signup' },
+      { label: 'Standard size lookup' },
+    ]}
+  />
 
   <!-- ── Dashboard Grid ─────────────────────────────────────────────── -->
   <div class="calc-dashboard">
@@ -201,7 +187,13 @@ const faqs: FAQ[] = [
       </div>
 
       <!-- Empty state -->
-      <EmptyState />
+      <EmptyState
+        checklist={[
+          'Select your preferred unit (inches, mm, cm…)',
+          'Enter the window width',
+          'Enter the window height',
+        ]}
+      />
 
       <!-- Results (hidden until calculation) -->
       <div id="results-grid" hidden class="results-grid-container">
@@ -282,12 +274,8 @@ const faqs: FAQ[] = [
           </ul>
         </div>
 
-        <!-- ── Smart Recommendations ─────────────────────────────── -->
-        <div id="rec-section" class="rec-section" hidden>
-
-          <div class="rec-section-header">
-            <span class="rec-section-title">Smart recommendations</span>
-          </div>
+        <!-- ── Smart Recommendations ──────────────────────────────────── -->
+        <RecommendationGrid id="rec-section" title="Smart recommendations">
 
           <!-- Nearest standard size — visual comparison -->
           <RecommendationCard label="Standard size match" badgeId="rec-std-badge" noteId="rec-std-note" noteText="US residential standard (AAMA)">
@@ -340,7 +328,7 @@ const faqs: FAQ[] = [
             </a>
           </RecommendationCard>
 
-        </div>
+        </RecommendationGrid>
       </div>
     </div>
   </div>
@@ -365,24 +353,28 @@ const faqs: FAQ[] = [
         title: 'Window Glass Calculator',
         description: 'Estimate glazing area and glass weight using your current width and height.',
         href: '/tools/window-glass-calculator',
+        icon: 'PanelTop',
         ariaLabel: 'Window Glass Calculator',
       },
       {
         title: 'Replacement Calculator',
         description: 'Find the closest standard replacement size for your opening dimensions.',
         href: '/tools/replacement-window-calculator',
+        icon: 'RefreshCw',
         ariaLabel: 'Replacement Window Calculator',
       },
       {
         title: 'Curtain Calculator',
         description: 'Instantly size curtains using your measured width and drop height.',
         href: '/tools/curtain-size-calculator',
+        icon: 'Blinds',
         ariaLabel: 'Curtain Size Calculator',
       },
       {
         title: 'AC Sizing Calculator',
         description: 'Use your window area to estimate the right BTU rating for cooling.',
         href: '/tools/window-ac-calculator',
+        icon: 'AirVent',
         ariaLabel: 'Window AC Calculator',
       },
     ]}
@@ -782,78 +774,6 @@ const faqs: FAQ[] = [
 </script>
 
 <style>
-  /* ── Hero ─────────────────────────────────────────────────────────── */
-
-  .calc-hero {
-    display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    gap: var(--spacing-xl);
-    margin-bottom: var(--spacing-xl);
-    padding-bottom: var(--spacing-lg);
-    border-bottom: 1px solid var(--color-hairline);
-  }
-
-  .calc-hero-left {
-    display: flex;
-    align-items: flex-start;
-    gap: var(--spacing-md);
-    flex: 1;
-  }
-
-  .calc-status-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    font-size: 11px;
-    font-family: var(--font-family-mono);
-    font-weight: 500;
-    color: #16a34a;
-    background-color: color-mix(in srgb, #22c55e 8%, transparent);
-    border: 1px solid color-mix(in srgb, #22c55e 18%, transparent);
-    border-radius: 4px;
-    padding: 2px 7px;
-    margin-bottom: var(--spacing-xs);
-    letter-spacing: 0.02em;
-  }
-
-  [data-theme='dark'] .calc-status-badge {
-    color: #4ade80;
-    background-color: color-mix(in srgb, #22c55e 10%, transparent);
-    border-color: color-mix(in srgb, #22c55e 20%, transparent);
-  }
-
-  .calc-status-dot {
-    width: 5px;
-    height: 5px;
-    border-radius: 50%;
-    background-color: #22c55e;
-    flex-shrink: 0;
-    animation: blink-dot 2.5s ease-in-out infinite;
-  }
-
-  @keyframes blink-dot {
-    0%, 100% { opacity: 1; }
-    50%       { opacity: 0.4; }
-  }
-
-  .calc-hero-title {
-    font-size: var(--font-size-display-md);
-    font-weight: 600;
-    color: var(--color-ink);
-    letter-spacing: var(--tracking-display-md);
-    margin: 0 0 var(--spacing-xs);
-    line-height: 1.15;
-  }
-
-  .calc-hero-desc {
-    font-size: var(--font-size-body-sm);
-    color: var(--color-body);
-    margin: 0;
-    max-width: 520px;
-    line-height: 1.6;
-  }
-
   /* ── Dashboard Grid ───────────────────────────────────────────────── */
 
   .calc-dashboard {

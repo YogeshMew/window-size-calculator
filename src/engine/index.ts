@@ -24,3 +24,6 @@ export * from './format.js';
 export * from './ac.js';
 export * from './curtain.js';
 export * from './glass.js';
+export * from './replacement.js';
+export * from './replacement-recommendations.js';
+

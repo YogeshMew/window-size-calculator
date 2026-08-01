@@ -213,10 +213,14 @@ export type StandardRegion = 'US' | 'UK' | 'CA' | 'AU' | 'EU';
 
 /** A single entry in the standard-size database */
 export interface StandardSize {
-  /** Width in inches (US/CA) or mm (UK/AU/EU) */
+  /** Width in inches */
   widthIn: number;
-  /** Height in inches (US/CA) or mm (UK/AU/EU) */
+  /** Height in inches */
   heightIn: number;
+  /** Width in mm */
+  widthMm: number;
+  /** Height in mm */
+  heightMm: number;
   /** Common window type for this size */
   type?: string;
   /** AAMA / BS / AS catalogue code if applicable */
@@ -286,22 +290,121 @@ export interface ACBTUResult {
   note: string;
 }
 
-/** Replacement planning recommendation */
-export interface ReplacementRecommendation {
-  /** Nearest standard size result */
-  standardMatch: StandardSizeResult;
-  /** Rough opening width (frame + 12.7 mm each side), in mm */
-  roughOpeningWidthMm: number;
-  /** Rough opening height (frame + 12.7 mm each side), in mm */
-  roughOpeningHeightMm: number;
-  /** Whether a standard replacement is likely available */
-  isStandardAvailable: boolean;
-  /** Whether a custom order is required */
-  requiresCustomOrder: boolean;
-  /** Shim space each side, in mm */
-  shimSpaceMm: number;
   /** Human-readable notes */
   notes: string[];
+}
+
+/** Measurement input profile for replacement calculation */
+export type ReplacementMeasurementType = 'existing-window' | 'rough-opening' | 'frame-size' | 'glass-only';
+
+/** Installation method classification */
+export type ReplacementInstallationType = 'insert' | 'full-frame' | 'new-construction';
+
+/** Confidence rating for standard size match */
+export type ReplacementConfidence = 'excellent' | 'good' | 'possible' | 'custom-required';
+
+/** Cost impact guidance classification */
+export type CostImpactTier = 'standard-lowest' | 'minor-customization' | 'custom-higher';
+
+/** Installation DIY difficulty rating */
+export type DIYDifficulty = 'easy' | 'moderate' | 'professional-recommended';
+
+/** Detailed input for replacement calculation engine */
+export interface DetailedReplacementInput {
+  /** Measured width in raw user units */
+  width: number;
+  /** Measured height in raw user units */
+  height: number;
+  /** Measurement unit */
+  unit: MeasurementUnit;
+  /** Region for standard size comparison */
+  region: StandardRegion;
+  /** What was measured */
+  measurementType: ReplacementMeasurementType;
+  /** Window style/type */
+  windowType: WindowType;
+  /** Installation approach */
+  installationType: ReplacementInstallationType;
+}
+
+/** Pure mathematical calculation result for replacement window */
+export interface ReplacementCalculationResult {
+  /** Input width normalized to mm */
+  widthMm: number;
+  /** Input height normalized to mm */
+  heightMm: number;
+  /** Display unit selected */
+  displayUnit: MeasurementUnit;
+  /** Region used for lookup */
+  region: StandardRegion;
+  /** Measurement type */
+  measurementType: ReplacementMeasurementType;
+  /** Window type */
+  windowType: WindowType;
+  /** Installation type */
+  installationType: ReplacementInstallationType;
+  /** Frame width in mm (calculated from measurementType) */
+  frameWidthMm: number;
+  /** Frame height in mm (calculated from measurementType) */
+  frameHeightMm: number;
+  /** Nearest standard size lookup result */
+  standardMatch: StandardSizeResult;
+  /** Top 3 nearest standard sizes ranked by proximity */
+  topMatches: StandardSizeResult[];
+  /** Distance score in inches (Euclidean distance) */
+  distanceIn: number;
+  /** Standard match percentage score (0-100%) */
+  matchPercentage: number;
+  /** Confidence rating tier */
+  confidence: ReplacementConfidence;
+  /** Whether a custom window unit is required */
+  requiresCustomOrder: boolean;
+  /** Recommended rough opening width in mm */
+  roughOpeningWidthMm: number;
+  /** Recommended rough opening height in mm */
+  roughOpeningHeightMm: number;
+  /** Shim space required per side in mm */
+  shimSpaceMm: number;
+  /** Perimeter clearance in mm */
+  clearanceMm: number;
+  /** Cost impact classification */
+  costImpact: CostImpactTier;
+  /** DIY installation difficulty rating */
+  diyDifficulty: DIYDifficulty;
+}
+
+/** Structured recommendation card for UI rendering */
+export interface ReplacementRecommendationCard {
+  title: string;
+  description: string;
+  status: 'pass' | 'fail' | 'info' | 'warning';
+  icon: string;
+  nextAction?: string;
+  href?: string;
+}
+
+/** Full set of UI recommendations generated from calculation results */
+export interface ReplacementRecommendationSet {
+  /** Trust explanation: "Why this standard size?" */
+  whyThisSize: string;
+  /** 5-Star rating string (e.g., "★★★★★") */
+  starRating: string;
+  /** Status emoji indicator (e.g., "🟢", "🟡", "🟠", "🔴") */
+  statusEmoji: string;
+  /** Text summary of star rating */
+  starText: string;
+  /** Frame recommendation advice */
+  frameRecommendation: string;
+  /** Cost impact title and guidance note */
+  costImpactTitle: string;
+  costImpactNote: string;
+  /** DIY difficulty title and guidance note */
+  diyTitle: string;
+  diyNote: string;
+  /** Array of actionable UI recommendation cards */
+  cards: ReplacementRecommendationCard[];
+  /** Detailed step-by-step installation notes */
+  installationNotes: string[];
 }
 
 // ---------------------------------------------------------------------------

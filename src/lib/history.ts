@@ -102,6 +102,10 @@ export function historyAdd<T extends Record<string, string>>(
   return entry;
 }
 
+/** Alias for historyAdd */
+export const saveToHistory = historyAdd;
+
+
 /**
  * Retrieve all history entries for a calculator, most recent first.
  *

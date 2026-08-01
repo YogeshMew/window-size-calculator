@@ -13,6 +13,8 @@
  */
 
 import { copyToClipboard, buildSummary } from './share.js';
+export { buildSummary } from './share.js';
+
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Print / PDF
