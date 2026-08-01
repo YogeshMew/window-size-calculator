@@ -1,0 +1,1646 @@
+---
+/**
+ * WindowMetrics — Window AC BTU Calculator
+ * Route: /tools/window-ac-calculator
+ *
+ * Calculates the correct BTU window AC unit for a room based on:
+ * dimensions, climate zone, sun exposure, room type, insulation, and occupants.
+ *
+ * Reuses: CalculatorLayout is intentionally NOT used here so we can use
+ * the same two-panel layout as window-size-calculator for visual consistency.
+ */
+
+import ToolLayout from '@/layouts/ToolLayout.astro';
+import InputCard from '@/components/calculator/InputCard.astro';
+import UnitSelector from '@/components/calculator/UnitSelector.astro';
+import ResultCard from '@/components/calculator/ResultCard.astro';
+import EmptyState from '@/components/calculator/EmptyState.astro';
+import WarningBanner from '@/components/calculator/WarningBanner.astro';
+import RecommendationCard from '@/components/calculator/RecommendationCard.astro';
+import RelatedTools from '@/components/calculator/RelatedTools.astro';
+import FAQSection from '@/components/content/FAQSection.astro';
+import ToolIcon from '@/components/ui/ToolIcon.astro';
+import TrustStrip from '@/components/ui/TrustStrip.astro';
+import HistoryPanel from '@/components/calculator/HistoryPanel.astro';
+import ShareExportBar from '@/components/calculator/ShareExportBar.astro';
+import FavoriteButton from '@/components/ui/FavoriteButton.astro';
+
+import { getToolBySlug } from '@/data/tools.js';
+import type { BreadcrumbItem, FAQ } from '@/types/calculator.js';
+
+const tool = getToolBySlug('window-ac-calculator')!;
+
+const breadcrumbs: BreadcrumbItem[] = [
+  { label: 'Home', href: '/' },
+  { label: 'Tools', href: '/tools' },
+  { label: tool.title, href: tool.href, current: true },
+];
+
+const faqs: FAQ[] = [
+  {
+    question: 'How many BTU do I need for my room?',
+    answer:
+      'A common starting point is 20 BTU per square foot of floor area. A 150 sq ft bedroom typically needs about 5,000–6,000 BTU. However, sunlight, insulation, ceiling height, and climate significantly affect the true requirement. Use this calculator to get a tailored recommendation.',
+  },
+  {
+    question: 'What does BTU stand for?',
+    answer:
+      'BTU stands for British Thermal Unit — the amount of energy needed to raise the temperature of one pound of water by 1°F. For air conditioners, a higher BTU rating means the unit can remove more heat from the room per hour.',
+  },
+  {
+    question: 'Is it better to get a larger BTU air conditioner?',
+    answer:
+      'No. An oversized AC unit cools the room quickly but does not run long enough to remove humidity, leaving the room feeling clammy and uncomfortable. It also cycles on and off more frequently, shortening the unit\'s lifespan. Always use the right-sized unit for your room.',
+  },
+  {
+    question: 'What is a refrigeration ton (ton of cooling)?',
+    answer:
+      '1 ton of cooling = 12,000 BTU/hr. It originated from the amount of heat needed to melt one ton of ice in 24 hours. Window AC units range from 0.4 tons (5,000 BTU) to 2 tons (24,000 BTU).',
+  },
+  {
+    question: 'How do I reduce my AC running costs?',
+    answer:
+      'Close blinds or curtains on sunny windows, seal gaps around doors and windows, ensure your ceiling fan is set to rotate counter-clockwise in summer, and choose an Energy Star certified unit with a high EER rating. Improving insulation can cut your BTU requirement by up to 18%.',
+  },
+];
+---
+
+<ToolLayout tool={tool} breadcrumbs={breadcrumbs} faqs={faqs}>
+
+  <!-- ── Page Hero ─────────────────────────────────────────────────── -->
+  <header class="calc-hero">
+    <div class="calc-hero-left">
+      <div class="icon-container icon-container-lg">
+        <ToolIcon name={tool.icon ?? 'AirVent'} size={22} />
+      </div>
+      <div>
+        <div class="calc-status-badge">
+          <span class="calc-status-dot" aria-hidden="true"></span>
+          Available
+        </div>
+        <h1 class="calc-hero-title">{tool.title}</h1>
+        <p class="calc-hero-desc">
+          Enter your room size and conditions. Get a precise BTU recommendation,
+          energy cost estimate, and cooling suitability rating — instantly.
+        </p>
+        <TrustStrip
+          compact
+          items={[
+            { label: 'HVAC-accurate' },
+            { label: 'All units' },
+            { label: 'No signup' },
+            { label: 'Energy cost estimate' },
+          ]}
+          class="calc-trust"
+        />
+      </div>
+    </div>
+    <FavoriteButton slug="window-ac-calculator" label="Favorite this calculator" />
+  </header>
+
+  <!-- ── Dashboard Grid ─────────────────────────────────────────────── -->
+  <div class="calc-dashboard">
+
+    <!-- LEFT PANEL — Inputs ──────────────────────────────────────── -->
+    <div class="calc-panel calc-panel-inputs">
+
+      <!-- Section: Room Dimensions -->
+      <div class="panel-header">
+        <span class="panel-label">Room dimensions</span>
+        <span class="panel-hint">All units supported</span>
+      </div>
+
+      <!-- Unit selector -->
+      <div class="unit-row">
+        <span class="unit-row-label">Unit</span>
+        <UnitSelector selected="ft" id="unit-selector" name="unit" />
+      </div>
+
+      <!-- Room Width -->
+      <InputCard label="Room Width" inputId="input-width" hint="e.g. 12 or 12 1/2" required>
+        <input
+          type="text"
+          id="input-width"
+          name="width"
+          class="input"
+          placeholder="12"
+          inputmode="decimal"
+          autocomplete="off"
+          aria-describedby="input-width-hint"
+        />
+      </InputCard>
+
+      <!-- Room Length -->
+      <InputCard label="Room Length" inputId="input-length" hint="e.g. 14 or 14 1/2" required>
+        <input
+          type="text"
+          id="input-length"
+          name="length"
+          class="input"
+          placeholder="14"
+          inputmode="decimal"
+          autocomplete="off"
+          aria-describedby="input-length-hint"
+        />
+      </InputCard>
+
+      <!-- Ceiling Height (optional) -->
+      <InputCard label="Ceiling Height" inputId="input-ceiling" hint="default 8 ft">
+        <input
+          type="text"
+          id="input-ceiling"
+          name="ceiling"
+          class="input"
+          placeholder="8"
+          inputmode="decimal"
+          autocomplete="off"
+          aria-describedby="input-ceiling-hint"
+        />
+      </InputCard>
+
+      <!-- Error / warning banner -->
+      <WarningBanner />
+
+      <!-- Section: Room Details -->
+      <div class="panel-section-header">
+        <span class="panel-label">Room details</span>
+      </div>
+
+      <!-- Room Type -->
+      <InputCard label="Room Type" inputId="input-room-type">
+        <select id="input-room-type" class="input-select" name="room-type">
+          <option value="bedroom" selected>Bedroom</option>
+          <option value="living-room">Living Room</option>
+          <option value="kitchen">Kitchen</option>
+          <option value="office">Office</option>
+          <option value="server-room">Server Room</option>
+        </select>
+      </InputCard>
+
+      <!-- Climate Zone -->
+      <InputCard label="Climate" inputId="input-climate">
+        <select id="input-climate" class="input-select" name="climate">
+          <option value="very-cold">Very Cold — Alpine / Sub-Arctic</option>
+          <option value="cold">Cold — Northern regions</option>
+          <option value="moderate" selected>Moderate — Temperate</option>
+          <option value="warm">Warm — Subtropical</option>
+          <option value="hot">Hot — Tropical / Southern US</option>
+          <option value="very-hot">Very Hot — Desert / Equatorial</option>
+        </select>
+      </InputCard>
+
+      <!-- Sun Exposure -->
+      <InputCard label="Sun Exposure" inputId="sun-selector">
+        <div
+          class="option-selector"
+          id="sun-selector"
+          role="group"
+          aria-label="Window sun exposure"
+        >
+          <button type="button" class="option-btn" aria-pressed="false" data-value="shade">Shade</button>
+          <button type="button" class="option-btn" aria-pressed="false" data-value="north">North</button>
+          <button type="button" class="option-btn" aria-pressed="true"  data-value="east">East</button>
+          <button type="button" class="option-btn" aria-pressed="false" data-value="west">West</button>
+          <button type="button" class="option-btn" aria-pressed="false" data-value="south">South</button>
+          <button type="button" class="option-btn" aria-pressed="false" data-value="full-sun">Full Sun</button>
+        </div>
+      </InputCard>
+
+      <!-- Insulation -->
+      <InputCard label="Insulation Quality" inputId="insulation-selector">
+        <div
+          class="option-selector"
+          id="insulation-selector"
+          role="group"
+          aria-label="Room insulation quality"
+        >
+          <button type="button" class="option-btn option-btn--wide" aria-pressed="false" data-value="excellent">Excellent</button>
+          <button type="button" class="option-btn option-btn--wide" aria-pressed="true"  data-value="average">Average</button>
+          <button type="button" class="option-btn option-btn--wide" aria-pressed="false" data-value="poor">Poor</button>
+        </div>
+      </InputCard>
+
+      <!-- Occupants -->
+      <InputCard label="Occupants" inputId="input-occupants" hint="people in room">
+        <div class="occupants-stepper">
+          <button type="button" class="stepper-btn" id="occ-dec" aria-label="Decrease occupants">−</button>
+          <input
+            type="number"
+            id="input-occupants"
+            name="occupants"
+            class="stepper-input"
+            min="1"
+            max="50"
+            value="2"
+            aria-describedby="input-occupants-hint"
+          />
+          <button type="button" class="stepper-btn" id="occ-inc" aria-label="Increase occupants">+</button>
+        </div>
+      </InputCard>
+
+    </div>
+
+    <!-- RIGHT PANEL — Results ────────────────────────────────────── -->
+    <div class="calc-panel calc-panel-results" aria-label="Calculation results" aria-live="polite">
+
+      <!-- Panel header -->
+      <div class="panel-header">
+        <span class="panel-label">Results</span>
+        <span class="panel-hint" id="results-unit-display">—</span>
+      </div>
+
+      <!-- Empty state -->
+      <EmptyState
+        title="Enter room dimensions"
+        sub="Fill in Width and Length to see your BTU recommendation"
+        icon="ruler"
+      />
+
+      <!-- Results (hidden until calculation) -->
+      <div id="results-grid" hidden class="results-grid-container">
+
+        <!-- Primary metric — Recommended BTU -->
+        <ResultCard
+          id="result-btu"
+          label="Recommended BTU"
+          value="—"
+          unit="BTU"
+          highlight
+          usedFor={['AC Sizing', 'Energy', 'Planning']}
+        />
+
+        <!-- Secondary row: Tons | HP -->
+        <div class="results-secondary-row">
+          <ResultCard
+            id="result-tons"
+            label="AC Capacity"
+            value="—"
+            unit="ton"
+            sublabel="1 ton = 12,000 BTU/hr"
+          />
+          <ResultCard
+            id="result-hp"
+            label="Horsepower"
+            value="—"
+            unit="HP"
+            sublabel="Compressor rating approx."
+          />
+        </div>
+
+        <!-- Third row: Area | Volume -->
+        <div class="results-secondary-row">
+          <ResultCard
+            id="result-area"
+            label="Room Area"
+            value="—"
+            unit=""
+            sublabel="Floor plan"
+          />
+          <ResultCard
+            id="result-volume"
+            label="Room Volume"
+            value="—"
+            unit=""
+            sublabel="Air to cool"
+          />
+        </div>
+
+        <!-- Energy row: Annual kWh | Annual Cost -->
+        <div class="results-energy-row">
+          <div class="energy-item">
+            <span class="energy-label">Est. Annual Energy</span>
+            <span id="result-kwh" class="energy-value">
+              <span class="result-value-text">—</span>
+              <span class="result-unit">kWh/yr</span>
+            </span>
+            <span class="energy-note">Based on 1,500 hrs use · EER 11</span>
+          </div>
+          <div class="energy-divider" aria-hidden="true"></div>
+          <div class="energy-item">
+            <span class="energy-label">Est. Annual Cost</span>
+            <span id="result-cost" class="energy-value">
+              <span class="result-value-text">—</span>
+              <span class="result-unit">/ yr</span>
+            </span>
+            <span class="energy-note">At $0.16 / kWh (US avg)</span>
+          </div>
+        </div>
+
+        <!-- Suitability card -->
+        <div id="suitability-section" class="suitability-section">
+          <div class="suitability-header">
+            <span class="suitability-title-label">Cooling suitability</span>
+            <span id="suitability-badge" class="rec-badge" data-type="exact">—</span>
+          </div>
+          <p id="suitability-note" class="suitability-note"></p>
+        </div>
+
+        <!-- ── Smart Recommendations ─────────────────────────────── -->
+        <div id="rec-section" class="rec-section" hidden>
+
+          <div class="rec-section-header">
+            <span class="rec-section-title">Recommendations</span>
+          </div>
+
+          <!-- BTU range recommendation -->
+          <RecommendationCard
+            label="BTU range"
+            badgeId="rec-btu-badge"
+            noteId="rec-btu-note"
+            noteText=""
+          >
+            <div class="rec-two-col">
+              <div class="rec-col">
+                <span class="rec-col-label">Minimum</span>
+                <span id="rec-btu-min" class="rec-col-value">—</span>
+              </div>
+              <div class="rec-col">
+                <span class="rec-col-label">Recommended</span>
+                <span id="rec-btu-rec" class="rec-col-value">—</span>
+              </div>
+              <div class="rec-col">
+                <span class="rec-col-label">Maximum</span>
+                <span id="rec-btu-max" class="rec-col-value">—</span>
+              </div>
+            </div>
+          </RecommendationCard>
+
+          <!-- Dynamic recommendations populated by JS -->
+          <div id="rec-dynamic" class="rec-dynamic-list"></div>
+
+          <!-- Next step -->
+          <RecommendationCard label="Suggested next step" variant="next-step">
+            <a href="/tools/window-size-calculator" class="rec-next-link">
+              Measure your window opening →
+            </a>
+          </RecommendationCard>
+
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Share / Export / History ──────────────────────────────────── -->
+  <div class="calc-extras">
+    <ShareExportBar calculatorTitle={tool.title} />
+    <HistoryPanel slug="window-ac-calculator" />
+  </div>
+
+  <!-- ── FAQ ────────────────────────────────────────────────────────── -->
+  <div class="calc-faq">
+    <FAQSection faqs={faqs} />
+  </div>
+
+  <!-- ── Sidebar: Related tools ─────────────────────────────────────── -->
+  <RelatedTools
+    slot="sidebar"
+    heading="Related tools"
+    links={[
+      {
+        title: 'Window Size Calculator',
+        description: 'Measure your window opening to verify your AC unit will physically fit.',
+        href: '/tools/window-size-calculator',
+        ariaLabel: 'Window Size Calculator',
+      },
+      {
+        title: 'Window Insulation Calculator',
+        description: 'Estimate how much better insulation can reduce your cooling requirements.',
+        href: '/tools/window-insulation-calculator',
+        ariaLabel: 'Window Insulation Calculator',
+      },
+      {
+        title: 'Curtain Size Calculator',
+        description: 'Thermal curtains reduce solar heat gain, cutting your BTU needs by up to 15%.',
+        href: '/tools/curtain-size-calculator',
+        ariaLabel: 'Curtain Size Calculator',
+      },
+      {
+        title: 'Blind Size Calculator',
+        description: 'Cellular blinds provide good insulation, especially on south-facing windows.',
+        href: '/tools/blind-size-calculator',
+        ariaLabel: 'Blind Size Calculator',
+      },
+    ]}
+    tip={{
+      label: 'Energy tip',
+      text: 'Install your window AC in a shaded window if possible. A unit in direct sun can be 10–15% less efficient.',
+    }}
+    guide={{
+      label: 'Related guide',
+      href: '/guides',
+      text: 'How to install a window AC unit safely →',
+    }}
+  />
+
+</ToolLayout>
+
+<!-- Calculator logic — powered by the WindowMetrics AC engine -->
+<script>
+  /**
+   * Window AC BTU Calculator — Client Script
+   *
+   * Reads all inputs → calls calculateACBTU() → writes results to DOM.
+   * All validation is delegated to the AC engine (validateRoomDimension, etc.).
+   * Unit conversion uses the shared engine (normalizeInput, toMm).
+   */
+
+  import {
+    normalizeInput,
+    toMm,
+    calculateACBTU,
+    validateRoomDimension,
+    validateCeilingHeight,
+    validateOccupants,
+    formatBTU,
+    formatTons,
+    formatHP,
+    formatWatts,
+    formatAnnualKWh,
+    formatRoomArea,
+    formatRoomVolume,
+    suitabilityDataType,
+    DEFAULT_CEILING_HEIGHT_MM,
+  } from '@/engine/index.js';
+  import { fmtInput } from '@/utils/display.js';
+  import type { MeasurementUnit } from '@/types/calculator.js';
+  import type { ClimateZone, SunExposure, ACRoomType, InsulationLevel } from '@/engine/ac.js';
+  import { readUrlState, pushUrlState, buildShareUrl } from '@/lib/url-state.js';
+  import { recordVisit } from '@/lib/recent.js';
+  import { track } from '@/lib/analytics.js';
+  import { buildSummary } from '@/lib/share.js';
+  import { buildExportPayload } from '@/lib/export.js';
+
+  // ── State ──────────────────────────────────────────────────────────────────
+
+  let currentUnit: MeasurementUnit = 'ft';
+  let currentSun: SunExposure = 'east';
+  let currentInsulation: InsulationLevel = 'average';
+
+  recordVisit('window-ac-calculator');
+
+  // ── DOM references ─────────────────────────────────────────────────────────
+
+  const widthInput    = document.getElementById('input-width')     as HTMLInputElement;
+  const lengthInput   = document.getElementById('input-length')    as HTMLInputElement;
+  const ceilingInput  = document.getElementById('input-ceiling')   as HTMLInputElement;
+  const climateSelect = document.getElementById('input-climate')   as HTMLSelectElement;
+  const roomTypeSelect = document.getElementById('input-room-type') as HTMLSelectElement;
+  const occupantsInput = document.getElementById('input-occupants') as HTMLInputElement;
+  const errorEl       = document.getElementById('calc-error')      as HTMLElement;
+  const resultsEmpty  = document.getElementById('results-empty')   as HTMLElement;
+  const resultsGrid   = document.getElementById('results-grid')    as HTMLElement;
+  const unitDisplay   = document.getElementById('results-unit-display') as HTMLElement;
+  const recSection    = document.getElementById('rec-section')     as HTMLElement | null;
+
+  // ── Helpers ────────────────────────────────────────────────────────────────
+
+  function showError(message: string, field?: 'width' | 'length') {
+    if (!errorEl) return;
+    errorEl.dataset.level = 'error';
+    errorEl.textContent = message;
+
+    // Highlight the relevant input
+    widthInput?.classList.remove('input--error');
+    lengthInput?.classList.remove('input--error');
+    if (field === 'width')  widthInput?.classList.add('input--error');
+    if (field === 'length') lengthInput?.classList.add('input--error');
+  }
+
+  function clearError() {
+    if (!errorEl) return;
+    errorEl.textContent = '';
+    delete errorEl.dataset.level;
+    widthInput?.classList.remove('input--error');
+    lengthInput?.classList.remove('input--error');
+  }
+
+  function showWarning(message: string) {
+    if (!errorEl) return;
+    errorEl.dataset.level = 'warn';
+    errorEl.textContent = message;
+  }
+
+  function setText(id: string, text: string) {
+    const el = document.getElementById(id);
+    if (el) {
+      // If element has result-value-text child, update that; else update directly
+      const child = el.querySelector('.result-value-text');
+      if (child) child.textContent = text;
+      else el.textContent = text;
+    }
+  }
+
+  function setUnit(id: string, unit: string) {
+    const el = document.getElementById(id);
+    if (el) {
+      const unitChild = el.querySelector('.result-unit');
+      if (unitChild) unitChild.textContent = unit;
+    }
+  }
+
+  function setResult(el: HTMLElement | null, value: string, unit: string) {
+    if (!el) return;
+    const valueChild = el.querySelector('.result-value-text');
+    const unitChild  = el.querySelector('.result-unit');
+    if (valueChild) valueChild.textContent = value;
+    if (unitChild)  unitChild.textContent  = unit ? ` ${unit}` : '';
+  }
+
+  // ── URL state restore ─────────────────────────────────────────────────────
+  {
+    const saved = readUrlState();
+    const validUnits = ['mm', 'cm', 'm', 'in', 'ft'];
+    const savedUnit = saved.unit as MeasurementUnit;
+    if (savedUnit && validUnits.includes(savedUnit)) {
+      currentUnit = savedUnit;
+      document.querySelectorAll<HTMLButtonElement>('.unit-btn').forEach((b) => {
+        b.setAttribute('aria-pressed', b.dataset.unit === savedUnit ? 'true' : 'false');
+      });
+    }
+    if (saved.width   && widthInput)    widthInput.value   = saved.width;
+    if (saved.length  && lengthInput)   lengthInput.value  = saved.length;
+    if (saved.ceiling && ceilingInput)  ceilingInput.value = saved.ceiling;
+    if (saved.climate && climateSelect) climateSelect.value = saved.climate;
+    if (saved.room    && roomTypeSelect) roomTypeSelect.value = saved.room;
+    if (saved.occupants && occupantsInput) occupantsInput.value = saved.occupants;
+    if (saved.sun) {
+      currentSun = saved.sun as SunExposure;
+      document.querySelectorAll<HTMLButtonElement>('#sun-selector .option-btn').forEach((b) => {
+        b.setAttribute('aria-pressed', b.dataset.value === saved.sun ? 'true' : 'false');
+      });
+    }
+    if (saved.insulation) {
+      currentInsulation = saved.insulation as InsulationLevel;
+      document.querySelectorAll<HTMLButtonElement>('#insulation-selector .option-btn').forEach((b) => {
+        b.setAttribute('aria-pressed', b.dataset.value === saved.insulation ? 'true' : 'false');
+      });
+    }
+  }
+
+  // ── History restore listener ──────────────────────────────────────────────
+  document.addEventListener('wm:history-restore', (e) => {
+    const detail = (e as CustomEvent<{ inputs: Record<string, string>; entryId: string }>).detail;
+    const { inputs } = detail;
+    const validUnits = ['mm', 'cm', 'm', 'in', 'ft'];
+    const savedUnit = inputs.unit as MeasurementUnit;
+    if (savedUnit && validUnits.includes(savedUnit) && savedUnit !== currentUnit) {
+      currentUnit = savedUnit;
+      document.querySelectorAll<HTMLButtonElement>('.unit-btn').forEach((b) => {
+        b.setAttribute('aria-pressed', b.dataset.unit === savedUnit ? 'true' : 'false');
+      });
+    }
+    if (inputs.width   && widthInput)    widthInput.value    = inputs.width;
+    if (inputs.length  && lengthInput)   lengthInput.value   = inputs.length;
+    if (inputs.ceiling && ceilingInput)  ceilingInput.value  = inputs.ceiling;
+    if (inputs.climate && climateSelect) climateSelect.value = inputs.climate;
+    if (inputs.room    && roomTypeSelect) roomTypeSelect.value = inputs.room;
+    if (inputs.occupants && occupantsInput) occupantsInput.value = inputs.occupants;
+    if (inputs.sun) {
+      currentSun = inputs.sun as SunExposure;
+      document.querySelectorAll<HTMLButtonElement>('#sun-selector .option-btn').forEach((b) => {
+        b.setAttribute('aria-pressed', b.dataset.value === inputs.sun ? 'true' : 'false');
+      });
+    }
+    if (inputs.insulation) {
+      currentInsulation = inputs.insulation as InsulationLevel;
+      document.querySelectorAll<HTMLButtonElement>('#insulation-selector .option-btn').forEach((b) => {
+        b.setAttribute('aria-pressed', b.dataset.value === inputs.insulation ? 'true' : 'false');
+      });
+    }
+    calculate();
+    track({ type: 'history_restored', properties: { slug: 'window-ac-calculator', entryId: detail.entryId } });
+  });
+
+  // ── Keyboard UX ───────────────────────────────────────────────────────────
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && errorEl?.textContent) clearError();
+  });
+  // Arrow keys on occupants stepper
+  occupantsInput?.addEventListener('keydown', (e) => {
+    const val = parseInt(occupantsInput.value ?? '2', 10);
+    if (e.key === 'ArrowUp'   && val < 50) { occupantsInput.value = String(val + 1); calculate(); }
+    if (e.key === 'ArrowDown' && val > 1)  { occupantsInput.value = String(val - 1); calculate(); }
+  });
+
+  // Default ceiling height in the current unit (for the placeholder)
+  function defaultCeilingInUnit(unit: MeasurementUnit): string {
+    const mm = DEFAULT_CEILING_HEIGHT_MM;
+    const map: Record<MeasurementUnit, string> = {
+      mm: '2438',
+      cm: '243.8',
+      m:  '2.44',
+      in: '96',
+      ft: '8',
+    };
+    return map[unit];
+  }
+
+  // ── Main calculation ───────────────────────────────────────────────────────
+
+  function calculate() {
+    clearError();
+
+    const rawWidth   = widthInput?.value.trim()  ?? '';
+    const rawLength  = lengthInput?.value.trim() ?? '';
+    const rawCeiling = ceilingInput?.value.trim() ?? '';
+
+    // Empty required fields — show neutral empty state
+    if (!rawWidth || !rawLength) {
+      if (resultsEmpty) resultsEmpty.hidden = false;
+      if (resultsGrid)  resultsGrid.hidden  = true;
+      if (recSection)   recSection.hidden   = true;
+      return;
+    }
+
+    // ── Parse width ──
+    const parsedWidth = normalizeInput(rawWidth, currentUnit);
+    if (parsedWidth === null || parsedWidth <= 0) {
+      showError(
+        `"${rawWidth}" is not a valid width. Enter a number (12), decimal (12.5), or fraction (12 1/2).`,
+        'width',
+      );
+      if (resultsEmpty) resultsEmpty.hidden = false;
+      if (resultsGrid)  resultsGrid.hidden  = true;
+      return;
+    }
+
+    // ── Parse length ──
+    const parsedLength = normalizeInput(rawLength, currentUnit);
+    if (parsedLength === null || parsedLength <= 0) {
+      showError(
+        `"${rawLength}" is not a valid length. Enter a number (14), decimal (14.5), or fraction (14 1/2).`,
+        'length',
+      );
+      if (resultsEmpty) resultsEmpty.hidden = false;
+      if (resultsGrid)  resultsGrid.hidden  = true;
+      return;
+    }
+
+    // ── Convert dimensions to mm ──
+    const widthMm  = toMm(parsedWidth,  currentUnit);
+    const lengthMm = toMm(parsedLength, currentUnit);
+
+    // ── Validate room dimensions ──
+    const widthVal  = validateRoomDimension(widthMm,  'width');
+    const lengthVal = validateRoomDimension(lengthMm, 'length');
+
+    if (!widthVal.valid) {
+      showError(widthVal.message ?? 'Invalid room width.', 'width');
+      if (resultsEmpty) resultsEmpty.hidden = false;
+      if (resultsGrid)  resultsGrid.hidden  = true;
+      return;
+    }
+    if (!lengthVal.valid) {
+      showError(lengthVal.message ?? 'Invalid room length.', 'length');
+      if (resultsEmpty) resultsEmpty.hidden = false;
+      if (resultsGrid)  resultsGrid.hidden  = true;
+      return;
+    }
+
+    // ── Parse ceiling height (optional; default 8 ft = 2,438.4 mm) ──
+    let ceilingMm = DEFAULT_CEILING_HEIGHT_MM;
+    if (rawCeiling) {
+      const parsedCeiling = normalizeInput(rawCeiling, currentUnit);
+      if (parsedCeiling === null || parsedCeiling <= 0) {
+        showError('Ceiling height is not valid. Enter a number like 8 (for 8 ft).');
+        if (resultsEmpty) resultsEmpty.hidden = false;
+        if (resultsGrid)  resultsGrid.hidden  = true;
+        return;
+      }
+      ceilingMm = toMm(parsedCeiling, currentUnit);
+      const ceilingVal = validateCeilingHeight(ceilingMm);
+      if (!ceilingVal.valid) {
+        showError(ceilingVal.message ?? 'Invalid ceiling height.');
+        if (resultsEmpty) resultsEmpty.hidden = false;
+        if (resultsGrid)  resultsGrid.hidden  = true;
+        return;
+      }
+    }
+
+    // ── Read select and button group values ──
+    const climate   = (climateSelect?.value    ?? 'moderate')  as ClimateZone;
+    const roomType  = (roomTypeSelect?.value   ?? 'bedroom')   as ACRoomType;
+
+    // ── Occupants ──
+    const rawOccupants = parseInt(occupantsInput?.value ?? '2', 10);
+    const occupantsVal = validateOccupants(rawOccupants);
+    if (!occupantsVal.valid) {
+      showError(occupantsVal.message ?? 'Invalid occupant count.');
+      if (resultsEmpty) resultsEmpty.hidden = false;
+      if (resultsGrid)  resultsGrid.hidden  = true;
+      return;
+    }
+
+    // ── Run calculation ──
+    const result = calculateACBTU({
+      widthMm,
+      lengthMm,
+      ceilingHeightMm: ceilingMm,
+      climate,
+      sunExposure:     currentSun,
+      roomType,
+      insulation:      currentInsulation,
+      occupants:       rawOccupants,
+    });
+
+    // ── Show engine warnings (non-blocking) ──
+    if (result.warnings.length > 0) {
+      // Show the most severe warning
+      const topWarning = result.warnings.find(w => w.level === 'warning')
+        ?? result.warnings.find(w => w.level === 'error')
+        ?? result.warnings[0];
+      showWarning(topWarning.message);
+    }
+
+    // ── Update unit display header ──
+    if (unitDisplay) {
+      const wDisplay = widthMm.toFixed(0);
+      const lDisplay = lengthMm.toFixed(0);
+      unitDisplay.textContent = `${parsedWidth} × ${parsedLength} ${currentUnit}`;
+    }
+
+    // ── Update result cards ──
+
+    // BTU
+    const btuCard = document.getElementById('result-btu');
+    setResult(btuCard, result.recommendedBTU.toLocaleString('en-US'), 'BTU');
+
+    // Tons
+    const tonsCard = document.getElementById('result-tons');
+    setResult(tonsCard, result.recommendedTons.toFixed(1), 'ton');
+
+    // HP
+    const hpCard = document.getElementById('result-hp');
+    setResult(hpCard, result.recommendedHP.toFixed(1), 'HP');
+
+    // Area
+    const areaCard = document.getElementById('result-area');
+    const areaText = formatRoomArea(result.roomAreaSqFt, result.roomAreaM2, currentUnit);
+    const areaParts = areaText.split(' ');
+    setResult(areaCard, areaParts[0], areaParts.slice(1).join(' '));
+
+    // Volume
+    const volumeCard = document.getElementById('result-volume');
+    const volText = formatRoomVolume(result.roomVolumeCuFt, result.roomVolumeM3, currentUnit);
+    const volParts = volText.split(' ');
+    setResult(volumeCard, volParts[0], volParts.slice(1).join(' '));
+
+    // Energy estimates
+    setText('result-kwh',  Math.round(result.estimatedAnnualKWh).toLocaleString('en-US'));
+    setText('result-cost', `$${result.estimatedAnnualCostUSD.toFixed(0)}`);
+
+    // Suitability
+    const badge = document.getElementById('suitability-badge');
+    const note  = document.getElementById('suitability-note');
+    if (badge) {
+      badge.dataset.type = suitabilityDataType(result.coolingSuitability);
+      badge.textContent  = result.coolingSuitability.replace(/-/g, ' ');
+      // Capitalize first letter
+      badge.textContent = badge.textContent.charAt(0).toUpperCase() + badge.textContent.slice(1);
+    }
+    if (note) {
+      note.textContent = result.suitabilityNote;
+    }
+
+    // ── BTU range recommendation ──
+    const btuBadge = document.getElementById('rec-btu-badge');
+    if (btuBadge) {
+      btuBadge.textContent  = suitabilityDataType(result.coolingSuitability) === 'far'
+        ? 'Oversized warning'
+        : 'Standard tier';
+      btuBadge.dataset.type = suitabilityDataType(result.coolingSuitability);
+    }
+
+    const btuNote = document.getElementById('rec-btu-note');
+    if (btuNote) {
+      btuNote.textContent = `Adjusted BTU: ${Math.round(result.adjustedBTU).toLocaleString('en-US')} → snapped to nearest standard tier`;
+    }
+
+    setText('rec-btu-min', result.recommendedBTUMin.toLocaleString('en-US') + ' BTU');
+    setText('rec-btu-rec', result.recommendedBTU.toLocaleString('en-US') + ' BTU');
+    setText('rec-btu-max', result.recommendedBTUMax.toLocaleString('en-US') + ' BTU');
+
+    // ── Dynamic recommendations (skip first 3 — shown in structured cards) ──
+    const dynList = document.getElementById('rec-dynamic');
+    if (dynList) {
+      dynList.innerHTML = '';
+      // Show recommendations from index 1 onwards (index 0 is BTU range, shown above)
+      result.recommendations.slice(2).forEach((rec) => {
+        const card = document.createElement('div');
+        card.className = 'dyn-rec-card';
+        card.innerHTML = `
+          <div class="dyn-rec-top">
+            <span class="dyn-rec-label">${rec.title}</span>
+            <span class="dyn-rec-value">${rec.value}</span>
+          </div>
+          ${rec.note ? `<p class="dyn-rec-note">${rec.note}</p>` : ''}
+        `;
+        dynList.appendChild(card);
+      });
+    }
+
+    // ── Show results ──
+    if (resultsEmpty) resultsEmpty.hidden = true;
+    if (resultsGrid)  resultsGrid.hidden  = false;
+    if (recSection)   recSection.hidden   = false;
+
+    // ── Phase 5 — URL state, history, share, analytics ───────────────────────
+    const acInputs: Record<string, string> = {
+      width: rawWidth, length: rawLength, unit: currentUnit,
+      sun: currentSun, insulation: currentInsulation,
+      climate: climateSelect?.value ?? 'moderate',
+      room: roomTypeSelect?.value ?? 'bedroom',
+      occupants: occupantsInput?.value ?? '2',
+    };
+    if (rawCeiling) acInputs.ceiling = rawCeiling;
+
+    pushUrlState(acInputs);
+
+    const histLabel = `${rawWidth} × ${rawLength} ${currentUnit} · ${Math.round(result.recommendedBTU / 1000)}k BTU`;
+    (window as any).wmHistoryPanel?.add(histLabel, acInputs);
+    (window as any).wmShareExportBar?.show();
+
+    (window as any).wmCurrentState = acInputs;
+    (window as any).wmBuildSummary = () => buildSummary(
+      'Window AC BTU Calculator',
+      [
+        ['Room Width',     `${rawWidth} ${currentUnit}`],
+        ['Room Length',    `${rawLength} ${currentUnit}`],
+        ['Climate',        climateSelect?.value ?? ''],
+        ['Recommended BTU', formatBTU(result.recommendedBTU)],
+        ['Cooling Tons',   formatTons(result.recommendedBTU)],
+        ['Est. Annual Cost', result.estimatedAnnualCostUSD.toLocaleString('en-US', { style: 'currency', currency: 'USD' })],
+      ],
+      buildShareUrl(acInputs),
+    );
+    (window as any).wmBuildExport = () => buildExportPayload(
+      'window-ac-calculator',
+      acInputs,
+      {
+        recommendedBTU: result.recommendedBTU,
+        recommendedBTUMin: result.recommendedBTUMin,
+        recommendedBTUMax: result.recommendedBTUMax,
+        areaSqFt: result.roomAreaSqFt,
+        estimatedAnnualCostUSD: result.estimatedAnnualCostUSD,
+        coolingSuitability: result.coolingSuitability,
+      },
+    );
+
+    track({
+      type: 'calculation_completed',
+      properties: { slug: 'window-ac-calculator', unit: currentUnit, inputs: acInputs },
+    });
+
+    // Mobile UX: smooth-scroll to results on small screens
+    if (resultsGrid && window.innerWidth < 768) {
+      resultsGrid.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }
+
+  // ── Option selector (button group) ──────────────────────────────────────
+
+  function initOptionSelector(
+    containerId: string,
+    onChange: (value: string) => void,
+  ) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+
+    container.addEventListener('click', (e) => {
+      const btn = (e.target as HTMLElement).closest('.option-btn') as HTMLButtonElement | null;
+      if (!btn) return;
+
+      container.querySelectorAll('.option-btn').forEach((b) => {
+        b.setAttribute('aria-pressed', b === btn ? 'true' : 'false');
+      });
+
+      onChange(btn.dataset.value ?? '');
+      calculate();
+    });
+  }
+
+  // ── Occupants stepper ────────────────────────────────────────────────────
+
+  document.getElementById('occ-dec')?.addEventListener('click', () => {
+    const val = parseInt(occupantsInput?.value ?? '2', 10);
+    if (val > 1 && occupantsInput) {
+      occupantsInput.value = String(val - 1);
+      calculate();
+    }
+  });
+
+  document.getElementById('occ-inc')?.addEventListener('click', () => {
+    const val = parseInt(occupantsInput?.value ?? '2', 10);
+    if (val < 50 && occupantsInput) {
+      occupantsInput.value = String(val + 1);
+      calculate();
+    }
+  });
+
+  // ── Event listeners ──────────────────────────────────────────────────────
+
+  widthInput?.addEventListener('input', calculate);
+  lengthInput?.addEventListener('input', calculate);
+  ceilingInput?.addEventListener('input', calculate);
+  climateSelect?.addEventListener('change', calculate);
+  roomTypeSelect?.addEventListener('change', calculate);
+  occupantsInput?.addEventListener('change', calculate);
+
+  initOptionSelector('sun-selector', (value) => {
+    currentSun = value as SunExposure;
+  });
+
+  initOptionSelector('insulation-selector', (value) => {
+    currentInsulation = value as InsulationLevel;
+  });
+
+  // ── Unit selector (unit change converts existing values) ─────────────────
+
+  document.getElementById('unit-selector')?.addEventListener('unitchange', (e) => {
+    const event   = e as CustomEvent<{ unit: MeasurementUnit }>;
+    const newUnit = event.detail.unit;
+    if (newUnit === currentUnit) return;
+
+    // Convert existing dimension inputs to the new unit
+    const rawW = widthInput?.value.trim()  ?? '';
+    const rawL = lengthInput?.value.trim() ?? '';
+    const rawC = ceilingInput?.value.trim() ?? '';
+
+    const parsedW = normalizeInput(rawW, currentUnit);
+    const parsedL = normalizeInput(rawL, currentUnit);
+    const parsedC = rawC ? normalizeInput(rawC, currentUnit) : null;
+
+    if (parsedW !== null && widthInput) {
+      widthInput.value = fmtInput(toMm(parsedW, currentUnit), newUnit);
+    }
+    if (parsedL !== null && lengthInput) {
+      lengthInput.value = fmtInput(toMm(parsedL, currentUnit), newUnit);
+    }
+    if (parsedC !== null && ceilingInput) {
+      ceilingInput.value = fmtInput(toMm(parsedC, currentUnit), newUnit);
+    }
+
+    // Update ceiling placeholder for the new unit
+    if (ceilingInput) {
+      const placeholders: Record<MeasurementUnit, string> = {
+        mm: '2438', cm: '243.8', m: '2.44', in: '96', ft: '8',
+      };
+      ceilingInput.placeholder = placeholders[newUnit];
+    }
+
+    const prevUnit = currentUnit;
+    currentUnit = newUnit;
+    calculate();
+
+    track({ type: 'unit_changed', properties: { slug: 'window-ac-calculator', from: prevUnit, to: newUnit } });
+  });
+
+  // Initial calculation from URL state (if inputs were restored)
+  if (widthInput?.value || lengthInput?.value) calculate();
+
+</script>
+
+<style>
+  /* ── Hero ─────────────────────────────────────────────────────────── */
+
+  .calc-hero {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: var(--spacing-xl);
+    margin-bottom: var(--spacing-xl);
+    padding-bottom: var(--spacing-lg);
+    border-bottom: 1px solid var(--color-hairline);
+  }
+
+  .calc-hero-left {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--spacing-md);
+    flex: 1;
+  }
+
+  .calc-status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    font-family: var(--font-family-mono);
+    font-weight: 500;
+    color: #16a34a;
+    background-color: color-mix(in srgb, #22c55e 8%, transparent);
+    border: 1px solid color-mix(in srgb, #22c55e 18%, transparent);
+    border-radius: 4px;
+    padding: 2px 7px;
+    margin-bottom: var(--spacing-xs);
+    letter-spacing: 0.02em;
+  }
+
+  :global([data-theme='dark']) .calc-status-badge {
+    color: #4ade80;
+    background-color: color-mix(in srgb, #22c55e 10%, transparent);
+    border-color: color-mix(in srgb, #22c55e 20%, transparent);
+  }
+
+  .calc-status-dot {
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background-color: #22c55e;
+    flex-shrink: 0;
+    animation: blink-dot 2.5s ease-in-out infinite;
+  }
+
+  @keyframes blink-dot {
+    0%, 100% { opacity: 1; }
+    50%       { opacity: 0.4; }
+  }
+
+  .calc-hero-title {
+    font-size: var(--font-size-display-md);
+    font-weight: 600;
+    color: var(--color-ink);
+    letter-spacing: var(--tracking-display-md);
+    margin: 0 0 var(--spacing-xs);
+    line-height: 1.15;
+  }
+
+  .calc-hero-desc {
+    font-size: var(--font-size-body-sm);
+    color: var(--color-body);
+    margin: 0;
+    max-width: 520px;
+    line-height: 1.6;
+  }
+
+  /* ── Dashboard Grid ───────────────────────────────────────────────── */
+
+  .calc-dashboard {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--spacing-lg);
+    align-items: start;
+    margin-bottom: var(--spacing-3xl);
+  }
+
+  @media (min-width: 768px) {
+    .calc-dashboard {
+      grid-template-columns: 340px 1fr;
+    }
+  }
+
+  /* ── Panels ───────────────────────────────────────────────────────── */
+
+  .calc-panel {
+    background-color: var(--color-canvas);
+    border: 1px solid var(--color-hairline);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+  }
+
+  .panel-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--spacing-sm) var(--spacing-md);
+    border-bottom: 1px solid var(--color-hairline);
+    background-color: var(--color-canvas-soft);
+  }
+
+  .panel-section-header {
+    display: flex;
+    align-items: center;
+    padding: var(--spacing-sm) var(--spacing-md);
+    border-top: 1px solid var(--color-hairline);
+    border-bottom: 1px solid var(--color-hairline);
+    background-color: var(--color-canvas-soft-2);
+    margin-top: 0;
+  }
+
+  .panel-label {
+    font-family: var(--font-family-mono);
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--color-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+
+  .panel-hint {
+    font-family: var(--font-family-mono);
+    font-size: 11px;
+    color: var(--color-muted);
+  }
+
+  /* ── Inputs Panel ─────────────────────────────────────────────────── */
+
+  .calc-panel-inputs {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .unit-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--spacing-md);
+    padding: var(--spacing-md);
+    border-bottom: 1px solid var(--color-hairline);
+  }
+
+  .unit-row-label {
+    font-size: var(--font-size-body-sm);
+    font-weight: 500;
+    color: var(--color-ink);
+  }
+
+  .calc-panel-inputs :global(.input-card) {
+    border: none;
+    border-bottom: 1px solid var(--color-hairline);
+    border-radius: 0;
+    box-shadow: none;
+    background: transparent;
+  }
+
+  /* ── Select input ─────────────────────────────────────────────────── */
+
+  .input-select {
+    width: 100%;
+    height: 36px;
+    padding: 0 var(--spacing-sm);
+    font-family: var(--font-family-sans);
+    font-size: var(--font-size-body-sm);
+    color: var(--color-ink);
+    background-color: var(--color-canvas);
+    border: 1px solid var(--color-hairline-strong);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+  }
+
+  .input-select:focus {
+    outline: 2px solid var(--color-link);
+    outline-offset: 1px;
+    border-color: var(--color-link);
+  }
+
+  :global([data-theme='dark']) .input-select {
+    background-color: var(--color-canvas-soft);
+    color: var(--color-ink);
+    border-color: var(--color-hairline-strong);
+  }
+
+  /* ── Option selector (button group) ──────────────────────────────── */
+
+  .option-selector {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+
+  .option-btn {
+    padding: 5px 9px;
+    font-size: 12px;
+    font-family: var(--font-family-sans);
+    background: none;
+    border: 1px solid var(--color-hairline-strong);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    color: var(--color-body);
+    transition: background-color 100ms ease, color 100ms ease, border-color 100ms ease;
+    line-height: 1.4;
+  }
+
+  .option-btn:hover {
+    border-color: var(--color-ink);
+    color: var(--color-ink);
+  }
+
+  .option-btn[aria-pressed='true'] {
+    background-color: var(--color-ink);
+    color: var(--color-canvas);
+    border-color: var(--color-ink);
+  }
+
+  :global([data-theme='dark']) .option-btn[aria-pressed='true'] {
+    background-color: var(--color-canvas);
+    color: var(--color-ink);
+  }
+
+  .option-btn--wide {
+    flex: 1;
+    text-align: center;
+  }
+
+  /* ── Occupants stepper ────────────────────────────────────────────── */
+
+  .occupants-stepper {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    width: 100%;
+  }
+
+  .stepper-btn {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    font-weight: 400;
+    background: none;
+    border: 1px solid var(--color-hairline-strong);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    color: var(--color-body);
+    line-height: 1;
+    flex-shrink: 0;
+    transition: background-color 100ms ease;
+  }
+
+  .stepper-btn:hover {
+    background-color: var(--color-canvas-soft);
+    border-color: var(--color-ink);
+    color: var(--color-ink);
+  }
+
+  .stepper-input {
+    width: 60px;
+    text-align: center;
+    font-family: var(--font-family-mono);
+    font-size: var(--font-size-body-sm);
+    font-weight: 600;
+    color: var(--color-ink);
+    background-color: var(--color-canvas);
+    border: 1px solid var(--color-hairline-strong);
+    border-radius: var(--radius-sm);
+    padding: 5px var(--spacing-xs);
+    -moz-appearance: textfield;
+  }
+
+  .stepper-input::-webkit-outer-spin-button,
+  .stepper-input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+  }
+
+  /* ── Results Panel ────────────────────────────────────────────────── */
+
+  .calc-panel-results {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .results-grid-container {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+
+  /* Primary BTU card — full width, highlighted */
+  .results-grid-container > :global(#result-btu) {
+    border: none;
+    border-bottom: 1px solid var(--color-hairline);
+    border-radius: 0;
+    padding: var(--spacing-lg) var(--spacing-md);
+    background-color: var(--color-canvas-soft);
+  }
+
+  /* Secondary row (2 columns) */
+  .results-secondary-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    border-bottom: 1px solid var(--color-hairline);
+  }
+
+  .results-secondary-row :global(.result-card) {
+    border: none;
+    border-right: 1px solid var(--color-hairline);
+    border-radius: 0;
+    padding: var(--spacing-md);
+  }
+
+  .results-secondary-row :global(.result-card:last-child) {
+    border-right: none;
+  }
+
+  /* ── Energy row ───────────────────────────────────────────────────── */
+
+  .results-energy-row {
+    display: flex;
+    align-items: stretch;
+    border-bottom: 1px solid var(--color-hairline);
+    background-color: var(--color-canvas-soft);
+  }
+
+  .energy-item {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    padding: var(--spacing-md);
+  }
+
+  .energy-divider {
+    width: 1px;
+    background-color: var(--color-hairline);
+    flex-shrink: 0;
+  }
+
+  .energy-label {
+    font-family: var(--font-family-mono);
+    font-size: 10px;
+    font-weight: 500;
+    color: var(--color-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+  }
+
+  .energy-value {
+    font-family: var(--font-family-mono);
+    font-size: var(--font-size-body-md);
+    font-weight: 600;
+    color: var(--color-ink);
+    display: flex;
+    align-items: baseline;
+    gap: 3px;
+  }
+
+  .energy-value .result-value-text {
+    font-size: var(--font-size-display-sm);
+    font-weight: 600;
+    color: var(--color-ink);
+  }
+
+  .energy-value .result-unit {
+    font-size: var(--font-size-caption);
+    font-weight: 400;
+    color: var(--color-muted);
+    margin-left: 2px;
+  }
+
+  .energy-note {
+    font-family: var(--font-family-mono);
+    font-size: 10px;
+    color: var(--color-muted);
+    line-height: 1.4;
+    margin-top: 2px;
+  }
+
+  /* ── Suitability card ─────────────────────────────────────────────── */
+
+  .suitability-section {
+    padding: var(--spacing-md);
+    border-bottom: 1px solid var(--color-hairline);
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-xs);
+  }
+
+  .suitability-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--spacing-sm);
+  }
+
+  .suitability-title-label {
+    font-family: var(--font-family-mono);
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--color-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+  }
+
+  .suitability-note {
+    font-size: var(--font-size-body-sm);
+    color: var(--color-body);
+    margin: 0;
+    line-height: 1.55;
+  }
+
+  /* ── Rec-badge (reused from RecommendationCard) ───────────────────── */
+  /* Must use :global() since rec-badge is inside a non-scoped element */
+
+  :global(.rec-badge) {
+    display: inline-flex;
+    align-items: center;
+    font-family: var(--font-family-mono);
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.04em;
+    padding: 2px 7px;
+    border-radius: 3px;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  :global(.rec-badge[data-type='exact']) {
+    background-color: color-mix(in srgb, #22c55e 12%, transparent);
+    color: #16a34a;
+    border: 1px solid color-mix(in srgb, #22c55e 25%, transparent);
+  }
+
+  :global(.rec-badge[data-type='close']) {
+    background-color: color-mix(in srgb, var(--color-warning) 12%, transparent);
+    color: var(--color-warning-deep);
+    border: 1px solid color-mix(in srgb, var(--color-warning) 25%, transparent);
+  }
+
+  :global(.rec-badge[data-type='far']) {
+    background-color: color-mix(in srgb, var(--color-error) 10%, transparent);
+    color: var(--color-error-deep);
+    border: 1px solid color-mix(in srgb, var(--color-error) 20%, transparent);
+  }
+
+  /* ── Smart Recommendations ────────────────────────────────────────── */
+
+  .rec-section {
+    border-top: 1px solid var(--color-hairline);
+    margin-top: var(--spacing-md);
+  }
+
+  .rec-section-header {
+    padding: var(--spacing-sm) var(--spacing-md);
+    background-color: var(--color-canvas-soft);
+    border-bottom: 1px solid var(--color-hairline);
+  }
+
+  .rec-section-title {
+    font-family: var(--font-family-mono);
+    font-size: 10px;
+    font-weight: 500;
+    color: var(--color-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+
+  /* Two-column recommendation grid */
+  .rec-two-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: var(--spacing-sm);
+    margin-bottom: var(--spacing-xs);
+  }
+
+  .rec-col {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .rec-col-label {
+    font-family: var(--font-family-mono);
+    font-size: 10px;
+    color: var(--color-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+
+  .rec-col-value {
+    font-family: var(--font-family-mono);
+    font-size: var(--font-size-body-sm);
+    font-weight: 600;
+    color: var(--color-ink);
+  }
+
+  /* Dynamic recommendation cards */
+  .rec-dynamic-list {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .dyn-rec-card {
+    padding: var(--spacing-md);
+    border-bottom: 1px solid var(--color-hairline);
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-xs);
+  }
+
+  .dyn-rec-top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: var(--spacing-md);
+  }
+
+  .dyn-rec-label {
+    font-family: var(--font-family-mono);
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--color-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    flex-shrink: 0;
+  }
+
+  .dyn-rec-value {
+    font-family: var(--font-family-mono);
+    font-size: var(--font-size-body-sm);
+    font-weight: 600;
+    color: var(--color-ink);
+    text-align: right;
+  }
+
+  .dyn-rec-note {
+    font-size: var(--font-size-caption);
+    color: var(--color-muted);
+    margin: 0;
+    line-height: 1.5;
+  }
+
+  /* Next step link */
+  .rec-next-link {
+    font-family: var(--font-family-mono);
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--color-link);
+    text-decoration: none;
+    white-space: nowrap;
+    flex-shrink: 0;
+    transition: opacity 150ms ease;
+  }
+
+  .rec-next-link:hover {
+    opacity: 0.75;
+  }
+
+  /* ── Phase 5 extras row (share/export + history) ──────────────────── */
+  .calc-extras {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+    margin-bottom: var(--spacing-xl);
+  }
+
+  /* ── Mobile UX ────────────────────────────────────────────────────── */
+
+  @media (max-width: 767px) {
+    .calc-hero {
+      flex-direction: column;
+      gap: var(--spacing-md);
+    }
+
+    .calc-hero-left {
+      gap: var(--spacing-sm);
+    }
+
+    .calc-hero-title {
+      font-size: var(--font-size-display-sm, 1.5rem);
+    }
+
+    /* Larger touch targets on mobile */
+    :global(.unit-btn),
+    :global(.option-btn) {
+      min-height: 44px;
+      padding: 10px 14px;
+      font-size: 14px;
+    }
+
+    :global(.input) {
+      font-size: 16px;  /* prevents iOS auto-zoom */
+      min-height: 44px;
+      padding: 10px 14px;
+    }
+
+    /* Occupants stepper – bigger buttons on mobile */
+    .stepper-btn {
+      width: 44px;
+      height: 44px;
+    }
+
+    /* Tighter dashboard on mobile */
+    .calc-dashboard {
+      gap: var(--spacing-md);
+      margin-bottom: var(--spacing-xl);
+    }
+
+    /* Results energy row stacks */
+    .energy-row {
+      grid-template-columns: 1fr;
+    }
+
+    /* Share/export bar wraps */
+    :global(.seb-btn) {
+      min-height: 40px;
+    }
+  }
+
+  /* ── FAQ ──────────────────────────────────────────────────────────── */
+
+  .calc-faq {
+    margin-top: var(--spacing-3xl);
+    padding-top: var(--spacing-2xl);
+    border-top: 1px solid var(--color-hairline);
+  }
+
+  /* ── Error input state ────────────────────────────────────────────── */
+
+  .input--error {
+    border-color: var(--color-error) !important;
+    background-color: var(--color-error-soft) !important;
+  }
+
+</style>
