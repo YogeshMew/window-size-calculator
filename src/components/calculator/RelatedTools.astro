@@ -1,0 +1,180 @@
+---
+/**
+ * WindowMetrics — Related Tools
+ *
+ * Sidebar widget listing related calculators and tools.
+ * Used in the ToolLayout "sidebar" slot.
+ *
+ * Props:
+ *   heading — Section heading text (default: "Related tools")
+ *   links   — Array of tool links to display
+ *   tip     — Optional "Pro tip" card at the bottom
+ *   guide   — Optional "Related guide" link at the bottom
+ */
+
+interface ToolLink {
+  title: string;
+  description: string;
+  href: string;
+  ariaLabel?: string;
+}
+
+interface Props {
+  heading?: string;
+  links: ToolLink[];
+  tip?: { label: string; text: string };
+  guide?: { label: string; href: string; text: string };
+}
+
+const { heading = 'Related tools', links, tip, guide } = Astro.props;
+---
+
+<div class="related-tools">
+  <p class="related-heading">{heading}</p>
+  <ul class="related-list" role="list">
+    {links.map((link) => (
+      <li>
+        <a
+          href={link.href}
+          class="related-link"
+          aria-label={link.ariaLabel ?? link.title}
+        >
+          <span class="related-link-title">{link.title}</span>
+          <span class="related-link-desc">{link.description}</span>
+        </a>
+      </li>
+    ))}
+  </ul>
+
+  {tip && (
+    <div class="sidebar-tip">
+      <p class="sidebar-tip-label">{tip.label}</p>
+      <p class="sidebar-tip-text">{tip.text}</p>
+    </div>
+  )}
+
+  {guide && (
+    <div class="sidebar-guide">
+      <p class="sidebar-guide-label">{guide.label}</p>
+      <a href={guide.href} class="sidebar-guide-link">
+        {guide.text}
+      </a>
+    </div>
+  )}
+</div>
+
+<style>
+  .related-tools {
+    background-color: var(--color-canvas);
+    border: 1px solid var(--color-hairline);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+  }
+
+  .related-heading {
+    font-family: var(--font-family-mono);
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--color-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    padding: var(--spacing-sm) var(--spacing-md);
+    border-bottom: 1px solid var(--color-hairline);
+    background-color: var(--color-canvas-soft);
+    margin: 0;
+  }
+
+  .related-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+
+  .related-link {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: var(--spacing-md);
+    border-bottom: 1px solid var(--color-hairline);
+    text-decoration: none;
+    color: inherit;
+    transition: background-color 150ms ease;
+  }
+
+  .related-link:last-of-type {
+    border-bottom: none;
+  }
+
+  .related-link:hover {
+    background-color: var(--color-canvas-soft);
+  }
+
+  .related-link-title {
+    font-size: var(--font-size-body-sm);
+    font-weight: 500;
+    color: var(--color-ink);
+  }
+
+  .related-link-desc {
+    font-size: var(--font-size-caption);
+    color: var(--color-muted);
+    line-height: 1.45;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  /* Pro tip card */
+  .sidebar-tip {
+    padding: var(--spacing-md);
+    background-color: var(--color-canvas-soft);
+    border-top: 1px solid var(--color-hairline);
+  }
+
+  .sidebar-tip-label {
+    font-family: var(--font-family-mono);
+    font-size: 10px;
+    font-weight: 500;
+    color: var(--color-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin: 0 0 4px;
+  }
+
+  .sidebar-tip-text {
+    font-size: var(--font-size-caption);
+    color: var(--color-body);
+    line-height: 1.55;
+    margin: 0;
+  }
+
+  /* Related guide link */
+  .sidebar-guide {
+    padding: var(--spacing-md);
+    border-top: 1px solid var(--color-hairline);
+  }
+
+  .sidebar-guide-label {
+    font-family: var(--font-family-mono);
+    font-size: 10px;
+    font-weight: 500;
+    color: var(--color-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin: 0 0 6px;
+  }
+
+  .sidebar-guide-link {
+    font-size: var(--font-size-caption);
+    color: var(--color-link);
+    text-decoration: none;
+    line-height: 1.45;
+    display: block;
+    transition: opacity 150ms ease;
+  }
+
+  .sidebar-guide-link:hover {
+    opacity: 0.75;
+  }
+</style>

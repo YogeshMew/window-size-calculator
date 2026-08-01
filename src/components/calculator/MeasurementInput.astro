@@ -1,0 +1,100 @@
+---
+/**
+ * WindowMetrics — Measurement Input
+ *
+ * A self-contained labeled measurement input field, built on top of InputCard.
+ * Future calculators should use this instead of manually composing InputCard + <input>.
+ *
+ * Differences from InputCard:
+ *   - Includes the <input> element itself (not just the card wrapper)
+ *   - Pre-wires ARIA attributes (aria-describedby, aria-invalid)
+ *   - Sets inputmode="decimal" and autocomplete="off" automatically
+ *   - Supports a unit suffix shown inside the field (e.g. "in", "mm")
+ *
+ * Props:
+ *   id          — HTML id for the input (required; also used for aria-describedby)
+ *   name        — Form field name
+ *   label       — Visible label text
+ *   hint        — Hint text below the field
+ *   placeholder — Input placeholder
+ *   value       — Initial value
+ *   unit        — Unit suffix displayed inside the field (cosmetic only)
+ *   required    — Whether the field is required
+ *   disabled    — Whether the field is disabled
+ *   error       — Inline error message (renders below the field, marks field aria-invalid)
+ */
+
+import InputCard from './InputCard.astro';
+
+interface Props {
+  id: string;
+  name?: string;
+  label: string;
+  hint?: string;
+  placeholder?: string;
+  value?: string;
+  unit?: string;
+  required?: boolean;
+  disabled?: boolean;
+  error?: string;
+}
+
+const {
+  id,
+  name,
+  label,
+  hint,
+  placeholder = '',
+  value = '',
+  unit,
+  required = false,
+  disabled = false,
+  error,
+} = Astro.props;
+---
+
+<InputCard label={label} inputId={id} hint={hint} error={error} required={required}>
+  <div class:list={['measurement-input-wrap', { 'has-unit': !!unit }]}>
+    <input
+      type="text"
+      id={id}
+      name={name ?? id}
+      class="input"
+      placeholder={placeholder}
+      value={value}
+      inputmode="decimal"
+      autocomplete="off"
+      aria-describedby={hint ? `${id}-hint` : undefined}
+      aria-invalid={error ? 'true' : undefined}
+      disabled={disabled}
+      required={required}
+    />
+    {unit && <span class="measurement-unit-suffix" aria-hidden="true">{unit}</span>}
+  </div>
+</InputCard>
+
+<style>
+  .measurement-input-wrap {
+    position: relative;
+    display: flex;
+    align-items: center;
+  }
+
+  .measurement-input-wrap .input {
+    width: 100%;
+  }
+
+  .measurement-input-wrap.has-unit .input {
+    padding-right: 2.5rem;
+  }
+
+  .measurement-unit-suffix {
+    position: absolute;
+    right: var(--spacing-sm);
+    font-family: var(--font-family-mono);
+    font-size: var(--font-size-caption);
+    color: var(--color-muted);
+    pointer-events: none;
+    user-select: none;
+  }
+</style>

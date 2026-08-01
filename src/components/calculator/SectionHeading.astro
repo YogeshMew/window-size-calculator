@@ -1,0 +1,46 @@
+---
+/**
+ * SectionHeading — Reusable heading for calculator recommendation sections.
+ *
+ * Usage:
+ *   <SectionHeading title="Standard Size Match" sub="How your window compares to US standard sizes" />
+ *   <SectionHeading title="Curtain Sizing" />
+ */
+interface Props {
+  /** Primary section heading text */
+  title: string;
+  /** Optional one-line subtext displayed below the heading */
+  sub?: string;
+  /** Heading level — defaults to 3 */
+  level?: 2 | 3 | 4;
+}
+
+const { title, sub, level = 3 } = Astro.props;
+const Tag = `h${level}` as const;
+---
+
+<div class="section-heading">
+  <Tag class="section-title">{title}</Tag>
+  {sub && <p class="section-sub">{sub}</p>}
+</div>
+
+<style>
+  .section-heading {
+    margin-bottom: var(--space-4, 1rem);
+  }
+
+  .section-title {
+    font-size: var(--font-size-base, 1rem);
+    font-weight: 600;
+    color: var(--color-text, inherit);
+    margin: 0;
+    line-height: 1.3;
+  }
+
+  .section-sub {
+    font-size: var(--font-size-sm, 0.875rem);
+    color: var(--color-text-muted, #6b7280);
+    margin: 0.25rem 0 0;
+    line-height: 1.5;
+  }
+</style>

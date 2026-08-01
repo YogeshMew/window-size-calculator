@@ -1,0 +1,80 @@
+---
+/**
+ * WindowMetrics — Validation Message
+ *
+ * A standalone inline validation message for per-field errors and advisories.
+ * Use when you need a field-level message decoupled from the global WarningBanner.
+ *
+ * The element is rendered but hidden when no message is set; JS can reveal it
+ * by setting textContent and removing the [hidden] attribute.
+ *
+ * Severity levels:
+ *   'error'   — Red. Indicates the field value is invalid.
+ *   'warning' — Amber. Advisory only; field value is accepted.
+ *   'info'    — Muted. Neutral informational note.
+ *   'success' — Green. Confirms a valid or accepted value.
+ *
+ * Props:
+ *   id       — HTML id (for aria-describedby on the associated input)
+ *   message  — Message text (empty = element is hidden)
+ *   level    — Severity level (default: 'error')
+ *   role     — ARIA role (default: 'alert' for error/warning, 'status' for info/success)
+ */
+
+interface Props {
+  id?: string;
+  message?: string;
+  level?: 'error' | 'warning' | 'info' | 'success';
+  role?: 'alert' | 'status';
+}
+
+const {
+  id,
+  message,
+  level = 'error',
+  role = level === 'info' || level === 'success' ? 'status' : 'alert',
+} = Astro.props;
+---
+
+<p
+  id={id}
+  class:list={['validation-message', `validation-message--${level}`]}
+  role={role}
+  aria-live={role === 'alert' ? 'assertive' : 'polite'}
+  hidden={!message}
+>
+  {message}
+</p>
+
+<style>
+  .validation-message {
+    font-size: var(--font-size-caption);
+    line-height: 1.5;
+    margin: var(--spacing-xxs) 0 0;
+    padding: 0;
+  }
+
+  .validation-message--error {
+    color: var(--color-error);
+  }
+
+  .validation-message--warning {
+    color: #92400e;
+  }
+
+  :global([data-theme='dark']) .validation-message--warning {
+    color: #fbbf24;
+  }
+
+  .validation-message--info {
+    color: var(--color-muted);
+  }
+
+  .validation-message--success {
+    color: #16a34a;
+  }
+
+  :global([data-theme='dark']) .validation-message--success {
+    color: #4ade80;
+  }
+</style>

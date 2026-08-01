@@ -305,6 +305,26 @@ export interface ReplacementRecommendation {
 }
 
 // ---------------------------------------------------------------------------
+// Warning System
+// ---------------------------------------------------------------------------
+
+/** Structured warning or advisory message for the shared warning engine */
+export interface WarningMessage {
+  message: string;
+  level: 'info' | 'warning' | 'error' | 'success';
+  /** When true, calculations are blocked and results are hidden */
+  blocking: boolean;
+  title?: string;
+}
+
+/** A labelled section in a results panel */
+export interface SectionDefinition {
+  id: string;
+  label: string;
+  description?: string;
+}
+
+// ---------------------------------------------------------------------------
 // SEO & Navigation
 // ---------------------------------------------------------------------------
 

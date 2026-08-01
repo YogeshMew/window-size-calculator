@@ -14,9 +14,16 @@ import ToolLayout from '@/layouts/ToolLayout.astro';
 import InputCard from '@/components/calculator/InputCard.astro';
 import UnitSelector from '@/components/calculator/UnitSelector.astro';
 import ResultCard from '@/components/calculator/ResultCard.astro';
+import EmptyState from '@/components/calculator/EmptyState.astro';
+import WarningBanner from '@/components/calculator/WarningBanner.astro';
+import RecommendationCard from '@/components/calculator/RecommendationCard.astro';
+import RelatedTools from '@/components/calculator/RelatedTools.astro';
 import FAQSection from '@/components/content/FAQSection.astro';
 import ToolIcon from '@/components/ui/ToolIcon.astro';
 import TrustStrip from '@/components/ui/TrustStrip.astro';
+import HistoryPanel from '@/components/calculator/HistoryPanel.astro';
+import ShareExportBar from '@/components/calculator/ShareExportBar.astro';
+import FavoriteButton from '@/components/ui/FavoriteButton.astro';
 
 import { getToolBySlug, getRelatedTools } from '@/data/tools.js';
 import type { BreadcrumbItem, FAQ } from '@/types/calculator.js';
@@ -88,6 +95,7 @@ const faqs: FAQ[] = [
         />
       </div>
     </div>
+    <FavoriteButton slug="window-size-calculator" label="Favorite this calculator" />
   </header>
 
   <!-- ── Dashboard Grid ─────────────────────────────────────────────── -->
@@ -136,8 +144,8 @@ const faqs: FAQ[] = [
         />
       </InputCard>
 
-      <!-- Error -->
-      <div id="calc-error" class="calc-error" role="alert" aria-live="polite"></div>
+      <!-- Error / warning banner -->
+      <WarningBanner />
 
       <!-- Measurement guide -->
       <div class="measure-guide">
@@ -193,17 +201,7 @@ const faqs: FAQ[] = [
       </div>
 
       <!-- Empty state -->
-      <div class="results-empty-state" id="results-empty">
-        <div class="empty-icon" aria-hidden="true">
-          <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
-            <rect x="6" y="4" width="20" height="24" rx="2" stroke="currentColor" stroke-width="1.5"/>
-            <line x1="6" y1="16" x2="26" y2="16" stroke="currentColor" stroke-width="1.5"/>
-            <line x1="16" y1="4" x2="16" y2="28" stroke="currentColor" stroke-width="1.5"/>
-          </svg>
-        </div>
-        <p class="empty-title">Enter dimensions</p>
-        <p class="empty-sub">Results will appear here as you type</p>
-      </div>
+      <EmptyState />
 
       <!-- Results (hidden until calculation) -->
       <div id="results-grid" hidden class="results-grid-container">
@@ -292,11 +290,7 @@ const faqs: FAQ[] = [
           </div>
 
           <!-- Nearest standard size — visual comparison -->
-          <div class="rec-card">
-            <div class="rec-card-top">
-              <span class="rec-card-label">Standard size match</span>
-              <span id="rec-std-badge" class="rec-badge">—</span>
-            </div>
+          <RecommendationCard label="Standard size match" badgeId="rec-std-badge" noteId="rec-std-note" noteText="US residential standard (AAMA)">
             <div class="std-comparison">
               <div class="std-comp-row">
                 <span class="std-comp-key">Your window</span>
@@ -309,14 +303,10 @@ const faqs: FAQ[] = [
               </div>
               <div class="std-comp-diff" id="rec-std-diff" hidden></div>
             </div>
-            <p id="rec-std-note" class="rec-card-note">US residential standard (AAMA)</p>
-          </div>
+          </RecommendationCard>
 
           <!-- Curtain sizing -->
-          <div class="rec-card">
-            <div class="rec-card-top">
-              <span class="rec-card-label">Curtain sizing</span>
-            </div>
+          <RecommendationCard label="Curtain sizing" noteId="rec-curtain-drop" noteText="Drop: —">
             <div class="rec-two-col">
               <div class="rec-col">
                 <span class="rec-col-label">Min. width</span>
@@ -327,14 +317,10 @@ const faqs: FAQ[] = [
                 <span id="rec-curtain-full" class="rec-col-value">—</span>
               </div>
             </div>
-            <p id="rec-curtain-drop" class="rec-card-note">Drop: —</p>
-          </div>
+          </RecommendationCard>
 
           <!-- Glass estimate -->
-          <div class="rec-card">
-            <div class="rec-card-top">
-              <span class="rec-card-label">Glass estimate</span>
-            </div>
+          <RecommendationCard label="Glass estimate" noteText="Single pane, 4 mm glass. Add 10% for cutting waste.">
             <div class="rec-two-col">
               <div class="rec-col">
                 <span class="rec-col-label">Glazing area</span>
@@ -345,20 +331,24 @@ const faqs: FAQ[] = [
                 <span id="rec-glass-weight" class="rec-col-value">—</span>
               </div>
             </div>
-            <p class="rec-card-note">Single pane, 4 mm glass. Add 10% for cutting waste.</p>
-          </div>
+          </RecommendationCard>
 
           <!-- Next step -->
-          <div class="rec-card rec-card--next">
-            <p class="rec-card-label">Suggested next step</p>
+          <RecommendationCard label="Suggested next step" variant="next-step">
             <a href="/tools" class="rec-next-link">
               Browse related calculators →
             </a>
-          </div>
+          </RecommendationCard>
 
         </div>
       </div>
     </div>
+  </div>
+
+  <!-- ── Share / Export / History ──────────────────────────────────── -->
+  <div class="calc-extras">
+    <ShareExportBar calculatorTitle={tool.title} />
+    <HistoryPanel slug="window-size-calculator" />
   </div>
 
   <!-- ── FAQ ────────────────────────────────────────────────────────── -->
@@ -367,52 +357,45 @@ const faqs: FAQ[] = [
   </div>
 
   <!-- ── Sidebar: Related tools ─────────────────────────────────────── -->
-  <div slot="sidebar" class="related-tools">
-    <p class="related-heading">Use your measurements for</p>
-    <ul class="related-list" role="list">
-      <li>
-        <a href="/tools/window-glass-calculator" class="related-link" aria-label="Window Glass Calculator">
-          <span class="related-link-title">Window Glass Calculator</span>
-          <span class="related-link-desc">Estimate glazing area and glass weight using your current width and height.</span>
-        </a>
-      </li>
-      <li>
-        <a href="/tools/replacement-window-calculator" class="related-link" aria-label="Replacement Window Calculator">
-          <span class="related-link-title">Replacement Calculator</span>
-          <span class="related-link-desc">Find the closest standard replacement size for your opening dimensions.</span>
-        </a>
-      </li>
-      <li>
-        <a href="/tools/curtain-size-calculator" class="related-link" aria-label="Curtain Size Calculator">
-          <span class="related-link-title">Curtain Calculator</span>
-          <span class="related-link-desc">Instantly size curtains using your measured width and drop height.</span>
-        </a>
-      </li>
-      <li>
-        <a href="/tools/window-ac-calculator" class="related-link" aria-label="Window AC Calculator">
-          <span class="related-link-title">AC Sizing Calculator</span>
-          <span class="related-link-desc">Use your window area to estimate the right BTU rating for cooling.</span>
-        </a>
-      </li>
-    </ul>
-
-    <!-- Quick tip card -->
-    <div class="sidebar-tip">
-      <p class="sidebar-tip-label">Pro tip</p>
-      <p class="sidebar-tip-text">
-        Measure at three points and always use the smallest dimension. Walls are rarely
-        perfectly square.
-      </p>
-    </div>
-
-    <!-- Related guide -->
-    <div class="sidebar-guide">
-      <p class="sidebar-guide-label">Related guide</p>
-      <a href="/guides" class="sidebar-guide-link">
-        How to measure a window for replacement →
-      </a>
-    </div>
-  </div>
+  <RelatedTools
+    slot="sidebar"
+    heading="Use your measurements for"
+    links={[
+      {
+        title: 'Window Glass Calculator',
+        description: 'Estimate glazing area and glass weight using your current width and height.',
+        href: '/tools/window-glass-calculator',
+        ariaLabel: 'Window Glass Calculator',
+      },
+      {
+        title: 'Replacement Calculator',
+        description: 'Find the closest standard replacement size for your opening dimensions.',
+        href: '/tools/replacement-window-calculator',
+        ariaLabel: 'Replacement Window Calculator',
+      },
+      {
+        title: 'Curtain Calculator',
+        description: 'Instantly size curtains using your measured width and drop height.',
+        href: '/tools/curtain-size-calculator',
+        ariaLabel: 'Curtain Size Calculator',
+      },
+      {
+        title: 'AC Sizing Calculator',
+        description: 'Use your window area to estimate the right BTU rating for cooling.',
+        href: '/tools/window-ac-calculator',
+        ariaLabel: 'Window AC Calculator',
+      },
+    ]}
+    tip={{
+      label: 'Pro tip',
+      text: 'Measure at three points and always use the smallest dimension. Walls are rarely perfectly square.',
+    }}
+    guide={{
+      label: 'Related guide',
+      href: '/guides',
+      text: 'How to measure a window for replacement →',
+    }}
+  />
 </ToolLayout>
 
 <!-- Calculator logic — powered by the WindowMetrics engine -->
@@ -421,6 +404,8 @@ const faqs: FAQ[] = [
    * Window Size Calculator — Client Script
    *
    * All calculation logic is delegated to @/engine/*.
+   * Formatting and UI state management are provided by @/utils/*.
+   *
    * This script is responsible only for:
    * - Reading DOM input
    * - Calling engine functions
@@ -430,7 +415,6 @@ const faqs: FAQ[] = [
   import {
     normalizeInput,
     toMm,
-    fromMm,
     formatArea,
     isMetricUnit,
     validateDimensions,
@@ -441,13 +425,34 @@ const faqs: FAQ[] = [
     calculateGlassWeight,
     findNearestStandardSize,
     calculateCurtainRecommendations,
+    MAX_DIMENSION_MM,
+    formatDifference,
+    formatDistance,
+    formatWeight,
+    formatCeil,
+    curtainAllowanceLabel,
   } from '@/engine/index.js';
+  import { fmtVal, fmtInput, maxLimitLabel } from '@/utils/display.js';
+  import {
+    type CalculatorUIRefs,
+    setResult,
+    setText,
+    showCalculatorError,
+    showCalculatorWarning,
+    clearCalculatorError,
+    resetCalculatorEmpty,
+  } from '@/utils/calculator-ui.js';
   import type { MeasurementUnit } from '@/types/calculator.js';
+  import { readUrlState, pushUrlState, buildShareUrl } from '@/lib/url-state.js';
+  import { recordVisit } from '@/lib/recent.js';
+  import { track } from '@/lib/analytics.js';
+  import { buildSummary } from '@/lib/share.js';
+  import { buildExportPayload } from '@/lib/export.js';
 
   let currentUnit: MeasurementUnit = 'in';
 
-  // Maximum supported dimension (engine constant, mirrored here for UI messages)
-  const MAX_DIM_MM = 9_144;
+  // Record this calculator visit for the "Recent calculators" feature
+  recordVisit('window-size-calculator');
 
   // ── DOM references ────────────────────────────────────────────────────────
   const widthInput   = document.getElementById('input-width')          as HTMLInputElement;
@@ -464,152 +469,56 @@ const faqs: FAQ[] = [
   const resultWidthMm   = document.getElementById('result-width-mm');
   const resultHeightMm  = document.getElementById('result-height-mm');
 
-  // ── Formatting helpers ────────────────────────────────────────────────────
+  // Shared refs object passed to UI utility helpers
+  const refs: CalculatorUIRefs = {
+    errorEl:      errorMsg,
+    resultsEmpty,
+    resultsGrid,
+    recSection,
+    widthInput,
+    heightInput,
+  };
 
-  /** Set the value and unit text inside a ResultCard */
-  function setResult(el: HTMLElement | null, value: string, unit = '') {
-    if (!el) return;
-    const valueEl = el.querySelector('.result-value-text') as HTMLElement;
-    const unitEl  = el.querySelector('.result-unit')       as HTMLElement;
-    if (valueEl) valueEl.textContent = value;
-    if (unitEl)  unitEl.textContent  = unit;
-  }
-
-  /** Set textContent by element id */
-  function setText(id: string, text: string) {
-    const el = document.getElementById(id);
-    if (el) el.textContent = text;
-  }
-
-  /**
-   * Format a mm value as a clean display number in the given unit (no unit label).
-   * Trailing zeros are removed. Used for the panel header and reference dimensions.
-   * Examples: fmtVal(1219.2, 'mm') → "1219",  fmtVal(914.4, 'in') → "36"
-   */
-  function fmtVal(mm: number, unit: MeasurementUnit): string {
-    const v = fromMm(mm, unit);
-    if (unit === 'mm') return Math.round(v).toString();
-    if (unit === 'cm') return parseFloat((Math.round(v * 10) / 10).toFixed(1)).toString();
-    if (unit === 'm')  return parseFloat(v.toFixed(3)).toString();
-    if (unit === 'ft') return parseFloat(v.toFixed(2)).toString();  // 2 decimal ft
-    return parseFloat(v.toFixed(1)).toString();   // 1 decimal in
-  }
-
-  /**
-   * Format a mm value for writing back into a text input field after a unit switch.
-   * Similar to fmtVal but retains a minimum number of decimals for unambiguous entry.
-   * Examples: fmtInput(1219.2, 'mm') → "1219",  fmtInput(914.4, 'in') → "36"
-   */
-  function fmtInput(mm: number, unit: MeasurementUnit): string {
-    const v = fromMm(mm, unit);
-    if (unit === 'mm') return Math.round(v).toString();
-    if (unit === 'cm') return (Math.round(v * 10) / 10).toFixed(1);
-    if (unit === 'm')  return v.toFixed(3);
-    return parseFloat(v.toFixed(2)).toString();   // in / ft — strip trailing zeros
-  }
-
-  /**
-   * Return the maximum allowed dimension expressed in the current unit.
-   * Used in user-facing error messages so the limit is always in the active unit.
-   */
-  function maxLimitLabel(unit: MeasurementUnit): string {
-    const v = fromMm(MAX_DIM_MM, unit);
-    if (unit === 'mm') return `${Math.round(v)} mm`;
-    if (unit === 'cm') return `${v.toFixed(1)} cm`;
-    if (unit === 'm')  return `${v.toFixed(3)} m`;
-    if (unit === 'in') return `${Math.round(v)}"`;
-    return `${v.toFixed(0)}'`;   // ft
-  }
-
-  /**
-   * Ceiling-round a mm value and format it in the given unit (for curtain recommendations
-   * where you always round up to ensure full coverage).
-   */
-  function fmtCeil(mm: number, unit: MeasurementUnit): string {
-    if (unit === 'in') return `${Math.ceil(mm / 25.4)}"`;
-    if (unit === 'ft') return `${(Math.ceil((mm / 304.8) * 10) / 10)}'`;
-    if (unit === 'cm') return `${Math.ceil(mm / 10)} cm`;
-    if (unit === 'm')  return `${(Math.ceil((mm / 1000) * 10) / 10)} m`;
-    return `${Math.ceil(mm)} mm`;
-  }
-
-  /**
-   * Format a signed inch difference for the standard-size comparison row.
-   * In metric mode the value is converted to the current unit.
-   * Returns 'exact' when the absolute difference is below 0.05 inches.
-   */
-  function fmtDiff(diffIn: number, unit: MeasurementUnit): string {
-    if (Math.abs(diffIn) < 0.05) return 'exact';
-    const sign = diffIn > 0 ? '+' : '-';
-    if (!isMetricUnit(unit)) return `${sign}${Math.abs(diffIn).toFixed(1)}"`;
-    const absMm = Math.abs(diffIn) * 25.4;
-    if (unit === 'mm') return `${sign}${Math.round(absMm)} mm`;
-    if (unit === 'cm') return `${sign}${(absMm / 10).toFixed(1)} cm`;
-    return `${sign}${(absMm / 1000).toFixed(3)} m`;
-  }
-
-  /**
-   * Format a Euclidean distance (in inches) for the standard-size badge.
-   * In metric mode the value is converted to the current unit.
-   */
-  function fmtDistance(distIn: number, unit: MeasurementUnit): string {
-    if (!isMetricUnit(unit)) return `${distIn.toFixed(1)}"`;
-    const distMm = distIn * 25.4;
-    if (unit === 'mm') return `${Math.round(distMm)} mm`;
-    if (unit === 'cm') return `${(distMm / 10).toFixed(1)} cm`;
-    return `${(distMm / 1000).toFixed(3)} m`;
-  }
-
-  // ── State helpers ─────────────────────────────────────────────────────────
-
-  /** Restore the empty state to the neutral "Enter dimensions" prompt. */
-  function resetEmptyState() {
-    const titleEl = resultsEmpty.querySelector('.empty-title') as HTMLElement;
-    const subEl   = resultsEmpty.querySelector('.empty-sub')   as HTMLElement;
-    if (titleEl) titleEl.textContent = 'Enter dimensions';
-    if (subEl)   subEl.textContent   = 'Results will appear here as you type';
-  }
-
-  /**
-   * Show a blocking error: update the error banner, hide the results grid,
-   * show the "Fix your input" empty state, and mark the offending field.
-   * Accessibility: sets aria-invalid and extends aria-describedby to include
-   * the error element so screen readers announce the message.
-   */
-  function showErrorState(msg: string, field: 'width' | 'height' | null = null) {
-    errorMsg.textContent = msg;
-    delete errorMsg.dataset.level;
-
-    // Reset both inputs, then apply to the errored field
-    widthInput?.removeAttribute('aria-invalid');
-    heightInput?.removeAttribute('aria-invalid');
-    widthInput?.setAttribute('aria-describedby', 'input-width-hint');
-    heightInput?.setAttribute('aria-describedby', 'input-height-hint');
-
-    if (field === 'width') {
-      widthInput?.setAttribute('aria-invalid', 'true');
-      widthInput?.setAttribute('aria-describedby', 'input-width-hint calc-error');
+  // ── URL state restore ─────────────────────────────────────────────────────
+  // Runs once on page load; silently ignored if no query params are present.
+  {
+    const saved = readUrlState();
+    const validUnits = ['mm', 'cm', 'm', 'in', 'ft'];
+    const savedUnit = saved.unit as MeasurementUnit;
+    if (savedUnit && validUnits.includes(savedUnit)) {
+      currentUnit = savedUnit;
+      document.querySelectorAll<HTMLButtonElement>('.unit-btn').forEach((b) => {
+        b.setAttribute('aria-pressed', b.dataset.unit === savedUnit ? 'true' : 'false');
+      });
     }
-    if (field === 'height') {
-      heightInput?.setAttribute('aria-invalid', 'true');
-      heightInput?.setAttribute('aria-describedby', 'input-height-hint calc-error');
+    if (saved.width && widthInput)   widthInput.value  = saved.width;
+    if (saved.height && heightInput) heightInput.value = saved.height;
+  }
+
+  // ── History restore listener ──────────────────────────────────────────────
+  document.addEventListener('wm:history-restore', (e) => {
+    const detail = (e as CustomEvent<{ inputs: Record<string, string>; entryId: string }>).detail;
+    const validUnits = ['mm', 'cm', 'm', 'in', 'ft'];
+    const savedUnit  = detail.inputs.unit as MeasurementUnit;
+    if (savedUnit && validUnits.includes(savedUnit) && savedUnit !== currentUnit) {
+      currentUnit = savedUnit;
+      document.querySelectorAll<HTMLButtonElement>('.unit-btn').forEach((b) => {
+        b.setAttribute('aria-pressed', b.dataset.unit === savedUnit ? 'true' : 'false');
+      });
     }
+    if (detail.inputs.width  && widthInput)  widthInput.value  = detail.inputs.width;
+    if (detail.inputs.height && heightInput) heightInput.value = detail.inputs.height;
+    calculate();
+    track({ type: 'history_restored', properties: { slug: 'window-size-calculator', entryId: detail.entryId } });
+  });
 
-    const titleEl = resultsEmpty.querySelector('.empty-title') as HTMLElement;
-    const subEl   = resultsEmpty.querySelector('.empty-sub')   as HTMLElement;
-    if (titleEl) titleEl.textContent = 'Fix your input';
-    if (subEl)   subEl.textContent   = 'Fix the highlighted measurement(s) to see calculations.';
-
-    resultsEmpty.hidden = false;
-    resultsGrid.hidden  = true;
-    if (recSection) recSection.hidden = true;
-  }
-
-  /** Show a non-blocking advisory warning — calculations still run. */
-  function showWarningMessage(msg: string) {
-    errorMsg.textContent = msg;
-    errorMsg.dataset.level = 'warn';
-  }
+  // ── Keyboard UX ───────────────────────────────────────────────────────────
+  // Escape clears the warning/error banner so the user can keep typing
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && errorMsg.textContent) {
+      clearCalculatorError(refs);
+    }
+  });
 
   // ── Main calculation ──────────────────────────────────────────────────────
 
@@ -618,16 +527,11 @@ const faqs: FAQ[] = [
     const rawHeight = heightInput?.value.trim() ?? '';
 
     // Reset all error/invalid states on every recalculation
-    errorMsg.textContent = '';
-    errorMsg.removeAttribute('data-level');
-    widthInput?.removeAttribute('aria-invalid');
-    heightInput?.removeAttribute('aria-invalid');
-    widthInput?.setAttribute('aria-describedby', 'input-width-hint');
-    heightInput?.setAttribute('aria-describedby', 'input-height-hint');
+    clearCalculatorError(refs);
 
     // Empty fields — show neutral placeholder
     if (!rawWidth || !rawHeight) {
-      resetEmptyState();
+      resetCalculatorEmpty(refs);
       resultsEmpty.hidden = false;
       resultsGrid.hidden  = true;
       if (recSection) recSection.hidden = true;
@@ -640,14 +544,16 @@ const faqs: FAQ[] = [
     const parsedHeight = normalizeInput(rawHeight, currentUnit);
 
     if (parsedWidth === null) {
-      showErrorState(
+      showCalculatorError(
+        refs,
         `"${rawWidth}" is not a valid width. Use a number (36), decimal (36.5), or fraction (36 1/2 or 48-3/8).`,
         'width',
       );
       return;
     }
     if (parsedHeight === null) {
-      showErrorState(
+      showCalculatorError(
+        refs,
         `"${rawHeight}" is not a valid height. Use a number (48), decimal (48.5), or fraction (48 3/8 or 48-7/16).`,
         'height',
       );
@@ -661,18 +567,20 @@ const faqs: FAQ[] = [
     const heightIn = heightMm / 25.4;
 
     // ── 3. Hard limit check with unit-specific message ────────────────────────
-    //    (mirrors the engine's MAX_DIMENSION_MM = 9144; done here so the
-    //     message names the limit in the user's active unit, not "30 feet")
-    if (widthMm > MAX_DIM_MM) {
-      showErrorState(
-        `Width is too large — maximum supported is ${maxLimitLabel(currentUnit)}.`,
+    //    (mirrors the engine's MAX_DIMENSION_MM; done here so the message
+    //     names the limit in the user's active unit, not always "30 feet")
+    if (widthMm > MAX_DIMENSION_MM) {
+      showCalculatorError(
+        refs,
+        `Width is too large — maximum supported is ${maxLimitLabel(MAX_DIMENSION_MM, currentUnit)}.`,
         'width',
       );
       return;
     }
-    if (heightMm > MAX_DIM_MM) {
-      showErrorState(
-        `Height is too large — maximum supported is ${maxLimitLabel(currentUnit)}.`,
+    if (heightMm > MAX_DIMENSION_MM) {
+      showCalculatorError(
+        refs,
+        `Height is too large — maximum supported is ${maxLimitLabel(MAX_DIMENSION_MM, currentUnit)}.`,
         'height',
       );
       return;
@@ -680,26 +588,25 @@ const faqs: FAQ[] = [
 
     // ── 4. Soft advisory warnings (non-blocking — calculations continue) ──────
     if (widthIn > 120) {
-      showWarningMessage('This width is larger than most residential windows. Double-check your measurement or unit selection.');
+      showCalculatorWarning(refs, 'This width is larger than most residential windows. Double-check your measurement or unit selection.');
     } else if (heightIn > 120) {
-      showWarningMessage('This height is larger than most residential windows. Double-check your measurement or unit selection.');
+      showCalculatorWarning(refs, 'This height is larger than most residential windows. Double-check your measurement or unit selection.');
     } else if (widthIn < 6 && widthMm >= 25) {
-      showWarningMessage('This width is smaller than a typical window pane. Are you measuring in the right unit?');
+      showCalculatorWarning(refs, 'This width is smaller than a typical window pane. Are you measuring in the right unit?');
     }
 
     // ── 5. Engine validation (NaN, ≤0, below min, unusual aspect ratio) ──────
     const validation = validateDimensions({ widthMm, heightMm });
     if (!validation.valid) {
       if (validation.level === 'warning') {
-        // Unusual proportions: show advisory but let calculations run
-        showWarningMessage(validation.message ?? 'Unusual window proportions — double-check measurements.');
+        showCalculatorWarning(refs, validation.message ?? 'Unusual window proportions — double-check measurements.');
       } else {
-        // Hard engine error (e.g. zero, below minimum, NaN)
-        showErrorState(
+        showCalculatorError(
+          refs,
           validation.message ?? 'Invalid dimensions.',
           validation.field === 'width'  ? 'width'
           : validation.field === 'height' ? 'height'
-          : null,
+          : undefined,
         );
         return;
       }
@@ -721,16 +628,12 @@ const faqs: FAQ[] = [
                   : currentUnit === 'ft' ? "'"
                   : currentUnit;
 
-    // Area: number from split, unit from areaUnit — .result-unit span always exists
     setResult(resultArea,      formatArea(areaMm2, currentUnit).split(' ')[0], areaUnit);
-    // Perimeter: fmtVal applies correct per-unit rounding (no regex fragility)
     setResult(resultPerimeter, fmtVal(perimeterMm, currentUnit), dimUnit);
     setResult(resultAspect,    aspectRatio, '');
-    // Reference dimensions — always follow the active unit, not hardcoded mm
     setResult(resultWidthMm,  fmtVal(widthMm,  currentUnit), dimUnit);
     setResult(resultHeightMm, fmtVal(heightMm, currentUnit), dimUnit);
 
-    // Panel header: show clean rounded dimensions in the active unit (no raw float)
     if (unitDisplay) {
       unitDisplay.textContent = `${fmtVal(widthMm, currentUnit)} \u00d7 ${fmtVal(heightMm, currentUnit)} ${currentUnit}`;
     }
@@ -738,17 +641,15 @@ const faqs: FAQ[] = [
     // ── 7. Smart recommendations ──────────────────────────────────────────────
 
     // 7a. Standard size match
-    const std      = findNearestStandardSize(widthMm, heightMm, 'US');
-    const stdWmm   = toMm(std.nearest.widthIn,  'in');
-    const stdHmm   = toMm(std.nearest.heightIn, 'in');
+    const std    = findNearestStandardSize(widthMm, heightMm, 'US');
+    const stdWmm = toMm(std.nearest.widthIn,  'in');
+    const stdHmm = toMm(std.nearest.heightIn, 'in');
 
-    // "Your window" — always in current unit (no mixing)
     setText('rec-your-dims',
       metric
         ? `${fmtVal(widthMm, currentUnit)} \u00d7 ${fmtVal(heightMm, currentUnit)} ${currentUnit}`
         : `${widthIn.toFixed(1)}" \u00d7 ${heightIn.toFixed(1)}"`);
 
-    // "Nearest standard" — convert to current unit in metric mode; label in imperial
     setText('rec-std-dims',
       metric
         ? `${fmtVal(stdWmm, currentUnit)} \u00d7 ${fmtVal(stdHmm, currentUnit)} ${currentUnit}`
@@ -757,7 +658,7 @@ const faqs: FAQ[] = [
     const diffEl = document.getElementById('rec-std-diff') as HTMLElement | null;
     if (diffEl) {
       if (!std.isExact) {
-        diffEl.textContent = `Diff: ${fmtDiff(std.diffWidthIn, currentUnit)} width \u00b7 ${fmtDiff(std.diffHeightIn, currentUnit)} height`;
+        diffEl.textContent = `Diff: ${formatDifference(std.diffWidthIn, currentUnit)} width \u00b7 ${formatDifference(std.diffHeightIn, currentUnit)} height`;
         diffEl.hidden = false;
       } else {
         diffEl.hidden = true;
@@ -772,10 +673,10 @@ const faqs: FAQ[] = [
         stdBadge.textContent  = 'Exact match';
         stdBadge.dataset.type = 'exact';
       } else if (std.isClose) {
-        stdBadge.textContent  = `\u00b1${fmtDistance(std.distanceIn, currentUnit)} close`;
+        stdBadge.textContent  = `\u00b1${formatDistance(std.distanceIn, currentUnit)} close`;
         stdBadge.dataset.type = 'close';
       } else {
-        stdBadge.textContent  = `${fmtDistance(std.distanceIn, currentUnit)} away`;
+        stdBadge.textContent  = `${formatDistance(std.distanceIn, currentUnit)} away`;
         stdBadge.dataset.type = 'far';
       }
     }
@@ -790,33 +691,58 @@ const faqs: FAQ[] = [
 
     // 7b. Curtain sizing — all values in current unit
     const curtain = calculateCurtainRecommendations(dims);
-    const curtainAllowance =
-      currentUnit === 'cm' ? '~20 cm'
-      : currentUnit === 'm'  ? '~0.2 m'
-      : currentUnit === 'ft' ? "~0.7'"
-      : currentUnit === 'mm' ? '~200 mm'
-      : '8"';
-    setText('rec-curtain-min',  fmtCeil(curtain.minWidthMm,  currentUnit));
-    setText('rec-curtain-full', fmtCeil(curtain.fullWidthMm, currentUnit));
+    setText('rec-curtain-min',  formatCeil(curtain.minWidthMm,  currentUnit));
+    setText('rec-curtain-full', formatCeil(curtain.fullWidthMm, currentUnit));
     setText('rec-curtain-drop',
-      `Drop: ${fmtCeil(curtain.dropMm, currentUnit)} (incl. ${curtainAllowance} above-window allowance)`);
+      `Drop: ${formatCeil(curtain.dropMm, currentUnit)} (incl. ${curtainAllowanceLabel(currentUnit)} above-window allowance)`);
 
-    // 7c. Glass estimate — area uses formatArea (same unit as calculator), weight in metric/imperial
+    // 7c. Glass estimate
     const glazingAreaMm2 = calculateGlassArea(dims);
     const glass          = calculateGlassWeight(glazingAreaMm2);
-
-    setText('rec-glass-area', formatArea(glazingAreaMm2, currentUnit));
-
-    setText('rec-glass-weight',
-      metric
-        ? `${glass.totalWeightKg.toFixed(1)} kg`
-        : `${glass.totalWeightLbs.toFixed(1)} lbs`);
+    setText('rec-glass-area',   formatArea(glazingAreaMm2, currentUnit));
+    setText('rec-glass-weight', formatWeight(glass.totalWeightKg, glass.totalWeightLbs, currentUnit));
 
     if (recSection) recSection.hidden = false;
 
     // ── 8. Show results ───────────────────────────────────────────────────────
     resultsEmpty.hidden = true;
     resultsGrid.hidden  = false;
+
+    // ── 9. Phase 5 — URL state, history, share, analytics ────────────────────
+    pushUrlState({ width: rawWidth, height: rawHeight, unit: currentUnit });
+
+    const histLabel = `${fmtVal(widthMm, currentUnit)} × ${fmtVal(heightMm, currentUnit)} ${currentUnit}`;
+    (window as any).wmHistoryPanel?.add(histLabel, { width: rawWidth, height: rawHeight, unit: currentUnit });
+    (window as any).wmShareExportBar?.show();
+
+    // Expose state for Share/Export components
+    (window as any).wmCurrentState = { width: rawWidth, height: rawHeight, unit: currentUnit };
+    (window as any).wmBuildSummary = () => buildSummary(
+      'Window Size Calculator',
+      [
+        ['Width',        `${fmtVal(widthMm, currentUnit)} ${currentUnit}`],
+        ['Height',       `${fmtVal(heightMm, currentUnit)} ${currentUnit}`],
+        ['Area',         formatArea(areaMm2, currentUnit)],
+        ['Perimeter',    `${fmtVal(perimeterMm, currentUnit)} ${currentUnit}`],
+        ['Aspect Ratio', aspectRatio],
+      ],
+      buildShareUrl({ width: rawWidth, height: rawHeight, unit: currentUnit }),
+    );
+    (window as any).wmBuildExport = () => buildExportPayload(
+      'window-size-calculator',
+      { width: rawWidth, height: rawHeight, unit: currentUnit },
+      { area: formatArea(areaMm2, currentUnit), perimeter: `${fmtVal(perimeterMm, currentUnit)} ${currentUnit}`, widthMm, heightMm },
+    );
+
+    track({
+      type: 'calculation_completed',
+      properties: { slug: 'window-size-calculator', unit: currentUnit, inputs: { width: rawWidth, height: rawHeight } },
+    });
+
+    // Mobile UX: smooth-scroll to results on small screens
+    if (window.innerWidth < 768) {
+      resultsGrid.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
   }
 
   // ── Event listeners ───────────────────────────────────────────────────────
@@ -844,9 +770,15 @@ const faqs: FAQ[] = [
       heightInput.value = fmtInput(toMm(parsedH, currentUnit), newUnit);
     }
 
+    const prevUnit = currentUnit;
     currentUnit = newUnit;
     calculate();
+
+    track({ type: 'unit_changed', properties: { slug: 'window-size-calculator', from: prevUnit, to: newUnit } });
   });
+
+  // Initial calculation from URL state (if inputs were restored)
+  if (widthInput?.value || heightInput?.value) calculate();
 </script>
 
 <style>
@@ -1002,20 +934,6 @@ const faqs: FAQ[] = [
     background: transparent;
   }
 
-  .calc-error {
-    padding: 0 var(--spacing-md);
-    min-height: 0;
-    font-size: var(--font-size-body-sm);
-    color: var(--color-error);
-    line-height: 1.5;
-  }
-
-  .calc-error:not(:empty) {
-    padding: var(--spacing-xs) var(--spacing-md);
-    background-color: color-mix(in srgb, var(--color-error) 5%, transparent);
-    border-bottom: 1px solid color-mix(in srgb, var(--color-error) 12%, transparent);
-  }
-
   /* Measurement guide */
   .measure-guide {
     padding: var(--spacing-md);
@@ -1086,36 +1004,6 @@ const faqs: FAQ[] = [
   .calc-panel-results {
     display: flex;
     flex-direction: column;
-  }
-
-  /* Empty state */
-  .results-empty-state {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: var(--spacing-sm);
-    padding: var(--spacing-4xl) var(--spacing-xl);
-    color: var(--color-muted);
-    text-align: center;
-  }
-
-  .empty-icon {
-    color: var(--color-hairline-strong);
-  }
-
-  .empty-title {
-    font-size: var(--font-size-body-sm);
-    font-weight: 500;
-    color: var(--color-muted);
-    margin: 0;
-  }
-
-  .empty-sub {
-    font-size: var(--font-size-caption);
-    color: var(--color-muted);
-    opacity: 0.7;
-    margin: 0;
   }
 
   /* Results grid */
@@ -1256,120 +1144,6 @@ const faqs: FAQ[] = [
     border-top: 1px solid var(--color-hairline);
   }
 
-  /* ── Sidebar ──────────────────────────────────────────────────────── */
-
-  .related-tools {
-    background-color: var(--color-canvas);
-    border: 1px solid var(--color-hairline);
-    border-radius: var(--radius-md);
-    overflow: hidden;
-  }
-
-  .related-heading {
-    font-family: var(--font-family-mono);
-    font-size: 11px;
-    font-weight: 500;
-    color: var(--color-muted);
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    padding: var(--spacing-sm) var(--spacing-md);
-    border-bottom: 1px solid var(--color-hairline);
-    background-color: var(--color-canvas-soft);
-    margin: 0;
-  }
-
-  .related-list {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-  }
-
-  .related-link {
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-    padding: var(--spacing-md);
-    border-bottom: 1px solid var(--color-hairline);
-    text-decoration: none;
-    color: inherit;
-    transition: background-color 150ms ease;
-  }
-
-  .related-link:last-of-type {
-    border-bottom: none;
-  }
-
-  .related-link:hover {
-    background-color: var(--color-canvas-soft);
-  }
-
-  .related-link-title {
-    font-size: var(--font-size-body-sm);
-    font-weight: 500;
-    color: var(--color-ink);
-  }
-
-  .related-link-desc {
-    font-size: var(--font-size-caption);
-    color: var(--color-muted);
-    line-height: 1.45;
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-  }
-
-  .sidebar-tip {
-    padding: var(--spacing-md);
-    background-color: var(--color-canvas-soft);
-    border-top: 1px solid var(--color-hairline);
-  }
-
-  .sidebar-tip-label {
-    font-family: var(--font-family-mono);
-    font-size: 10px;
-    font-weight: 500;
-    color: var(--color-muted);
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    margin: 0 0 4px;
-  }
-
-  .sidebar-tip-text {
-    font-size: var(--font-size-caption);
-    color: var(--color-body);
-    line-height: 1.55;
-    margin: 0;
-  }
-
-  .sidebar-guide {
-    padding: var(--spacing-md);
-    border-top: 1px solid var(--color-hairline);
-  }
-
-  .sidebar-guide-label {
-    font-family: var(--font-family-mono);
-    font-size: 10px;
-    font-weight: 500;
-    color: var(--color-muted);
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    margin: 0 0 6px;
-  }
-
-  .sidebar-guide-link {
-    font-size: var(--font-size-caption);
-    color: var(--color-link);
-    text-decoration: none;
-    line-height: 1.45;
-    display: block;
-    transition: opacity 150ms ease;
-  }
-
-  .sidebar-guide-link:hover {
-    opacity: 0.75;
-  }
-
   /* ── Smart Recommendations ────────────────────────────────────────── */
 
   .rec-section {
@@ -1390,96 +1164,6 @@ const faqs: FAQ[] = [
     color: var(--color-muted);
     text-transform: uppercase;
     letter-spacing: 0.08em;
-  }
-
-  .rec-card {
-    padding: var(--spacing-md);
-    border-bottom: 1px solid var(--color-hairline);
-  }
-
-  .rec-card:last-child {
-    border-bottom: none;
-  }
-
-  .rec-card--next {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: var(--spacing-md);
-    background-color: var(--color-canvas-soft);
-  }
-
-  .rec-card-top {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: var(--spacing-sm);
-    margin-bottom: var(--spacing-xs);
-  }
-
-  .rec-card-label {
-    font-family: var(--font-family-mono);
-    font-size: 11px;
-    font-weight: 500;
-    color: var(--color-muted);
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-  }
-
-  .rec-card-value {
-    font-family: var(--font-family-mono);
-    font-size: var(--font-size-body-md);
-    font-weight: 600;
-    color: var(--color-ink);
-    margin: 0 0 var(--spacing-xxs);
-    letter-spacing: -0.01em;
-  }
-
-  .rec-card-note {
-    font-size: var(--font-size-caption);
-    color: var(--color-muted);
-    margin: 0;
-    line-height: 1.5;
-  }
-
-  /* Badge */
-  .rec-badge {
-    font-family: var(--font-family-mono);
-    font-size: 10px;
-    padding: 1px 6px;
-    border-radius: 3px;
-    border: 1px solid var(--color-hairline);
-    background-color: var(--color-canvas-soft-2);
-    color: var(--color-muted);
-    flex-shrink: 0;
-    letter-spacing: 0.03em;
-    transition: background-color 150ms ease, color 150ms ease, border-color 150ms ease;
-  }
-
-  .rec-badge[data-type='exact'] {
-    background-color: color-mix(in srgb, #22c55e 10%, transparent);
-    border-color: color-mix(in srgb, #22c55e 20%, transparent);
-    color: #16a34a;
-  }
-
-  [data-theme='dark'] .rec-badge[data-type='exact'] {
-    color: #4ade80;
-  }
-
-  .rec-badge[data-type='close'] {
-    background-color: color-mix(in srgb, #f59e0b 10%, transparent);
-    border-color: color-mix(in srgb, #f59e0b 20%, transparent);
-    color: #b45309;
-  }
-
-  [data-theme='dark'] .rec-badge[data-type='close'] {
-    color: #fbbf24;
-  }
-
-  .rec-badge[data-type='far'] {
-    background-color: var(--color-canvas-soft-2);
-    color: var(--color-muted);
-    border-color: var(--color-hairline);
   }
 
   /* ── Standard size visual comparison ─────────────────────────────── */
@@ -1591,16 +1275,89 @@ const faqs: FAQ[] = [
     opacity: 0.75;
   }
 
-  /* ── Warning validation state ─────────────────────────────────────── */
-
-  /* calc-error can have [data-level='warn'] for soft advisory messages */
-  #calc-error[data-level='warn'] {
-    background-color: color-mix(in srgb, #f59e0b 8%, transparent);
-    border-color: color-mix(in srgb, #f59e0b 20%, transparent);
-    color: #92400e;
+  /* ── Phase 5 extras row (share/export + history) ──────────────────── */
+  .calc-extras {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+    margin-bottom: var(--spacing-xl);
   }
 
-  [data-theme='dark'] #calc-error[data-level='warn'] {
-    color: #fbbf24;
+  /* Hero favorite button alignment */
+  .calc-hero {
+    align-items: flex-start;
   }
+
+  /* ── Mobile UX ────────────────────────────────────────────────────── */
+
+  @media (max-width: 767px) {
+    .calc-hero {
+      flex-direction: column;
+      gap: var(--spacing-md);
+    }
+
+    .calc-hero-left {
+      gap: var(--spacing-sm);
+    }
+
+    .calc-hero-title {
+      font-size: var(--font-size-display-sm, 1.5rem);
+    }
+
+    /* Larger touch targets for unit selector buttons */
+    :global(.unit-btn) {
+      min-height: 44px;
+      padding: 10px 12px;
+      font-size: 14px;
+    }
+
+    /* Larger inputs for easier touch typing */
+    :global(.input) {
+      font-size: 16px; /* prevents iOS auto-zoom */
+      min-height: 44px;
+      padding: 10px 14px;
+    }
+
+    /* Stack the secondary row vertically on small screens */
+    .results-secondary-row {
+      grid-template-columns: 1fr;
+    }
+
+    .results-secondary-row :global(.result-card) {
+      border-right: none;
+      border-bottom: 1px solid var(--color-hairline);
+    }
+
+    .results-secondary-row :global(.result-card:last-child) {
+      border-bottom: none;
+    }
+
+    /* Tighter dashboard spacing on mobile */
+    .calc-dashboard {
+      gap: var(--spacing-md);
+      margin-bottom: var(--spacing-xl);
+    }
+
+    /* Share/export bar: wrap buttons on mobile */
+    :global(.seb-actions) {
+      gap: 6px;
+    }
+
+    :global(.seb-btn) {
+      min-height: 40px;
+    }
+  }
+
+  @media print {
+    .calc-hero,
+    .calc-extras,
+    .calc-faq,
+    :global(.sidebar),
+    :global(.share-export-bar),
+    :global(.history-panel) {
+      display: none !important;
+    }
+    .calc-panel-inputs { display: none !important; }
+  }
+
 </style>

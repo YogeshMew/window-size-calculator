@@ -1,0 +1,88 @@
+---
+/**
+ * WindowMetrics — Empty State
+ *
+ * Shown in the results panel when no input has been entered, input is invalid,
+ * or a calculation is unavailable.
+ *
+ * Props:
+ *   id    — HTML id for JS targeting (default: "results-empty")
+ *   title — Primary message (default: "Enter dimensions")
+ *   sub   — Secondary message below the title
+ *   icon  — Which SVG icon to display ('window' | 'ruler' | 'search')
+ */
+
+interface Props {
+  id?: string;
+  title?: string;
+  sub?: string;
+  icon?: 'window' | 'ruler' | 'search';
+}
+
+const {
+  id = 'results-empty',
+  title = 'Enter dimensions',
+  sub = 'Results will appear here as you type',
+  icon = 'window',
+} = Astro.props;
+---
+
+<div class="results-empty-state" id={id}>
+  <div class="empty-icon" aria-hidden="true">
+    {icon === 'window' && (
+      <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+        <rect x="6" y="4" width="20" height="24" rx="2" stroke="currentColor" stroke-width="1.5"/>
+        <line x1="6" y1="16" x2="26" y2="16" stroke="currentColor" stroke-width="1.5"/>
+        <line x1="16" y1="4" x2="16" y2="28" stroke="currentColor" stroke-width="1.5"/>
+      </svg>
+    )}
+    {icon === 'ruler' && (
+      <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+        <rect x="4" y="12" width="24" height="8" rx="1.5" stroke="currentColor" stroke-width="1.5"/>
+        <line x1="9" y1="16" x2="9" y2="20" stroke="currentColor" stroke-width="1.5"/>
+        <line x1="14" y1="16" x2="14" y2="20" stroke="currentColor" stroke-width="1.5"/>
+        <line x1="19" y1="16" x2="19" y2="20" stroke="currentColor" stroke-width="1.5"/>
+        <line x1="24" y1="16" x2="24" y2="20" stroke="currentColor" stroke-width="1.5"/>
+      </svg>
+    )}
+    {icon === 'search' && (
+      <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+        <circle cx="14" cy="14" r="8" stroke="currentColor" stroke-width="1.5"/>
+        <line x1="20" y1="20" x2="28" y2="28" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+      </svg>
+    )}
+  </div>
+  <p class="empty-title">{title}</p>
+  <p class="empty-sub">{sub}</p>
+</div>
+
+<style>
+  .results-empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-4xl) var(--spacing-xl);
+    color: var(--color-muted);
+    text-align: center;
+  }
+
+  .empty-icon {
+    color: var(--color-hairline-strong);
+  }
+
+  .empty-title {
+    font-size: var(--font-size-body-sm);
+    font-weight: 500;
+    color: var(--color-muted);
+    margin: 0;
+  }
+
+  .empty-sub {
+    font-size: var(--font-size-caption);
+    color: var(--color-muted);
+    opacity: 0.7;
+    margin: 0;
+  }
+</style>

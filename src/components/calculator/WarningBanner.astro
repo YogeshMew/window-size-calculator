@@ -1,0 +1,62 @@
+---
+/**
+ * WindowMetrics — Warning Banner
+ *
+ * Displays validation errors and advisory warnings in the input panel.
+ * Rendered empty by default; calculator JS populates it at runtime.
+ *
+ * Severity levels (set by JS via data-level attribute):
+ *   (none)   — error state: red background and text
+ *   'warn'   — warning state: amber background, calculations continue
+ *
+ * JS API (from src/utils/calculator-ui.ts):
+ *   showCalculatorError(refs, message)   → populates with error styling
+ *   showCalculatorWarning(refs, message) → populates with warn styling (data-level="warn")
+ *   clearCalculatorError(refs)           → empties the element
+ *
+ * Props:
+ *   id    — HTML id used by calculator JS (default: "calc-error")
+ *   class — Additional classes
+ */
+
+interface Props {
+  id?: string;
+  class?: string;
+}
+
+const { id = 'calc-error', class: className } = Astro.props;
+---
+
+<div
+  id={id}
+  class:list={['calc-error', className]}
+  role="alert"
+  aria-live="polite"
+></div>
+
+<style>
+  .calc-error {
+    padding: 0 var(--spacing-md);
+    min-height: 0;
+    font-size: var(--font-size-body-sm);
+    color: var(--color-error);
+    line-height: 1.5;
+  }
+
+  .calc-error:not(:empty) {
+    padding: var(--spacing-xs) var(--spacing-md);
+    background-color: color-mix(in srgb, var(--color-error) 5%, transparent);
+    border-bottom: 1px solid color-mix(in srgb, var(--color-error) 12%, transparent);
+  }
+
+  /* Warning level — advisory only, calculations continue */
+  :global(#calc-error[data-level='warn']) {
+    background-color: color-mix(in srgb, #f59e0b 8%, transparent);
+    border-color: color-mix(in srgb, #f59e0b 20%, transparent);
+    color: #92400e;
+  }
+
+  :global([data-theme='dark'] #calc-error[data-level='warn']) {
+    color: #fbbf24;
+  }
+</style>
