@@ -14,10 +14,10 @@ import type { ValidationResult, Dimensions } from '@/types/calculator.js';
 // ---------------------------------------------------------------------------
 
 /** Minimum reasonable window dimension in mm (roughly 1 inch) */
-const MIN_DIMENSION_MM = 25;
+export const MIN_DIMENSION_MM = 25;
 
 /** Maximum reasonable window dimension in mm (roughly 30 feet) */
-const MAX_DIMENSION_MM = 9_144;
+export const MAX_DIMENSION_MM = 9_144;
 
 /** Maximum reasonable aspect ratio (width:height or height:width) */
 const MAX_ASPECT_RATIO = 10;
