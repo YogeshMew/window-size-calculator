@@ -1,0 +1,1409 @@
+---
+/**
+ * WindowMetrics — Window Glass Calculator
+ * Route: /tools/window-glass-calculator
+ *
+ * Calculates glass area, weight, handling requirements, and ordering quantities
+ * for any shape and glass type. Full Phase 5 platform integration.
+ */
+
+import ToolLayout from '@/layouts/ToolLayout.astro';
+import InputCard from '@/components/calculator/InputCard.astro';
+import UnitSelector from '@/components/calculator/UnitSelector.astro';
+import ResultCard from '@/components/calculator/ResultCard.astro';
+import EmptyState from '@/components/calculator/EmptyState.astro';
+import WarningBanner from '@/components/calculator/WarningBanner.astro';
+import RecommendationCard from '@/components/calculator/RecommendationCard.astro';
+import RelatedTools from '@/components/calculator/RelatedTools.astro';
+import FAQSection from '@/components/content/FAQSection.astro';
+import ToolIcon from '@/components/ui/ToolIcon.astro';
+import TrustStrip from '@/components/ui/TrustStrip.astro';
+import HistoryPanel from '@/components/calculator/HistoryPanel.astro';
+import ShareExportBar from '@/components/calculator/ShareExportBar.astro';
+import FavoriteButton from '@/components/ui/FavoriteButton.astro';
+
+import { getToolBySlug, getRelatedTools } from '@/data/tools.js';
+import type { BreadcrumbItem, FAQ } from '@/types/calculator.js';
+
+const tool = getToolBySlug('window-glass-calculator')!;
+const relatedTools = getRelatedTools('window-glass-calculator');
+
+const breadcrumbs: BreadcrumbItem[] = [
+  { label: 'Home', href: '/' },
+  { label: 'Tools', href: '/tools' },
+  { label: tool.title, href: tool.href, current: true },
+];
+
+const faqs: FAQ[] = [
+  {
+    question: 'How is glass weight calculated?',
+    answer:
+      'Glass weight = area (m²) × thickness (mm) × 2.5 kg/m²/mm. Float glass has a density of 2,500 kg/m³. A 1 m² pane of 6 mm glass weighs 15 kg. For double-pane IGU, add both glass panes plus approximately 2 kg/m² for the spacer and sealant.',
+  },
+  {
+    question: 'What is the difference between annealed and tempered glass?',
+    answer:
+      'Annealed glass is standard float glass — it can be cut, drilled, and shaped on-site, but it breaks into large, sharp shards. Tempered glass is heat-treated to be 4–5× stronger and must be sized before tempering. When it breaks, it shatters into small, blunt granules that are far safer.',
+  },
+  {
+    question: 'When is tempered glass required?',
+    answer:
+      'Building codes in most countries require tempered (or laminated) glass near doors, in shower enclosures, for any pane within 500 mm of the floor, skylights, stairwells, and panes larger than 0.5 m². Always check your local building code — requirements vary by region.',
+  },
+  {
+    question: 'Can tempered glass be cut after ordering?',
+    answer:
+      'No. Tempered glass cannot be cut, drilled, or ground after the tempering process. Any modifications must be made to annealed glass before tempering. Always confirm your exact final dimensions before placing a tempered glass order.',
+  },
+  {
+    question: 'How much waste allowance should I add?',
+    answer:
+      '10% is the industry standard for most rectangular cuts. For non-rectangular shapes (circles, triangles), add 15–20% as more material is wasted. For precision prefabricated panes where you have exact measurements, 5% may suffice.',
+  },
+  {
+    question: 'What does shipping weight include?',
+    answer:
+      'Shipping weight in this calculator is the glass weight plus 25% for protective packaging — wooden crating, foam edge protectors, and bubble wrap. The exact packing weight varies by supplier, but 20–30% is a reasonable estimate for quoting freight costs.',
+  },
+  {
+    question: 'How do I measure a circular glass pane?',
+    answer:
+      'Measure the diameter (the widest measurement across the centre). The radius is half the diameter. Enter the diameter in the Width field and select the Circle shape. The calculator converts to area using π × (d/2)².',
+  },
+  {
+    question: 'What glass thickness do I need for my window?',
+    answer:
+      'For small windows (under 0.25 m²), 4 mm is sufficient. Standard residential windows (0.5–1.5 m²) typically use 5–6 mm. Large panes (over 2 m²) need 8–10 mm. For structural applications, wind load calculations per ASTM E1300 or EN 16612 should be performed by an engineer.',
+  },
+];
+---
+
+<ToolLayout tool={tool} breadcrumbs={breadcrumbs} faqs={faqs}>
+
+  <!-- ── Page Hero ──────────────────────────────────────────────────── -->
+  <header class="calc-hero">
+    <div class="calc-hero-left">
+      <div class="icon-container icon-container-lg">
+        <ToolIcon name={tool.icon ?? 'PanelTop'} size={22} />
+      </div>
+      <div>
+        <div class="calc-status-badge">
+          <span class="calc-status-dot" aria-hidden="true"></span>
+          Available
+        </div>
+        <h1 class="calc-hero-title">{tool.title}</h1>
+        <p class="calc-hero-desc">
+          Enter your glass dimensions and type. Get weight, area, handling requirements,
+          ordering quantities — and a live illustration that updates as you type.
+        </p>
+        <TrustStrip
+          compact
+          items={[
+            { label: '5 shapes supported' },
+            { label: '6 glass types' },
+            { label: 'Handling guidance' },
+            { label: 'No signup' },
+          ]}
+          class="calc-trust"
+        />
+      </div>
+    </div>
+    <FavoriteButton slug="window-glass-calculator" label="Favorite this calculator" />
+  </header>
+
+  <!-- ── Dashboard Grid ─────────────────────────────────────────── -->
+  <div class="calc-dashboard">
+
+    <!-- LEFT PANEL — Inputs ──────────────────────────────────── -->
+    <div class="calc-panel calc-panel-inputs">
+
+      <!-- Section: Shape & Dimensions -->
+      <div class="panel-header">
+        <span class="panel-label">Glass dimensions</span>
+        <span class="panel-hint">Frame opening size</span>
+      </div>
+
+      <!-- Shape selector -->
+      <InputCard label="Shape" inputId="shape-selector">
+        <div class="option-selector" id="shape-selector" role="group" aria-label="Glass shape">
+          <button type="button" class="option-btn" aria-pressed="true"  data-value="rectangle">Rectangle</button>
+          <button type="button" class="option-btn" aria-pressed="false" data-value="square">Square</button>
+          <button type="button" class="option-btn" aria-pressed="false" data-value="circle">Circle</button>
+          <button type="button" class="option-btn" aria-pressed="false" data-value="half-circle">½ Circle</button>
+          <button type="button" class="option-btn" aria-pressed="false" data-value="triangle">Triangle</button>
+        </div>
+      </InputCard>
+
+      <!-- Unit selector -->
+      <div class="unit-row">
+        <span class="unit-row-label">Unit</span>
+        <UnitSelector selected="in" id="unit-selector" name="unit" />
+      </div>
+
+      <!-- Width / Diameter -->
+      <InputCard label="Width" inputId="input-width" hint="e.g. 36 or 36 1/4" required>
+        <input
+          type="text"
+          id="input-width"
+          name="width"
+          class="input"
+          placeholder="36"
+          inputmode="decimal"
+          autocomplete="off"
+          aria-describedby="input-width-hint"
+        />
+      </InputCard>
+
+      <!-- Height (hidden for square, circle, half-circle) -->
+      <div id="height-row">
+        <InputCard label="Height" inputId="input-height" hint="e.g. 48 or 48 1/2" required>
+          <input
+            type="text"
+            id="input-height"
+            name="height"
+            class="input"
+            placeholder="48"
+            inputmode="decimal"
+            autocomplete="off"
+            aria-describedby="input-height-hint"
+          />
+        </InputCard>
+      </div>
+
+      <!-- Shape hint for non-rectangular shapes -->
+      <div id="shape-hint" class="shape-hint" hidden></div>
+
+      <!-- Error / warning banner -->
+      <WarningBanner />
+
+      <!-- Section: Glass Specification -->
+      <div class="panel-section-header">
+        <span class="panel-label">Glass specification</span>
+      </div>
+
+      <!-- Glass Type -->
+      <InputCard label="Glass Type" inputId="input-glass-type">
+        <select id="input-glass-type" class="input-select" name="glassType">
+          <option value="annealed" selected>Annealed (Standard Float)</option>
+          <option value="tempered">Tempered (Toughened)</option>
+          <option value="laminated">Laminated Safety Glass</option>
+          <option value="double-pane">Double-Pane IGU</option>
+          <option value="triple-pane">Triple-Pane IGU</option>
+          <option value="low-e">Low-E Coated</option>
+        </select>
+      </InputCard>
+
+      <!-- Thickness -->
+      <InputCard label="Thickness (per pane)" inputId="thickness-selector">
+        <div class="option-selector" id="thickness-selector" role="group" aria-label="Glass thickness">
+          <button type="button" class="option-btn" aria-pressed="false" data-value="3">3 mm</button>
+          <button type="button" class="option-btn" aria-pressed="false" data-value="4">4 mm</button>
+          <button type="button" class="option-btn" aria-pressed="false" data-value="5">5 mm</button>
+          <button type="button" class="option-btn" aria-pressed="true"  data-value="6">6 mm</button>
+          <button type="button" class="option-btn" aria-pressed="false" data-value="8">8 mm</button>
+          <button type="button" class="option-btn" aria-pressed="false" data-value="10">10 mm</button>
+          <button type="button" class="option-btn" aria-pressed="false" data-value="12">12 mm</button>
+          <button type="button" class="option-btn" aria-pressed="false" data-value="15">15 mm</button>
+          <button type="button" class="option-btn" aria-pressed="false" data-value="19">19 mm</button>
+        </div>
+      </InputCard>
+
+      <!-- Quantity -->
+      <InputCard label="Quantity" inputId="input-quantity" hint="number of identical panes">
+        <div class="occupants-stepper">
+          <button type="button" class="stepper-btn" id="qty-dec" aria-label="Decrease quantity">−</button>
+          <input
+            type="number"
+            id="input-quantity"
+            name="quantity"
+            class="stepper-input"
+            min="1"
+            max="500"
+            value="1"
+            aria-describedby="input-quantity-hint"
+          />
+          <button type="button" class="stepper-btn" id="qty-inc" aria-label="Increase quantity">+</button>
+        </div>
+      </InputCard>
+
+      <!-- Section: Order Planning -->
+      <div class="panel-section-header">
+        <span class="panel-label">Order planning</span>
+      </div>
+
+      <!-- Waste Allowance -->
+      <InputCard label="Waste Allowance" inputId="waste-selector">
+        <div class="option-selector" id="waste-selector" role="group" aria-label="Waste allowance">
+          <button type="button" class="option-btn" aria-pressed="false" data-value="0">0%</button>
+          <button type="button" class="option-btn" aria-pressed="false" data-value="5">5%</button>
+          <button type="button" class="option-btn" aria-pressed="true"  data-value="10">10%</button>
+          <button type="button" class="option-btn" aria-pressed="false" data-value="15">15%</button>
+          <button type="button" class="option-btn" aria-pressed="false" data-value="20">20%</button>
+        </div>
+      </InputCard>
+
+      <!-- Section: Optional Details -->
+      <div class="panel-section-header">
+        <span class="panel-label">Optional details</span>
+      </div>
+
+      <!-- Edge Finish -->
+      <InputCard label="Edge Finish" inputId="edge-selector">
+        <div class="option-selector" id="edge-selector" role="group" aria-label="Edge finish">
+          <button type="button" class="option-btn option-btn--wide" aria-pressed="true"  data-value="raw">Raw</button>
+          <button type="button" class="option-btn option-btn--wide" aria-pressed="false" data-value="polished">Polished</button>
+          <button type="button" class="option-btn option-btn--wide" aria-pressed="false" data-value="beveled">Beveled</button>
+        </div>
+      </InputCard>
+
+      <!-- Hole Cut-outs -->
+      <InputCard label="Hole Cut-outs" inputId="holes-selector">
+        <div class="option-selector" id="holes-selector" role="group" aria-label="Number of holes">
+          <button type="button" class="option-btn" aria-pressed="true"  data-value="0">None</button>
+          <button type="button" class="option-btn" aria-pressed="false" data-value="1">1</button>
+          <button type="button" class="option-btn" aria-pressed="false" data-value="2">2</button>
+          <button type="button" class="option-btn" aria-pressed="false" data-value="4">4+</button>
+        </div>
+      </InputCard>
+
+      <!-- Calculate button -->
+      <button
+        type="button"
+        id="btn-calculate"
+        class="btn-primary"
+        aria-label="Calculate glass weight and area"
+      >
+        Calculate
+      </button>
+
+    </div>
+
+    <!-- RIGHT PANEL — Results ────────────────────────────────── -->
+    <div class="calc-panel calc-panel-results" aria-label="Calculation results" aria-live="polite">
+
+      <div class="panel-header">
+        <span class="panel-label">Results</span>
+        <span class="panel-hint" id="results-unit-display">—</span>
+      </div>
+
+      <EmptyState
+        title="Enter glass dimensions"
+        sub="Fill in Width and Height to see weight, area, and handling requirements"
+        icon="ruler"
+      />
+
+      <div id="results-grid" hidden class="results-grid-container">
+
+        <!-- Smart Cards Row 1: Area | Weight per piece -->
+        <div class="results-secondary-row">
+          <ResultCard
+            id="result-area"
+            label="Area per Piece"
+            value="—"
+            unit=""
+            sublabel="Net glass area"
+            highlight
+          />
+          <ResultCard
+            id="result-weight"
+            label="Weight per Piece"
+            value="—"
+            unit="kg"
+            sublabel="One pane"
+            highlight
+          />
+        </div>
+
+        <!-- Smart Cards Row 2: Total Weight | Shipping Weight -->
+        <div class="results-secondary-row">
+          <ResultCard
+            id="result-total-weight"
+            label="Total Weight"
+            value="—"
+            unit="kg"
+            sublabel="All panes combined"
+          />
+          <ResultCard
+            id="result-shipping"
+            label="Shipping Weight"
+            value="—"
+            unit="kg"
+            sublabel="+25% for packaging"
+          />
+        </div>
+
+        <!-- Handling card (full width) -->
+        <div id="handling-card" class="handling-card">
+          <div class="handling-icon-row">
+            <span id="handling-icon" class="handling-icon" aria-hidden="true">👤</span>
+            <div>
+              <div class="handling-title" id="handling-title">—</div>
+              <div class="handling-note"  id="handling-note">—</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Smart Cards Row 3: Perimeter | Thickness -->
+        <div class="results-secondary-row">
+          <ResultCard
+            id="result-perimeter"
+            label="Perimeter"
+            value="—"
+            unit=""
+            sublabel="Edge length"
+          />
+          <ResultCard
+            id="result-thickness"
+            label="Total Unit Thickness"
+            value="—"
+            unit="mm"
+            sublabel="Including IGU gap"
+          />
+        </div>
+
+        <!-- Order Planning (full width) -->
+        <div class="order-card">
+          <div class="order-card-label">Order planning</div>
+          <div class="order-grid">
+            <div class="order-item">
+              <span class="order-val" id="result-pieces">—</span>
+              <span class="order-key">Pieces to order (with waste)</span>
+            </div>
+            <div class="order-item">
+              <span class="order-val" id="result-total-area">—</span>
+              <span class="order-key">Total area (all pieces)</span>
+            </div>
+            <div class="order-item">
+              <span class="order-val" id="result-area-waste">—</span>
+              <span class="order-key">Area per piece (with waste)</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Recommendation badges -->
+        <div class="badge-row">
+          <div class="badge-item">
+            <span class="badge-label">Recommended thickness</span>
+            <span class="badge-val" id="badge-rec-thickness">—</span>
+          </div>
+          <div class="badge-item">
+            <span class="badge-label">Installation</span>
+            <span class="badge-val" id="badge-install">—</span>
+          </div>
+          <div class="badge-item">
+            <span class="badge-label">Safety class</span>
+            <span class="badge-val" id="badge-safety">—</span>
+          </div>
+          <div class="badge-item">
+            <span class="badge-label">Custom fabrication</span>
+            <span class="badge-val" id="badge-custom-fab">—</span>
+          </div>
+        </div>
+
+        <!-- Live SVG Illustration -->
+        <div class="svg-card">
+          <div class="svg-card-label">Live illustration</div>
+          <svg
+            id="glass-svg"
+            viewBox="0 0 300 260"
+            xmlns="http://www.w3.org/2000/svg"
+            aria-label="Glass pane illustration"
+            role="img"
+          >
+            <!-- Background -->
+            <rect width="300" height="260" class="svg-bg" />
+
+            <!-- Stack shadow panes (shown for quantity > 1) -->
+            <g id="svg-stack-group">
+              <rect id="svg-stack-4" x="68" y="58" width="164" height="144" rx="2" class="svg-stack-pane" />
+              <rect id="svg-stack-3" x="64" y="54" width="164" height="144" rx="2" class="svg-stack-pane" />
+              <rect id="svg-stack-2" x="60" y="50" width="164" height="144" rx="2" class="svg-stack-pane" />
+            </g>
+
+            <!-- Main glass pane -->
+            <rect id="svg-glass-main" x="56" y="46" width="164" height="144" rx="2" class="svg-glass" />
+            <!-- Glass reflection highlight -->
+            <rect id="svg-glass-shine" x="62" y="52" width="40" height="25" rx="2" class="svg-glass-shine" />
+
+            <!-- Shape-specific overlay: circle -->
+            <ellipse id="svg-circle" cx="138" cy="118" rx="72" ry="72" class="svg-shape-overlay" style="display:none;" />
+            <!-- Half-circle -->
+            <path id="svg-half-circle" d="M 66 118 A 72 72 0 0 1 210 118 Z" class="svg-shape-overlay" style="display:none;" />
+            <!-- Triangle -->
+            <polygon id="svg-triangle" points="56,190 220,190 56,46" class="svg-shape-overlay" style="display:none;" />
+
+            <!-- Dimension arrows — Width -->
+            <line id="svg-w-line" x1="56" y1="215" x2="220" y2="215" class="svg-dim-line" />
+            <polygon id="svg-w-arr-l" points="56,215 63,212 63,218" class="svg-dim-arrow" />
+            <polygon id="svg-w-arr-r" points="220,215 213,212 213,218" class="svg-dim-arrow" />
+            <text id="svg-w-label" x="138" y="228" class="svg-dim-text svg-dim-text--center">Width</text>
+
+            <!-- Dimension arrows — Height -->
+            <line id="svg-h-line" x1="240" y1="46" x2="240" y2="190" class="svg-dim-line" />
+            <polygon id="svg-h-arr-t" points="240,46 237,53 243,53" class="svg-dim-arrow" />
+            <polygon id="svg-h-arr-b" points="240,190 237,183 243,183" class="svg-dim-arrow" />
+            <text id="svg-h-label" x="252" y="120" class="svg-dim-text" writing-mode="tb">Height</text>
+
+            <!-- Weight label overlay -->
+            <rect id="svg-wt-bg" x="56" y="46" width="80" height="28" rx="3" class="svg-label-bg" />
+            <text id="svg-wt-text" x="96" y="62" class="svg-label-text svg-dim-text--center">— kg</text>
+
+            <!-- Area label -->
+            <text id="svg-area-text" x="138" y="118" class="svg-area-text svg-dim-text--center">—</text>
+
+            <!-- Stack count label -->
+            <text id="svg-qty-label" x="252" y="48" class="svg-qty-text" style="display:none;">×1</text>
+          </svg>
+        </div>
+
+      </div><!-- /#results-grid -->
+
+    </div>
+
+  </div><!-- /.calc-dashboard -->
+
+  <!-- ── Share + History ────────────────────────────────────────── -->
+  <div class="calc-extras">
+    <ShareExportBar />
+    <HistoryPanel slug="window-glass-calculator" />
+  </div>
+
+  <!-- ── Warnings + Recommendations ───────────────────────────── -->
+  <section id="rec-section" hidden aria-label="Recommendations and warnings">
+
+    <!-- Warnings -->
+    <div id="rec-warnings" class="rec-warnings-list"></div>
+
+    <div class="rec-section-header">
+      <h2 class="rec-section-title">Recommendations</h2>
+    </div>
+
+    <div id="rec-cards" class="rec-cards-grid"></div>
+
+    <!-- Buying guide -->
+    <div id="buying-guide" class="buying-guide" hidden>
+      <h3 id="buying-guide-title" class="buying-guide-title">—</h3>
+      <p id="buying-guide-desc" class="buying-guide-desc"></p>
+      <div class="buying-guide-grid">
+        <div class="buying-pros">
+          <div class="buying-col-label">Pros</div>
+          <ul id="buying-pros-list" class="buying-list"></ul>
+        </div>
+        <div class="buying-cons">
+          <div class="buying-col-label">Cons</div>
+          <ul id="buying-cons-list" class="buying-list"></ul>
+        </div>
+      </div>
+      <div class="buying-uses">
+        <div class="buying-col-label">Typical uses</div>
+        <div id="buying-uses-list" class="buying-uses-chips"></div>
+      </div>
+      <div class="buying-flags">
+        <span id="buying-cuttable" class="buying-flag">—</span>
+        <span id="buying-safety"   class="buying-flag">—</span>
+      </div>
+    </div>
+
+  </section>
+
+  <!-- ── Related Tools ─────────────────────────────────────────── -->
+  <RelatedTools
+    heading="Related calculators"
+    links={relatedTools.map((t) => ({
+      title:       t.title,
+      description: t.description,
+      href:        t.href,
+    }))}
+  />
+
+  <!-- ── FAQ ───────────────────────────────────────────────────── -->
+  <FAQSection faqs={faqs} />
+
+</ToolLayout>
+
+<script>
+  import {
+    normalizeInput,
+    toMm,
+    fromMm,
+    isMetricUnit,
+  } from '@/engine/units.js';
+
+  import {
+    calculateGlass,
+    validateGlassDimension,
+    type GlassShape,
+    type GlassType,
+    type EdgeFinish,
+  } from '@/engine/glass.js';
+
+  import type { MeasurementUnit } from '@/types/calculator.js';
+
+  import { readUrlState, pushUrlState, buildShareUrl } from '@/lib/url-state.js';
+  import { buildSummary } from '@/lib/share.js';
+  import { buildExportPayload } from '@/lib/export.js';
+  import { recordVisit } from '@/lib/recent.js';
+  import { track } from '@/lib/analytics.js';
+
+  // ── Track visit ───────────────────────────────────────────────────────────
+  recordVisit('window-glass-calculator');
+
+  // ── DOM references ────────────────────────────────────────────────────────
+  const widthInput    = document.getElementById('input-width')    as HTMLInputElement | null;
+  const heightInput   = document.getElementById('input-height')   as HTMLInputElement | null;
+  const glassTypeSelect = document.getElementById('input-glass-type') as HTMLSelectElement | null;
+  const qtyInput      = document.getElementById('input-quantity') as HTMLInputElement | null;
+  const qtyDec        = document.getElementById('qty-dec');
+  const qtyInc        = document.getElementById('qty-inc');
+
+  const heightRow     = document.getElementById('height-row');
+  const shapeHint     = document.getElementById('shape-hint');
+
+  const resultsEmpty  = document.querySelector<HTMLElement>('.empty-state');
+  const resultsGrid   = document.getElementById('results-grid');
+  const recSection    = document.getElementById('rec-section');
+  const recCards      = document.getElementById('rec-cards');
+  const recWarnings   = document.getElementById('rec-warnings');
+  const buyingGuide   = document.getElementById('buying-guide');
+
+  const errorEl       = document.querySelector<HTMLElement>('[data-wm-warning]');
+  const unitDisplay   = document.getElementById('results-unit-display');
+
+  // ── State ─────────────────────────────────────────────────────────────────
+  let currentUnit: MeasurementUnit = 'in';
+  let currentShape: GlassShape     = 'rectangle';
+  let currentEdge: EdgeFinish      = 'raw';
+  let currentWaste                 = 10;
+  let currentThickness             = 6;
+  let currentHoles                 = 0;
+
+  // ── Helpers ────────────────────────────────────────────────────────────────
+
+  function setEl(id: string, text: string) {
+    const el = document.getElementById(id);
+    if (el) el.textContent = text;
+  }
+
+  function setResult(card: Element | null, value: string, unit: string) {
+    if (!card) return;
+    const valEl  = card.querySelector('[data-result-value]');
+    const unitEl = card.querySelector('[data-result-unit]');
+    if (valEl)  valEl.textContent  = value;
+    if (unitEl) unitEl.textContent = unit;
+  }
+
+  function showError(msg: string, field?: string) {
+    if (!errorEl) return;
+    errorEl.textContent = msg;
+    errorEl.removeAttribute('hidden');
+    errorEl.setAttribute('data-level', 'error');
+    if (field) document.getElementById(`input-${field}`)?.setAttribute('aria-invalid', 'true');
+  }
+
+  function showWarning(msg: string) {
+    if (!errorEl) return;
+    errorEl.textContent = msg;
+    errorEl.removeAttribute('hidden');
+    errorEl.setAttribute('data-level', 'warning');
+  }
+
+  function clearError() {
+    if (!errorEl) return;
+    errorEl.textContent = '';
+    errorEl.setAttribute('hidden', '');
+    errorEl.removeAttribute('data-level');
+    widthInput?.removeAttribute('aria-invalid');
+    heightInput?.removeAttribute('aria-invalid');
+  }
+
+  function fmtArea(m2: number, sqft: number): string {
+    if (isMetricUnit(currentUnit)) {
+      return m2 >= 1 ? `${m2.toFixed(3)} m²` : `${(m2 * 10000).toFixed(0)} cm²`;
+    }
+    return `${sqft.toFixed(2)} sq ft`;
+  }
+
+  function fmtLen(mm: number): string {
+    const val = fromMm(mm, currentUnit);
+    if (currentUnit === 'mm') return `${Math.round(val)} mm`;
+    if (currentUnit === 'cm') return `${val.toFixed(1)} cm`;
+    if (currentUnit === 'm')  return `${val.toFixed(2)} m`;
+    if (currentUnit === 'ft') return `${val.toFixed(2)} ft`;
+    return `${val.toFixed(2)}"`;
+  }
+
+  function fmtWeight(kg: number): string {
+    return `${kg.toFixed(1)} kg (${(kg * 2.20462).toFixed(1)} lb)`;
+  }
+
+  // ── Option selector wiring ─────────────────────────────────────────────────
+
+  function wireOptionGroup(id: string, onChange: (val: string) => void) {
+    const container = document.getElementById(id);
+    if (!container) return;
+    container.querySelectorAll<HTMLButtonElement>('.option-btn').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        container.querySelectorAll<HTMLButtonElement>('.option-btn').forEach((b) => b.setAttribute('aria-pressed', 'false'));
+        btn.setAttribute('aria-pressed', 'true');
+        onChange(btn.dataset.value ?? '');
+      });
+    });
+  }
+
+  wireOptionGroup('shape-selector', (val) => {
+    currentShape = val as GlassShape;
+    const needsHeight = val === 'rectangle' || val === 'triangle';
+    if (heightRow) heightRow.hidden = !needsHeight;
+
+    const hints: Record<string, string> = {
+      circle:        '🔵 Enter the diameter. Area = π × (d÷2)²',
+      'half-circle': '🌓 Enter the diameter of the full circle. Area = half of a full circle.',
+      square:        '⬜ Width only. Height = Width. Area = w²',
+      triangle:      '📐 Right triangle. Enter the two legs (width and height).',
+    };
+    if (shapeHint) {
+      if (hints[val]) { shapeHint.textContent = hints[val]; shapeHint.hidden = false; }
+      else            { shapeHint.hidden = true; }
+    }
+
+    // Update width label for circle
+    const wLabel = document.querySelector<HTMLElement>('[for="input-width"], label[for="input-width"]')
+      ?? document.querySelector<HTMLElement>('.input-card-label');
+    calculate();
+  });
+
+  wireOptionGroup('thickness-selector', (val) => {
+    currentThickness = parseInt(val, 10);
+    calculate();
+  });
+
+  wireOptionGroup('waste-selector', (val) => {
+    currentWaste = parseInt(val, 10);
+    calculate();
+  });
+
+  wireOptionGroup('edge-selector', (val) => {
+    currentEdge = val as EdgeFinish;
+    calculate();
+  });
+
+  wireOptionGroup('holes-selector', (val) => {
+    currentHoles = parseInt(val, 10);
+    calculate();
+  });
+
+  // ── Quantity stepper ───────────────────────────────────────────────────────
+  qtyDec?.addEventListener('click', () => {
+    const v = parseInt(qtyInput?.value ?? '1', 10);
+    if (v > 1 && qtyInput) { qtyInput.value = String(v - 1); calculate(); }
+  });
+  qtyInc?.addEventListener('click', () => {
+    const v = parseInt(qtyInput?.value ?? '1', 10);
+    if (v < 500 && qtyInput) { qtyInput.value = String(v + 1); calculate(); }
+  });
+  qtyInput?.addEventListener('change', () => calculate());
+  qtyInput?.addEventListener('keydown', (e) => {
+    const v = parseInt(qtyInput.value ?? '1', 10);
+    if (e.key === 'ArrowUp'   && v < 500) { qtyInput.value = String(v + 1); calculate(); }
+    if (e.key === 'ArrowDown' && v > 1)   { qtyInput.value = String(v - 1); calculate(); }
+  });
+
+  // ── Unit selector ─────────────────────────────────────────────────────────
+  document.querySelectorAll<HTMLButtonElement>('.unit-btn').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const newUnit = btn.dataset.unit as MeasurementUnit;
+      if (newUnit === currentUnit) return;
+      const oldUnit = currentUnit;
+      currentUnit = newUnit;
+      track({ type: 'unit_changed', properties: { slug: 'window-glass-calculator', from: oldUnit, to: newUnit } });
+      calculate();
+    });
+  });
+
+  // ── Input listeners ────────────────────────────────────────────────────────
+  [widthInput, heightInput].forEach((el) => {
+    el?.addEventListener('input', () => calculate());
+    el?.addEventListener('keydown', (e) => { if (e.key === 'Enter') calculate(); });
+  });
+
+  glassTypeSelect?.addEventListener('change', () => calculate());
+  document.getElementById('btn-calculate')?.addEventListener('click', () => calculate());
+
+  // ── Keyboard UX ───────────────────────────────────────────────────────────
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && errorEl?.textContent) clearError();
+  });
+
+  // ── URL state restore ─────────────────────────────────────────────────────
+  {
+    const saved = readUrlState();
+    const validUnits: MeasurementUnit[] = ['mm', 'cm', 'm', 'in', 'ft'];
+    const savedUnit = saved.unit as MeasurementUnit;
+
+    if (savedUnit && validUnits.includes(savedUnit)) {
+      currentUnit = savedUnit;
+      document.querySelectorAll<HTMLButtonElement>('.unit-btn').forEach((b) => {
+        b.setAttribute('aria-pressed', b.dataset.unit === savedUnit ? 'true' : 'false');
+      });
+    }
+
+    if (saved.width  && widthInput)  widthInput.value  = saved.width;
+    if (saved.height && heightInput) heightInput.value = saved.height;
+    if (saved.glassType && glassTypeSelect) glassTypeSelect.value = saved.glassType;
+    if (saved.qty && qtyInput) qtyInput.value = saved.qty;
+
+    if (saved.shape) {
+      currentShape = saved.shape as GlassShape;
+      document.querySelectorAll<HTMLButtonElement>('#shape-selector .option-btn').forEach((b) => {
+        b.setAttribute('aria-pressed', b.dataset.value === saved.shape ? 'true' : 'false');
+      });
+      const needsHeight = saved.shape === 'rectangle' || saved.shape === 'triangle';
+      if (heightRow) heightRow.hidden = !needsHeight;
+    }
+
+    if (saved.thickness) {
+      currentThickness = parseInt(saved.thickness, 10);
+      document.querySelectorAll<HTMLButtonElement>('#thickness-selector .option-btn').forEach((b) => {
+        b.setAttribute('aria-pressed', b.dataset.value === saved.thickness ? 'true' : 'false');
+      });
+    }
+
+    if (saved.waste) {
+      currentWaste = parseInt(saved.waste, 10);
+      document.querySelectorAll<HTMLButtonElement>('#waste-selector .option-btn').forEach((b) => {
+        b.setAttribute('aria-pressed', b.dataset.value === saved.waste ? 'true' : 'false');
+      });
+    }
+
+    if (saved.edge) {
+      currentEdge = saved.edge as EdgeFinish;
+      document.querySelectorAll<HTMLButtonElement>('#edge-selector .option-btn').forEach((b) => {
+        b.setAttribute('aria-pressed', b.dataset.value === saved.edge ? 'true' : 'false');
+      });
+    }
+
+    if (saved.holes) {
+      currentHoles = parseInt(saved.holes, 10);
+      document.querySelectorAll<HTMLButtonElement>('#holes-selector .option-btn').forEach((b) => {
+        b.setAttribute('aria-pressed', b.dataset.value === saved.holes ? 'true' : 'false');
+      });
+    }
+  }
+
+  // ── History restore listener ──────────────────────────────────────────────
+  document.addEventListener('wm:history-restore', (e) => {
+    const detail = (e as CustomEvent<{ inputs: Record<string, string>; entryId: string }>).detail;
+    const { inputs } = detail;
+    const validUnits: MeasurementUnit[] = ['mm', 'cm', 'm', 'in', 'ft'];
+    const savedUnit = inputs.unit as MeasurementUnit;
+
+    if (savedUnit && validUnits.includes(savedUnit) && savedUnit !== currentUnit) {
+      currentUnit = savedUnit;
+      document.querySelectorAll<HTMLButtonElement>('.unit-btn').forEach((b) => {
+        b.setAttribute('aria-pressed', b.dataset.unit === savedUnit ? 'true' : 'false');
+      });
+    }
+
+    if (inputs.width  && widthInput)  widthInput.value  = inputs.width;
+    if (inputs.height && heightInput) heightInput.value = inputs.height;
+    if (inputs.glassType && glassTypeSelect) glassTypeSelect.value = inputs.glassType;
+    if (inputs.qty && qtyInput) qtyInput.value = inputs.qty;
+
+    const restoreGroup = (groupId: string, val: string, stateSetter: (v: string) => void) => {
+      if (!val) return;
+      stateSetter(val);
+      document.querySelectorAll<HTMLButtonElement>(`#${groupId} .option-btn`).forEach((b) => {
+        b.setAttribute('aria-pressed', b.dataset.value === val ? 'true' : 'false');
+      });
+    };
+
+    if (inputs.shape)     { restoreGroup('shape-selector',     inputs.shape,     (v) => { currentShape = v as GlassShape; const nh = v === 'rectangle' || v === 'triangle'; if (heightRow) heightRow.hidden = !nh; }); }
+    if (inputs.thickness) { restoreGroup('thickness-selector', inputs.thickness, (v) => { currentThickness = parseInt(v, 10); }); }
+    if (inputs.waste)     { restoreGroup('waste-selector',     inputs.waste,     (v) => { currentWaste = parseInt(v, 10); }); }
+    if (inputs.edge)      { restoreGroup('edge-selector',      inputs.edge,      (v) => { currentEdge = v as EdgeFinish; }); }
+    if (inputs.holes)     { restoreGroup('holes-selector',     inputs.holes,     (v) => { currentHoles = parseInt(v, 10); }); }
+
+    calculate();
+    track({ type: 'history_restored', properties: { slug: 'window-glass-calculator', entryId: detail.entryId } });
+  });
+
+  // ── SVG updater ───────────────────────────────────────────────────────────
+
+  function updateSVG(params: {
+    shape: GlassShape;
+    aspectRatio: number;
+    quantity: number;
+    weightKg: number;
+    areaM2: number;
+    areaUnit: string;
+  }) {
+    const { shape, aspectRatio, quantity, weightKg, areaM2, areaUnit } = params;
+
+    // Fixed frame inside SVG
+    const PAD = { left: 56, top: 46, right: 56, bottom: 70 };
+    const SVG_W = 300, SVG_H = 260;
+    const maxW = SVG_W - PAD.left - PAD.right;  // 188
+    const maxH = SVG_H - PAD.top  - PAD.bottom; // 144
+
+    // Compute display size respecting aspect ratio
+    let displayW: number, displayH: number;
+    if (shape === 'square') {
+      displayW = displayH = Math.min(maxW, maxH);
+    } else if (shape === 'circle' || shape === 'half-circle') {
+      displayW = displayH = Math.min(maxW, maxH);
+    } else {
+      if (aspectRatio > maxW / maxH) {
+        displayW = maxW; displayH = maxW / aspectRatio;
+      } else {
+        displayH = maxH; displayW = maxH * aspectRatio;
+      }
+    }
+
+    const left  = PAD.left + (maxW - displayW) / 2;
+    const top   = PAD.top  + (maxH - displayH) / 2;
+    const right = left  + displayW;
+    const bottom = top  + displayH;
+    const cx    = (left + right) / 2;
+    const cy    = (top + bottom) / 2;
+
+    // Main glass rect
+    const mainRect = document.getElementById('svg-glass-main');
+    if (mainRect) {
+      mainRect.setAttribute('x', String(left));
+      mainRect.setAttribute('y', String(top));
+      mainRect.setAttribute('width', String(displayW));
+      mainRect.setAttribute('height', String(displayH));
+      mainRect.style.display = (shape === 'circle' || shape === 'half-circle' || shape === 'triangle') ? 'none' : 'block';
+    }
+
+    // Shine
+    const shine = document.getElementById('svg-glass-shine');
+    if (shine) {
+      shine.setAttribute('x', String(left + 6));
+      shine.setAttribute('y', String(top + 6));
+      shine.setAttribute('width', '40');
+      shine.setAttribute('height', '22');
+    }
+
+    // Circle
+    const circleEl = document.getElementById('svg-circle');
+    if (circleEl) {
+      circleEl.setAttribute('cx', String(cx));
+      circleEl.setAttribute('cy', String(cy));
+      circleEl.setAttribute('rx', String(displayW / 2));
+      circleEl.setAttribute('ry', String(displayH / 2));
+      circleEl.style.display = shape === 'circle' ? 'block' : 'none';
+    }
+
+    // Half-circle
+    const halfCircle = document.getElementById('svg-half-circle');
+    if (halfCircle) {
+      const r = displayW / 2;
+      halfCircle.setAttribute('d', `M ${left} ${cy} A ${r} ${r} 0 0 1 ${right} ${cy} Z`);
+      halfCircle.style.display = shape === 'half-circle' ? 'block' : 'none';
+    }
+
+    // Triangle
+    const triEl = document.getElementById('svg-triangle');
+    if (triEl) {
+      triEl.setAttribute('points', `${left},${bottom} ${right},${bottom} ${left},${top}`);
+      triEl.style.display = shape === 'triangle' ? 'block' : 'none';
+    }
+
+    // Dimension arrows — Width
+    const wY = bottom + 22;
+    document.getElementById('svg-w-line')?.setAttribute('x1', String(left));
+    document.getElementById('svg-w-line')?.setAttribute('y1', String(wY));
+    document.getElementById('svg-w-line')?.setAttribute('x2', String(right));
+    document.getElementById('svg-w-line')?.setAttribute('y2', String(wY));
+    document.getElementById('svg-w-arr-l')?.setAttribute('points', `${left},${wY} ${left+7},${wY-3} ${left+7},${wY+3}`);
+    document.getElementById('svg-w-arr-r')?.setAttribute('points', `${right},${wY} ${right-7},${wY-3} ${right-7},${wY+3}`);
+    const wLabel = document.getElementById('svg-w-label');
+    if (wLabel) { wLabel.setAttribute('x', String(cx)); wLabel.setAttribute('y', String(wY + 13)); }
+
+    // Dimension arrows — Height (only for rect/square/triangle)
+    const needsH = shape === 'rectangle' || shape === 'square' || shape === 'triangle';
+    const hX = right + 22;
+    document.getElementById('svg-h-line')?.setAttribute('x1', String(hX));
+    document.getElementById('svg-h-line')?.setAttribute('y1', String(top));
+    document.getElementById('svg-h-line')?.setAttribute('x2', String(hX));
+    document.getElementById('svg-h-line')?.setAttribute('y2', String(bottom));
+    document.getElementById('svg-h-arr-t')?.setAttribute('points', `${hX},${top} ${hX-3},${top+7} ${hX+3},${top+7}`);
+    document.getElementById('svg-h-arr-b')?.setAttribute('points', `${hX},${bottom} ${hX-3},${bottom-7} ${hX+3},${bottom-7}`);
+    const hLabel = document.getElementById('svg-h-label');
+    if (hLabel) {
+      hLabel.setAttribute('x', String(hX + 10));
+      hLabel.setAttribute('y', String(cy));
+      hLabel.style.display = needsH ? 'block' : 'none';
+    }
+    document.getElementById('svg-h-line')!.style.display = needsH ? '' : 'none';
+    document.getElementById('svg-h-arr-t')!.style.display = needsH ? '' : 'none';
+    document.getElementById('svg-h-arr-b')!.style.display = needsH ? '' : 'none';
+
+    // Stack shadows
+    const showStack = quantity > 1;
+    const stackIds  = ['svg-stack-2', 'svg-stack-3', 'svg-stack-4'];
+    stackIds.forEach((id, i) => {
+      const el = document.getElementById(id);
+      if (el) {
+        const off = (i + 1) * 4;
+        el.setAttribute('x', String(left + off));
+        el.setAttribute('y', String(top + off));
+        el.setAttribute('width', String(displayW));
+        el.setAttribute('height', String(displayH));
+        el.style.display = (showStack && i < Math.min(quantity - 1, 3)) ? 'block' : 'none';
+      }
+    });
+
+    // Weight label
+    const wtBg = document.getElementById('svg-wt-bg');
+    const wtTxt = document.getElementById('svg-wt-text');
+    if (wtBg) { wtBg.setAttribute('x', String(left + 4)); wtBg.setAttribute('y', String(top + 4)); }
+    if (wtTxt) { wtTxt.setAttribute('x', String(left + 44)); wtTxt.setAttribute('y', String(top + 18)); wtTxt.textContent = `${weightKg.toFixed(1)} kg`; }
+
+    // Area label (centered in shape)
+    const areaTxt = document.getElementById('svg-area-text');
+    if (areaTxt) {
+      areaTxt.setAttribute('x', String(cx));
+      areaTxt.setAttribute('y', String(cy + 6));
+      areaTxt.textContent = areaUnit;
+    }
+
+    // Quantity label
+    const qtyLabel = document.getElementById('svg-qty-label');
+    if (qtyLabel) {
+      qtyLabel.textContent = `×${quantity}`;
+      qtyLabel.setAttribute('x', String(right - 2));
+      qtyLabel.setAttribute('y', String(top - 2));
+      qtyLabel.style.display = showStack ? 'block' : 'none';
+    }
+  }
+
+  // ── Main calculation ──────────────────────────────────────────────────────
+
+  function calculate() {
+    clearError();
+
+    const rawWidth  = widthInput?.value.trim()  ?? '';
+    const rawHeight = heightInput?.value.trim() ?? '';
+    const needsHeight = currentShape === 'rectangle' || currentShape === 'triangle';
+
+    // Empty required fields
+    if (!rawWidth || (needsHeight && !rawHeight)) {
+      if (resultsEmpty) resultsEmpty.hidden = false;
+      if (resultsGrid)  resultsGrid.hidden  = true;
+      if (recSection)   recSection.hidden   = true;
+      return;
+    }
+
+    // Parse width
+    const parsedWidth = normalizeInput(rawWidth, currentUnit);
+    if (parsedWidth === null || parsedWidth <= 0) {
+      showError(`"${rawWidth}" is not a valid width. Enter a number (36), decimal (36.5), or fraction (36 1/4).`, 'width');
+      if (resultsEmpty) resultsEmpty.hidden = false;
+      if (resultsGrid)  resultsGrid.hidden  = true;
+      return;
+    }
+
+    // Parse height (only when needed)
+    let parsedHeight = parsedWidth; // default for square/circle/half-circle
+    if (needsHeight) {
+      const ph = normalizeInput(rawHeight, currentUnit);
+      if (ph === null || ph <= 0) {
+        showError(`"${rawHeight}" is not a valid height. Enter a number (48) or fraction (48 1/2).`, 'height');
+        if (resultsEmpty) resultsEmpty.hidden = false;
+        if (resultsGrid)  resultsGrid.hidden  = true;
+        return;
+      }
+      parsedHeight = ph;
+    }
+
+    const widthMm  = toMm(parsedWidth,  currentUnit);
+    const heightMm = toMm(parsedHeight, currentUnit);
+
+    // Validate
+    const widthVal  = validateGlassDimension(widthMm, 'width');
+    const heightVal = validateGlassDimension(heightMm, 'height');
+
+    if (!widthVal.valid && widthVal.level === 'error') {
+      showError(widthVal.message ?? 'Invalid width.', 'width');
+      if (resultsEmpty) resultsEmpty.hidden = false;
+      if (resultsGrid)  resultsGrid.hidden  = true;
+      return;
+    }
+    if (needsHeight && !heightVal.valid && heightVal.level === 'error') {
+      showError(heightVal.message ?? 'Invalid height.', 'height');
+      if (resultsEmpty) resultsEmpty.hidden = false;
+      if (resultsGrid)  resultsGrid.hidden  = true;
+      return;
+    }
+
+    const quantity   = Math.max(1, parseInt(qtyInput?.value ?? '1', 10));
+    const glassType  = (glassTypeSelect?.value ?? 'annealed') as GlassType;
+
+    // Run calculation
+    const result = calculateGlass({
+      widthMm,
+      heightMm,
+      shape:       currentShape,
+      glassType,
+      thicknessMm: currentThickness,
+      quantity,
+      wastePercent: currentWaste,
+      edgeFinish:  currentEdge,
+      holeCount:   currentHoles,
+    });
+
+    // Show top warning
+    if (result.warnings.length > 0) showWarning(result.warnings[0].message);
+
+    // Unit display
+    if (unitDisplay) {
+      const label = currentShape === 'circle' || currentShape === 'half-circle'
+        ? `Ø ${parsedWidth} ${currentUnit}`
+        : `${parsedWidth} × ${parsedHeight} ${currentUnit}`;
+      unitDisplay.textContent = label;
+    }
+
+    // ── Area ──
+    const areaCard = document.getElementById('result-area');
+    const areaText = fmtArea(result.areaPerPieceM2, result.areaPerPieceSqFt);
+    setResult(areaCard, areaText.split(' ')[0], areaText.split(' ').slice(1).join(' '));
+
+    // ── Weight per piece ──
+    const weightCard = document.getElementById('result-weight');
+    setResult(weightCard, result.weightPerPieceKg.toFixed(1), `kg (${result.weightPerPieceLbs.toFixed(1)} lb)`);
+
+    // ── Total weight ──
+    const totalWCard = document.getElementById('result-total-weight');
+    setResult(totalWCard, result.totalWeightKg.toFixed(1), `kg (${(result.totalWeightKg * 2.20462).toFixed(1)} lb)`);
+
+    // ── Shipping weight ──
+    const shipCard = document.getElementById('result-shipping');
+    setResult(shipCard, result.shippingWeightKg.toFixed(1), 'kg');
+
+    // ── Handling card ──
+    const hCard  = document.getElementById('handling-card');
+    const hIcon  = document.getElementById('handling-icon');
+    const hTitle = document.getElementById('handling-title');
+    const hNote  = document.getElementById('handling-note');
+    if (hCard) {
+      const cls = result.handlingClass;
+      hCard.dataset.handling = cls;
+      if (hIcon)  hIcon.textContent  = cls === 'solo' ? '🧍' : cls === 'two-person' ? '👥' : '🏗️';
+      if (hTitle) hTitle.textContent = cls === 'solo' ? 'One person can handle this' : cls === 'two-person' ? 'Two people required' : 'Mechanical equipment required';
+      if (hNote)  hNote.textContent  = result.handlingNote;
+    }
+
+    // ── Perimeter ──
+    const perimCard = document.getElementById('result-perimeter');
+    setResult(perimCard, fmtLen(result.perimeterMm), '');
+
+    // ── Thickness ──
+    const thickCard = document.getElementById('result-thickness');
+    setResult(thickCard, result.totalThicknessMm.toFixed(1), 'mm');
+
+    // ── Order planning ──
+    setEl('result-pieces',     `${result.piecesNeededWithWaste} pcs`);
+    setEl('result-total-area', fmtArea(result.totalAreaM2, result.totalAreaM2 * 10.764));
+    setEl('result-area-waste', fmtArea(result.areaWithWasteM2, result.areaWithWasteM2 * 10.764));
+
+    // ── Badges ──
+    setEl('badge-rec-thickness', `${result.recommendedThicknessMm} mm${result.isTooThin ? ' ⚠️' : ' ✓'}`);
+    const installLabels: Record<string, string> = { easy: 'DIY Easy', moderate: 'DIY Moderate', professional: 'Professional', contractor: 'Contractor' };
+    setEl('badge-install',      installLabels[result.installDifficulty] ?? result.installDifficulty);
+    const safetyLabels: Record<string, string> = { standard: 'Standard', 'impact-resistant': 'Impact Resistant', 'tempered-required': 'Safety Glass' };
+    setEl('badge-safety',       safetyLabels[result.safetyClass] ?? result.safetyClass);
+    setEl('badge-custom-fab',   result.customFabRequired ? 'Required ⚠️' : 'Not needed');
+
+    // ── SVG ──
+    const ar = (currentShape === 'rectangle' || currentShape === 'triangle')
+      ? widthMm / heightMm
+      : 1;
+    const svgAreaLabel = fmtArea(result.areaPerPieceM2, result.areaPerPieceSqFt);
+    updateSVG({
+      shape:      currentShape,
+      aspectRatio: ar,
+      quantity,
+      weightKg:  result.weightPerPieceKg,
+      areaM2:    result.areaPerPieceM2,
+      areaUnit:  svgAreaLabel,
+    });
+
+    // ── Recommendations section ──
+    if (recCards) {
+      recCards.innerHTML = '';
+      result.recommendations.forEach((rec) => {
+        const card = document.createElement('div');
+        card.className = 'dyn-rec-card';
+        card.innerHTML = `
+          <div class="dyn-rec-top"><span class="dyn-rec-label">${rec.title}</span></div>
+          <p class="dyn-rec-body">${rec.body}</p>
+          ${rec.tip ? `<p class="dyn-rec-tip">${rec.tip}</p>` : ''}
+        `;
+        recCards.appendChild(card);
+      });
+    }
+
+    // Warnings in rec section
+    if (recWarnings) {
+      recWarnings.innerHTML = '';
+      result.warnings.forEach((w) => {
+        const el = document.createElement('div');
+        el.className = 'warning-banner';
+        el.setAttribute('data-level', w.level);
+        el.textContent = w.message;
+        recWarnings.appendChild(el);
+      });
+    }
+
+    // ── Buying guide ──
+    if (buyingGuide) {
+      const guide = result.buyingGuide;
+      buyingGuide.hidden = false;
+      setEl('buying-guide-title', guide.typeName);
+      setEl('buying-guide-desc',  guide.description);
+
+      const prosList = document.getElementById('buying-pros-list');
+      if (prosList) { prosList.innerHTML = ''; guide.pros.forEach(p => { const li = document.createElement('li'); li.textContent = p; prosList.appendChild(li); }); }
+
+      const consList = document.getElementById('buying-cons-list');
+      if (consList) { consList.innerHTML = ''; guide.cons.forEach(c => { const li = document.createElement('li'); li.textContent = c; consList.appendChild(li); }); }
+
+      const usesEl = document.getElementById('buying-uses-list');
+      if (usesEl) { usesEl.innerHTML = ''; guide.typicalUses.forEach(u => { const chip = document.createElement('span'); chip.className = 'use-chip'; chip.textContent = u; usesEl.appendChild(chip); }); }
+
+      const cuttableEl = document.getElementById('buying-cuttable');
+      if (cuttableEl) {
+        cuttableEl.textContent = guide.canCutAfterOrder ? '✓ Cuttable after ordering' : '✗ Cannot cut after ordering';
+        cuttableEl.dataset.state = guide.canCutAfterOrder ? 'yes' : 'no';
+      }
+      const safetyEl = document.getElementById('buying-safety');
+      if (safetyEl) {
+        safetyEl.textContent = guide.safetyRated ? '✓ Safety-rated glass' : '✗ Not safety-rated';
+        safetyEl.dataset.state = guide.safetyRated ? 'yes' : 'no';
+      }
+    }
+
+    // ── Show results ──
+    if (resultsEmpty) resultsEmpty.hidden = true;
+    if (resultsGrid)  resultsGrid.hidden  = false;
+    if (recSection)   recSection.hidden   = false;
+
+    // ── Phase 5: URL state, history, share/export, analytics ─────────────────
+    const glassInputs: Record<string, string> = {
+      width:      rawWidth,
+      height:     needsHeight ? rawHeight : rawWidth,
+      unit:       currentUnit,
+      shape:      currentShape,
+      glassType,
+      thickness:  String(currentThickness),
+      qty:        String(quantity),
+      waste:      String(currentWaste),
+      edge:       currentEdge,
+      holes:      String(currentHoles),
+    };
+    pushUrlState(glassInputs);
+
+    const histLabel = `${parsedWidth}${needsHeight ? ' × ' + parsedHeight : ''} ${currentUnit} · ${glassType} ${currentThickness}mm · ${result.weightPerPieceKg.toFixed(1)} kg`;
+    (window as any).wmHistoryPanel?.add(histLabel, glassInputs);
+    (window as any).wmShareExportBar?.show();
+
+    (window as any).wmCurrentState = glassInputs;
+    (window as any).wmBuildSummary = () => buildSummary(
+      'Window Glass Calculator',
+      [
+        ['Width',            `${rawWidth} ${currentUnit}`],
+        ['Height',           needsHeight ? `${rawHeight} ${currentUnit}` : `${rawWidth} ${currentUnit}`],
+        ['Shape',            currentShape],
+        ['Glass Type',       glassType],
+        ['Thickness',        `${currentThickness} mm`],
+        ['Quantity',         String(quantity)],
+        ['Area per Piece',   fmtArea(result.areaPerPieceM2, result.areaPerPieceSqFt)],
+        ['Weight per Piece', `${result.weightPerPieceKg.toFixed(1)} kg`],
+        ['Total Weight',     `${result.totalWeightKg.toFixed(1)} kg`],
+        ['Handling',         result.handlingClass.replace('-', ' ')],
+        ['Custom Fab?',      result.customFabRequired ? 'Yes' : 'No'],
+      ],
+      buildShareUrl(glassInputs),
+    );
+    (window as any).wmBuildExport = () => buildExportPayload(
+      'window-glass-calculator',
+      glassInputs,
+      {
+        areaPerPieceM2:    result.areaPerPieceM2,
+        areaPerPieceSqFt:  result.areaPerPieceSqFt,
+        weightPerPieceKg:  result.weightPerPieceKg,
+        totalWeightKg:     result.totalWeightKg,
+        shippingWeightKg:  result.shippingWeightKg,
+        handlingClass:     result.handlingClass,
+        customFabRequired: result.customFabRequired,
+        recommendedThicknessMm: result.recommendedThicknessMm,
+      },
+    );
+
+    track({
+      type: 'calculation_completed',
+      properties: { slug: 'window-glass-calculator', unit: currentUnit, inputs: glassInputs },
+    });
+
+    // Mobile scroll
+    if (resultsGrid && window.innerWidth < 768) {
+      resultsGrid.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }
+
+  // Initial restore
+  if (widthInput?.value) calculate();
+</script>
+
+<style>
+  /* ── Layout ─────────────────────────────────────────────────────────────── */
+  .calc-hero { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--space-4); margin-bottom: var(--space-6); }
+  .calc-hero-left { display: flex; align-items: flex-start; gap: var(--space-4); flex: 1; min-width: 0; }
+  .calc-hero-title { font-size: var(--font-2xl); font-weight: 700; color: var(--color-text-primary); margin: 0 0 var(--space-2); }
+  .calc-hero-desc  { color: var(--color-text-secondary); font-size: var(--font-sm); margin: 0 0 var(--space-3); line-height: 1.5; }
+  .calc-status-badge { display: inline-flex; align-items: center; gap: var(--space-1-5); font-size: var(--font-xs); font-weight: 500; color: var(--color-success); margin-bottom: var(--space-2); }
+  .calc-status-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--color-success); animation: pulse 2s ease-in-out infinite; }
+
+  .calc-dashboard { display: grid; grid-template-columns: 380px 1fr; gap: var(--space-4); align-items: start; }
+  .calc-panel { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: var(--space-5); display: flex; flex-direction: column; gap: var(--space-3); }
+  .calc-extras { margin-top: var(--space-4); display: flex; flex-direction: column; gap: var(--space-3); }
+
+  /* ── Panel headers ──────────────────────────────────────────────────────── */
+  .panel-header { display: flex; align-items: baseline; justify-content: space-between; gap: var(--space-2); margin-bottom: var(--space-1); }
+  .panel-section-header { margin-top: var(--space-2); padding-top: var(--space-3); border-top: 1px solid var(--color-border); }
+  .panel-label { font-size: var(--font-xs); font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--color-text-muted); }
+  .panel-hint  { font-size: var(--font-xs); color: var(--color-text-muted); }
+
+  /* ── Unit row ───────────────────────────────────────────────────────────── */
+  .unit-row { display: flex; align-items: center; gap: var(--space-3); }
+  .unit-row-label { font-size: var(--font-sm); font-weight: 500; color: var(--color-text-secondary); min-width: 2.5rem; }
+
+  /* ── Shape hint ─────────────────────────────────────────────────────────── */
+  .shape-hint { font-size: var(--font-xs); color: var(--color-primary); background: color-mix(in srgb, var(--color-primary) 8%, transparent); padding: var(--space-2) var(--space-3); border-radius: var(--radius-md); border: 1px solid color-mix(in srgb, var(--color-primary) 20%, transparent); }
+
+  /* ── Option selectors ───────────────────────────────────────────────────── */
+  .option-selector { display: flex; flex-wrap: wrap; gap: var(--space-1-5); }
+  .option-btn { padding: var(--space-1-5) var(--space-3); border-radius: var(--radius-md); border: 1px solid var(--color-border); background: var(--color-surface); color: var(--color-text-secondary); font-size: var(--font-sm); font-weight: 500; cursor: pointer; transition: all 0.15s ease; line-height: 1.4; }
+  .option-btn:hover { border-color: var(--color-primary); color: var(--color-primary); }
+  .option-btn[aria-pressed="true"] { background: var(--color-primary); border-color: var(--color-primary); color: white; }
+  .option-btn--wide { flex: 1; min-width: 80px; text-align: center; }
+
+  /* ── Quantity stepper ───────────────────────────────────────────────────── */
+  .occupants-stepper { display: flex; align-items: center; gap: var(--space-2); }
+  .stepper-btn { width: 36px; height: 36px; border-radius: var(--radius-md); border: 1px solid var(--color-border); background: var(--color-surface); color: var(--color-text-primary); font-size: var(--font-lg); font-weight: 400; cursor: pointer; display: flex; align-items: center; justify-content: center; line-height: 1; }
+  .stepper-btn:hover { border-color: var(--color-primary); }
+  .stepper-input { width: 60px; text-align: center; padding: var(--space-2); border-radius: var(--radius-md); border: 1px solid var(--color-border); font-size: var(--font-base); }
+
+  /* ── Calculate button ───────────────────────────────────────────────────── */
+  .btn-primary { width: 100%; padding: var(--space-3) var(--space-4); border-radius: var(--radius-md); border: none; background: var(--color-primary); color: white; font-size: var(--font-sm); font-weight: 600; cursor: pointer; transition: background 0.15s ease; margin-top: var(--space-2); }
+  .btn-primary:hover { background: var(--color-primary-hover, #1d4ed8); }
+  .btn-primary:active { transform: translateY(1px); }
+
+  /* ── Results ─────────────────────────────────────────────────────────────── */
+  .results-grid-container { display: flex; flex-direction: column; gap: var(--space-3); }
+  .results-secondary-row { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3); }
+
+  /* ── Handling card ──────────────────────────────────────────────────────── */
+  .handling-card { padding: var(--space-4); border-radius: var(--radius-md); border: 1px solid var(--color-border); background: var(--color-surface); }
+  .handling-card[data-handling="solo"]       { border-color: var(--color-success); background: color-mix(in srgb, var(--color-success) 6%, transparent); }
+  .handling-card[data-handling="two-person"] { border-color: #f59e0b; background: color-mix(in srgb, #f59e0b 6%, transparent); }
+  .handling-card[data-handling="mechanical"] { border-color: #ef4444; background: color-mix(in srgb, #ef4444 6%, transparent); }
+  .handling-icon-row { display: flex; align-items: flex-start; gap: var(--space-3); }
+  .handling-icon     { font-size: 2rem; line-height: 1; }
+  .handling-title    { font-size: var(--font-sm); font-weight: 700; color: var(--color-text-primary); margin-bottom: var(--space-1); }
+  .handling-note     { font-size: var(--font-xs); color: var(--color-text-secondary); line-height: 1.5; }
+
+  /* ── Order card ─────────────────────────────────────────────────────────── */
+  .order-card { padding: var(--space-3) var(--space-4); background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-md); }
+  .order-card-label { font-size: var(--font-xs); font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--color-text-muted); margin-bottom: var(--space-2); }
+  .order-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-3); }
+  .order-item { display: flex; flex-direction: column; gap: 2px; }
+  .order-val  { font-size: var(--font-lg); font-weight: 700; color: var(--color-text-primary); }
+  .order-key  { font-size: var(--font-xs); color: var(--color-text-muted); }
+
+  /* ── Badge row ──────────────────────────────────────────────────────────── */
+  .badge-row { display: grid; grid-template-columns: repeat(2, 1fr); gap: var(--space-2); }
+  .badge-item { padding: var(--space-2) var(--space-3); background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-md); display: flex; flex-direction: column; gap: 2px; }
+  .badge-label { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--color-text-muted); }
+  .badge-val   { font-size: var(--font-sm); font-weight: 700; color: var(--color-text-primary); }
+
+  /* ── SVG card ───────────────────────────────────────────────────────────── */
+  .svg-card { border: 1px solid var(--color-border); border-radius: var(--radius-md); padding: var(--space-3); background: var(--color-surface); }
+  .svg-card-label { font-size: var(--font-xs); font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--color-text-muted); margin-bottom: var(--space-2); }
+  #glass-svg { width: 100%; height: auto; }
+
+  /* SVG classes */
+  .svg-bg          { fill: #f4f4f5; }
+  .svg-glass       { fill: #bfdbfe; stroke: #3b82f6; stroke-width: 1.5; opacity: 0.85; }
+  .svg-glass-shine { fill: white; opacity: 0.4; }
+  .svg-shape-overlay { fill: #bfdbfe; stroke: #3b82f6; stroke-width: 1.5; opacity: 0.85; }
+  .svg-stack-pane  { fill: #93c5fd; stroke: #60a5fa; stroke-width: 1; opacity: 0.5; }
+  .svg-dim-line    { stroke: #374151; stroke-width: 1; }
+  .svg-dim-arrow   { fill: #374151; }
+  .svg-dim-text    { font-size: 9px; fill: #4b5563; font-family: sans-serif; }
+  .svg-dim-text--center { text-anchor: middle; dominant-baseline: middle; }
+  .svg-label-bg    { fill: rgba(59,130,246,0.85); rx: 3; }
+  .svg-label-text  { font-size: 9px; fill: white; font-family: sans-serif; font-weight: 700; }
+  .svg-area-text   { font-size: 10px; fill: #1e40af; font-family: sans-serif; font-weight: 600; text-anchor: middle; dominant-baseline: middle; }
+  .svg-qty-text    { font-size: 10px; fill: #6366f1; font-family: sans-serif; font-weight: 700; text-anchor: end; }
+
+  /* ── Recommendations ────────────────────────────────────────────────────── */
+  .rec-section-header { display: flex; align-items: center; margin-top: var(--space-6); margin-bottom: var(--space-4); padding-top: var(--space-4); border-top: 1px solid var(--color-border); }
+  .rec-section-title  { font-size: var(--font-xl); font-weight: 700; color: var(--color-text-primary); margin: 0; }
+  .rec-warnings-list  { display: flex; flex-direction: column; gap: var(--space-2); margin-top: var(--space-4); }
+  .warning-banner { padding: var(--space-2) var(--space-3); border-radius: var(--radius-md); font-size: var(--font-sm); }
+  .warning-banner[data-level="warning"] { background: #fef3c7; color: #92400e; border: 1px solid #fcd34d; }
+  .warning-banner[data-level="error"]   { background: #fee2e2; color: #991b1b; border: 1px solid #fca5a5; }
+
+  .rec-cards-grid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3); margin-top: var(--space-3); }
+  .dyn-rec-card   { padding: var(--space-4); background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-md); }
+  .dyn-rec-top    { margin-bottom: var(--space-2); }
+  .dyn-rec-label  { font-size: var(--font-sm); font-weight: 600; color: var(--color-text-primary); }
+  .dyn-rec-body   { font-size: var(--font-xs); color: var(--color-text-secondary); line-height: 1.6; margin: 0 0 var(--space-2); }
+  .dyn-rec-tip    { font-size: var(--font-xs); color: var(--color-primary); line-height: 1.5; margin: 0; font-style: italic; }
+
+  /* ── Buying guide ───────────────────────────────────────────────────────── */
+  .buying-guide { margin-top: var(--space-6); padding: var(--space-5); background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg); }
+  .buying-guide-title { font-size: var(--font-lg); font-weight: 700; color: var(--color-text-primary); margin: 0 0 var(--space-2); }
+  .buying-guide-desc  { font-size: var(--font-sm); color: var(--color-text-secondary); margin: 0 0 var(--space-4); line-height: 1.6; }
+  .buying-guide-grid  { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-4); margin-bottom: var(--space-4); }
+  .buying-col-label   { font-size: var(--font-xs); font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--color-text-muted); margin-bottom: var(--space-2); }
+  .buying-list        { margin: 0; padding-left: var(--space-4); display: flex; flex-direction: column; gap: var(--space-1); }
+  .buying-list li     { font-size: var(--font-xs); color: var(--color-text-secondary); line-height: 1.5; }
+  .buying-uses        { margin-bottom: var(--space-4); }
+  .buying-uses-chips  { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-top: var(--space-2); }
+  .use-chip           { padding: var(--space-1) var(--space-2-5); background: color-mix(in srgb, var(--color-primary) 10%, transparent); color: var(--color-primary); border-radius: var(--radius-full); font-size: var(--font-xs); font-weight: 500; }
+  .buying-flags       { display: flex; gap: var(--space-3); flex-wrap: wrap; }
+  .buying-flag        { font-size: var(--font-xs); font-weight: 600; padding: var(--space-1) var(--space-2-5); border-radius: var(--radius-md); }
+  .buying-flag[data-state="yes"] { background: color-mix(in srgb, var(--color-success) 12%, transparent); color: var(--color-success); }
+  .buying-flag[data-state="no"]  { background: color-mix(in srgb, #ef4444 12%, transparent); color: #ef4444; }
+
+  /* ── Pulse animation ─────────────────────────────────────────────────────── */
+  @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+
+  /* ── Mobile ─────────────────────────────────────────────────────────────── */
+  @media (max-width: 900px) { .calc-dashboard { grid-template-columns: 1fr; } }
+
+  @media (max-width: 640px) {
+    .calc-hero { flex-direction: column; }
+    .calc-hero-left { flex-direction: column; }
+    .calc-hero-title { font-size: var(--font-xl); }
+    .results-secondary-row { grid-template-columns: 1fr; }
+    .order-grid  { grid-template-columns: 1fr 1fr; }
+    .badge-row   { grid-template-columns: 1fr 1fr; }
+    .rec-cards-grid { grid-template-columns: 1fr; }
+    .buying-guide-grid { grid-template-columns: 1fr; }
+    .option-btn { padding: var(--space-2) var(--space-2-5); }
+  }
+
+  /* ── Print ──────────────────────────────────────────────────────────────── */
+  @media print {
+    .calc-panel-inputs { display: none; }
+    .calc-dashboard { grid-template-columns: 1fr; }
+    .calc-extras { display: none; }
+    .btn-primary { display: none; }
+    .rec-cards-grid { grid-template-columns: 1fr; }
+  }
+</style>
