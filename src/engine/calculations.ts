@@ -114,9 +114,9 @@ export function calculateAspectRatio(dimensions: Dimensions): string {
  * @param frameRatio  Proportion of opening that is glass (default 0.9)
  * @returns           Net glazing area in mm²
  *
- * @example calculateGlassArea({ widthMm: 914.4, heightMm: 1219.2 }) → 1_003_354.27
+ * @example calculateNetGlassArea({ widthMm: 914.4, heightMm: 1219.2 }) → 1_003_354.27
  */
-export function calculateGlassArea(dimensions: Dimensions, frameRatio = 0.9): number {
+export function calculateNetGlassArea(dimensions: Dimensions, frameRatio = 0.9): number {
   return dimensions.widthMm * dimensions.heightMm * frameRatio;
 }
 
@@ -129,12 +129,12 @@ export function calculateGlassArea(dimensions: Dimensions, frameRatio = 0.9): nu
  * - Double pane (2×4mm): ~20.8 kg/m²
  * - Triple pane (3×4mm): ~31.2 kg/m²
  *
- * @param glazingAreaMm2  Net glazing area in mm² (from calculateGlassArea)
+ * @param glazingAreaMm2  Net glazing area in mm² (from calculateNetGlassArea)
  * @param spec            Glass specification (panes, thickness per pane)
  * @returns               Full glass result including weights and area conversions
  *
  * @example
- * const area = calculateGlassArea({ widthMm: 914.4, heightMm: 1219.2 });
+ * const area = calculateNetGlassArea({ widthMm: 914.4, heightMm: 1219.2 });
  * calculateGlassWeight(area, { panes: 1, thicknessMmPerPane: 4 })
  * // → { glazingAreaSqFt: ~10.8, totalWeightKg: ~11.2, totalWeightLbs: ~24.8, ... }
  */

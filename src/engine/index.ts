@@ -10,7 +10,7 @@
  * Modules:
  *   units.ts           — Unit conversion, input normalization, display formatting
  *   validation.ts      — Dimension validation with human-readable messages
- *   calculations.ts    — Area, perimeter, diagonal, aspect ratio, glass weight
+ *   calculations.ts    — Area, perimeter, diagonal, aspect ratio, net glass area, glass weight
  *   standards.ts       — Standard size database (US, UK, CA, AU, EU) + nearest-size lookup
  *   recommendations.ts — Curtain, blind, AC BTU, replacement planning recommendations
  */

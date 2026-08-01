@@ -2,7 +2,7 @@
  * WindowMetrics — Core Calculation Tests
  *
  * Tests: calculateArea, calculatePerimeter, calculateDiagonal,
- *        calculateAspectRatio, calculateGlassArea, calculateGlassWeight
+ *        calculateAspectRatio, calculateNetGlassArea, calculateGlassWeight
  */
 
 import { describe, it, expect } from 'vitest';
@@ -11,7 +11,7 @@ import {
   calculatePerimeter,
   calculateDiagonal,
   calculateAspectRatio,
-  calculateGlassArea,
+  calculateNetGlassArea,
   calculateGlassWeight,
 } from '../calculations.js';
 
@@ -119,23 +119,23 @@ describe('calculateAspectRatio', () => {
 });
 
 // ---------------------------------------------------------------------------
-// calculateGlassArea
+// calculateNetGlassArea
 // ---------------------------------------------------------------------------
 
-describe('calculateGlassArea', () => {
+describe('calculateNetGlassArea', () => {
   it('returns 90% of frame area by default', () => {
     const frame = calculateArea({ widthMm: 914.4, heightMm: 1219.2 });
-    expect(calculateGlassArea({ widthMm: 914.4, heightMm: 1219.2 })).toBeCloseTo(frame * 0.9, 2);
+    expect(calculateNetGlassArea({ widthMm: 914.4, heightMm: 1219.2 })).toBeCloseTo(frame * 0.9, 2);
   });
 
   it('respects a custom frame ratio', () => {
     const frame = calculateArea({ widthMm: 1000, heightMm: 1000 });
-    expect(calculateGlassArea({ widthMm: 1000, heightMm: 1000 }, 0.85)).toBeCloseTo(frame * 0.85, 2);
+    expect(calculateNetGlassArea({ widthMm: 1000, heightMm: 1000 }, 0.85)).toBeCloseTo(frame * 0.85, 2);
   });
 
   it('returns exactly full area with frameRatio 1.0', () => {
     const dims = { widthMm: 600, heightMm: 900 };
-    expect(calculateGlassArea(dims, 1.0)).toBe(calculateArea(dims));
+    expect(calculateNetGlassArea(dims, 1.0)).toBe(calculateArea(dims));
   });
 });
 

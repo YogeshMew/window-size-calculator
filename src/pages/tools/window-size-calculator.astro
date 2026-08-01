@@ -421,7 +421,7 @@ const faqs: FAQ[] = [
     calculateArea,
     calculatePerimeter,
     calculateAspectRatio,
-    calculateGlassArea,
+    calculateNetGlassArea,
     calculateGlassWeight,
     findNearestStandardSize,
     calculateCurtainRecommendations,
@@ -697,7 +697,7 @@ const faqs: FAQ[] = [
       `Drop: ${formatCeil(curtain.dropMm, currentUnit)} (incl. ${curtainAllowanceLabel(currentUnit)} above-window allowance)`);
 
     // 7c. Glass estimate
-    const glazingAreaMm2 = calculateGlassArea(dims);
+    const glazingAreaMm2 = calculateNetGlassArea(dims);
     const glass          = calculateGlassWeight(glazingAreaMm2);
     setText('rec-glass-area',   formatArea(glazingAreaMm2, currentUnit));
     setText('rec-glass-weight', formatWeight(glass.totalWeightKg, glass.totalWeightLbs, currentUnit));
