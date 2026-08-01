@@ -1,0 +1,374 @@
+---
+/**
+ * WindowMetrics — Developer Health Check Page
+ *
+ * Available at /dev/health (development only).
+ * Audits the calculator registry for completeness and correctness.
+ *
+ * Access in production returns a 404.
+ */
+
+import { TOOLS } from '@/data/tools.js';
+import type { Tool } from '@/types/content.js';
+
+// Redirect to 404 in production
+if (!import.meta.env.DEV) {
+  return Astro.redirect('/404', 404);
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Health check logic (server-side, runs at build/dev time)
+// ─────────────────────────────────────────────────────────────────────────────
+
+type Severity = 'error' | 'warn' | 'ok';
+
+interface CheckResult {
+  slug: string;
+  title: string;
+  status: Tool['status'];
+  checks: { label: string; passed: boolean; severity: Severity; note?: string }[];
+}
+
+function auditTool(tool: Tool): CheckResult {
+  const checks: CheckResult['checks'] = [];
+
+  // Required fields
+  checks.push({ label: 'Has slug',        passed: Boolean(tool.slug),        severity: 'error' });
+  checks.push({ label: 'Has title',       passed: Boolean(tool.title),       severity: 'error' });
+  checks.push({ label: 'Has description', passed: Boolean(tool.description), severity: 'error' });
+  checks.push({ label: 'Has icon',        passed: Boolean(tool.icon),        severity: 'warn' });
+  checks.push({ label: 'Has href',        passed: Boolean(tool.href),        severity: 'error' });
+  checks.push({ label: 'Has category',    passed: Boolean(tool.category),    severity: 'error' });
+
+  // Recommended fields
+  checks.push({
+    label: 'Has keywords',
+    passed: Boolean(tool.keywords?.length),
+    severity: 'warn',
+    note: tool.keywords?.length ? `${tool.keywords.length} keywords` : 'SEO — add keywords',
+  });
+  checks.push({
+    label: 'Has related tools',
+    passed: Boolean(tool.relatedSlugs?.length),
+    severity: 'warn',
+    note: tool.relatedSlugs?.length ? `${tool.relatedSlugs.length} related` : 'Add related tools',
+  });
+  checks.push({
+    label: 'Has benefits',
+    passed: Boolean(tool.benefits?.length),
+    severity: 'warn',
+    note: tool.benefits?.length ? `${tool.benefits.length} benefits` : 'Improves card UX',
+  });
+  checks.push({
+    label: 'Has longDescription',
+    passed: Boolean(tool.longDescription),
+    severity: 'warn',
+    note: 'Improves SEO',
+  });
+  checks.push({
+    label: 'Has useCases',
+    passed: Boolean(tool.useCases?.length),
+    severity: 'warn',
+  });
+
+  // Slug consistency (slug should match href)
+  const expectedHref = `/tools/${tool.slug}`;
+  checks.push({
+    label: 'slug matches href',
+    passed: tool.href === expectedHref,
+    severity: 'error',
+    note: tool.href !== expectedHref ? `Expected ${expectedHref}, got ${tool.href}` : undefined,
+  });
+
+  return { slug: tool.slug, title: tool.title, status: tool.status, checks };
+}
+
+// Run all audits
+const results = TOOLS.map(auditTool);
+
+// Find duplicate slugs
+const slugCounts: Record<string, number> = {};
+TOOLS.forEach(t => { slugCounts[t.slug] = (slugCounts[t.slug] ?? 0) + 1; });
+const duplicateSlugs = Object.entries(slugCounts)
+  .filter(([, count]) => count > 1)
+  .map(([slug]) => slug);
+
+// Summary stats
+const liveTools    = TOOLS.filter(t => t.status === 'live').length;
+const comingSoon   = TOOLS.filter(t => t.status === 'coming-soon').length;
+const planned      = TOOLS.filter(t => t.status === 'planned').length;
+const totalErrors  = results.flatMap(r => r.checks).filter(c => !c.passed && c.severity === 'error').length;
+const totalWarns   = results.flatMap(r => r.checks).filter(c => !c.passed && c.severity === 'warn').length;
+const overallOk    = totalErrors === 0 && duplicateSlugs.length === 0;
+---
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="robots" content="noindex, nofollow" />
+  <title>Calculator Health — WindowMetrics Dev</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; }
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      font-size: 14px;
+      line-height: 1.5;
+      color: #1a1a2e;
+      background: #f8fafc;
+      margin: 0;
+      padding: 24px;
+    }
+    h1 { font-size: 22px; margin: 0 0 4px; }
+    .tagline { color: #64748b; margin: 0 0 24px; }
+    .summary-bar {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-bottom: 24px;
+    }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+    .badge--ok    { background: #dcfce7; color: #15803d; }
+    .badge--error { background: #fee2e2; color: #dc2626; }
+    .badge--warn  { background: #fef9c3; color: #b45309; }
+    .badge--info  { background: #e0f2fe; color: #0369a1; }
+    .badge--muted { background: #f1f5f9; color: #475569; }
+
+    .section-title {
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: #64748b;
+      margin: 0 0 8px;
+    }
+
+    .duplicate-alert {
+      background: #fee2e2;
+      border: 1px solid #fca5a5;
+      border-radius: 8px;
+      padding: 12px 16px;
+      margin-bottom: 20px;
+      color: #7f1d1d;
+      font-size: 13px;
+    }
+
+    .tool-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 40px;
+      background: white;
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 0 0 1px rgba(0,0,0,0.06);
+    }
+    .tool-table th, .tool-table td {
+      padding: 10px 14px;
+      text-align: left;
+      border-bottom: 1px solid #f1f5f9;
+    }
+    .tool-table th {
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: #64748b;
+      background: #f8fafc;
+    }
+    .tool-table tr:last-child td { border-bottom: none; }
+    .tool-name { font-weight: 600; }
+    .tool-slug { font-family: monospace; font-size: 12px; color: #64748b; }
+
+    .checks-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+    }
+    .check-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      padding: 2px 7px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 500;
+    }
+    .check-chip--ok   { background: #dcfce7; color: #166534; }
+    .check-chip--warn { background: #fef9c3; color: #854d0e; }
+    .check-chip--error { background: #fee2e2; color: #991b1b; }
+
+    .status-pill {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 600;
+    }
+    .status-pill--live        { background: #dcfce7; color: #166534; }
+    .status-pill--coming-soon { background: #fef9c3; color: #92400e; }
+    .status-pill--planned     { background: #f1f5f9; color: #475569; }
+
+    .score-bar {
+      height: 6px;
+      border-radius: 3px;
+      background: #e2e8f0;
+      overflow: hidden;
+      width: 80px;
+    }
+    .score-bar-fill {
+      height: 100%;
+      border-radius: 3px;
+      transition: width 0.2s;
+    }
+    .score-bar-fill--ok   { background: #22c55e; }
+    .score-bar-fill--warn { background: #f59e0b; }
+    .score-bar-fill--bad  { background: #ef4444; }
+
+    details { margin: 0; }
+    summary {
+      cursor: pointer;
+      font-size: 12px;
+      color: #3b82f6;
+      list-style: none;
+    }
+    summary::-webkit-details-marker { display: none; }
+
+    .note-list { margin: 6px 0 0 0; padding: 0 0 0 16px; font-size: 12px; color: #64748b; }
+
+    footer {
+      margin-top: 40px;
+      font-size: 12px;
+      color: #94a3b8;
+      border-top: 1px solid #e2e8f0;
+      padding-top: 16px;
+    }
+  </style>
+</head>
+<body>
+
+<h1>🩺 Calculator Health</h1>
+<p class="tagline">WindowMetrics Developer Diagnostics — <strong>development only</strong></p>
+
+<!-- Summary badges -->
+<div class="summary-bar">
+  <span class:list={['badge', overallOk ? 'badge--ok' : 'badge--error']}>
+    {overallOk ? '✓ All checks passed' : '✗ Issues found'}
+  </span>
+  <span class="badge badge--info">{TOOLS.length} calculators registered</span>
+  <span class="badge badge--ok">{liveTools} live</span>
+  {comingSoon > 0 && <span class="badge badge--warn">{comingSoon} coming soon</span>}
+  <span class="badge badge--muted">{planned} planned</span>
+  {totalErrors > 0 && <span class="badge badge--error">{totalErrors} errors</span>}
+  {totalWarns  > 0 && <span class="badge badge--warn">{totalWarns} warnings</span>}
+</div>
+
+<!-- Duplicate slug alert -->
+{duplicateSlugs.length > 0 && (
+  <div class="duplicate-alert">
+    <strong>⚠ Duplicate slugs detected:</strong> {duplicateSlugs.join(', ')}
+    <br/>Each calculator must have a unique slug.
+  </div>
+)}
+
+<!-- Tool-by-tool table -->
+<p class="section-title">All registered calculators</p>
+<table class="tool-table">
+  <thead>
+    <tr>
+      <th>Calculator</th>
+      <th>Status</th>
+      <th>Score</th>
+      <th>Checks</th>
+    </tr>
+  </thead>
+  <tbody>
+    {results.map((r) => {
+      const total     = r.checks.length;
+      const passed    = r.checks.filter(c => c.passed).length;
+      const pct       = Math.round((passed / total) * 100);
+      const hasErrors = r.checks.some(c => !c.passed && c.severity === 'error');
+      const hasWarns  = r.checks.some(c => !c.passed && c.severity === 'warn');
+      const barClass  = hasErrors ? 'score-bar-fill--bad' : hasWarns ? 'score-bar-fill--warn' : 'score-bar-fill--ok';
+      const failedChecks = r.checks.filter(c => !c.passed);
+
+      return (
+        <tr>
+          <td>
+            <div class="tool-name">{r.title}</div>
+            <div class="tool-slug">{r.slug}</div>
+          </td>
+          <td>
+            <span class:list={['status-pill', `status-pill--${r.status}`]}>
+              {r.status}
+            </span>
+          </td>
+          <td>
+            <div class="score-bar">
+              <div class:list={['score-bar-fill', barClass]} style={`width: ${pct}%`}></div>
+            </div>
+            <span style="font-size: 11px; color: #64748b;">{passed}/{total}</span>
+          </td>
+          <td>
+            {failedChecks.length === 0 ? (
+              <span style="font-size: 12px; color: #16a34a;">✓ All passed</span>
+            ) : (
+              <details>
+                <summary>
+                  {failedChecks.filter(c => c.severity === 'error').length > 0 &&
+                    <span style="color: #dc2626; font-weight: 600;">
+                      {failedChecks.filter(c => c.severity === 'error').length} errors
+                    </span>
+                  }
+                  {failedChecks.filter(c => c.severity === 'error').length > 0 &&
+                   failedChecks.filter(c => c.severity === 'warn').length > 0  && ' · '}
+                  {failedChecks.filter(c => c.severity === 'warn').length > 0 &&
+                    <span style="color: #b45309;">
+                      {failedChecks.filter(c => c.severity === 'warn').length} warnings
+                    </span>
+                  }
+                  {' ↓'}
+                </summary>
+                <ul class="note-list">
+                  {failedChecks.map(c => (
+                    <li>
+                      <span style={`color: ${c.severity === 'error' ? '#dc2626' : '#b45309'}`}>
+                        [{c.severity.toUpperCase()}]
+                      </span>
+                      {' '}{c.label}{c.note ? ` — ${c.note}` : ''}
+                    </li>
+                  ))}
+                </ul>
+              </details>
+            )}
+          </td>
+        </tr>
+      );
+    })}
+  </tbody>
+</table>
+
+<!-- Legend -->
+<p class="section-title">Legend</p>
+<div class="summary-bar">
+  <span class="badge badge--error">ERROR — required for the tool to work correctly</span>
+  <span class="badge badge--warn">WARN — recommended for quality and SEO</span>
+  <span class="badge badge--ok">OK — check passed</span>
+</div>
+
+<footer>
+  <p>This page is only accessible in development mode (<code>import.meta.env.DEV === true</code>).</p>
+  <p>Add this URL to your bookmarks: <code>/dev/health</code></p>
+  <p>Generated at {new Date().toISOString()}</p>
+</footer>
+
+</body>
+</html>

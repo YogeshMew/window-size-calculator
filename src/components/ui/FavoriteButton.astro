@@ -1,0 +1,125 @@
+---
+/**
+ * WindowMetrics — Favorite Button
+ *
+ * A heart/bookmark toggle that marks a calculator as a favorite.
+ * State is persisted in localStorage and reflected visually.
+ *
+ * Props:
+ *   slug  — Calculator slug to favorite/un-favorite
+ *   label — Accessible label (default: "Favorite this calculator")
+ */
+
+interface Props {
+  slug: string;
+  label?: string;
+}
+
+const { slug, label = 'Favorite this calculator' } = Astro.props;
+---
+
+<button
+  type="button"
+  class="fav-btn"
+  id={`fav-btn-${slug}`}
+  data-slug={slug}
+  aria-label={label}
+  aria-pressed="false"
+>
+  <svg class="fav-icon" width="16" height="16" viewBox="0 0 24 24" aria-hidden="true">
+    <path
+      d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"
+      stroke="currentColor"
+      stroke-width="2"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+    />
+  </svg>
+  <span class="fav-label" id={`fav-label-${slug}`}>{label}</span>
+</button>
+
+<script>
+  import { isFavorite, toggleFavorite } from '@/lib/favorites.js';
+  import { track } from '@/lib/analytics.js';
+
+  document.querySelectorAll<HTMLButtonElement>('.fav-btn').forEach((btn) => {
+    const slug = btn.dataset.slug ?? '';
+    if (!slug) return;
+
+    // Set initial state from localStorage
+    function updateState() {
+      const favorited = isFavorite(slug);
+      btn.setAttribute('aria-pressed', favorited ? 'true' : 'false');
+      btn.classList.toggle('fav-btn--active', favorited);
+    }
+
+    updateState();
+
+    btn.addEventListener('click', () => {
+      const nowFavorited = toggleFavorite(slug);
+      updateState();
+
+      // Track analytics event
+      track({
+        type: nowFavorited ? 'favorite_added' : 'favorite_removed',
+        properties: { slug },
+      });
+
+      // Dispatch custom event for any parent to observe
+      btn.dispatchEvent(
+        new CustomEvent('wm:favorite-toggled', {
+          bubbles: true,
+          detail: { slug, favorited: nowFavorited },
+        }),
+      );
+    });
+  });
+</script>
+
+<style>
+  .fav-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 10px;
+    background: none;
+    border: 1px solid var(--color-hairline-strong);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    color: var(--color-muted);
+    font-size: var(--font-size-body-sm);
+    font-family: var(--font-family-sans);
+    transition: color 150ms ease, border-color 150ms ease, background-color 150ms ease;
+  }
+
+  .fav-btn:hover {
+    color: #ef4444;
+    border-color: #ef4444;
+    background-color: color-mix(in srgb, #ef4444 5%, transparent);
+  }
+
+  .fav-btn--active {
+    color: #ef4444;
+    border-color: #ef4444;
+    background-color: color-mix(in srgb, #ef4444 8%, transparent);
+  }
+
+  .fav-btn--active .fav-icon path {
+    fill: #ef4444;
+    stroke: #ef4444;
+  }
+
+  :global([data-theme='dark']) .fav-btn--active {
+    color: #f87171;
+    border-color: #f87171;
+  }
+
+  .fav-icon {
+    flex-shrink: 0;
+  }
+
+  .fav-icon path {
+    fill: none;
+    transition: fill 150ms ease;
+  }
+</style>

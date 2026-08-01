@@ -1,0 +1,132 @@
+---
+/**
+ * WindowMetrics — Recent Calculators
+ *
+ * Displays the last 8 calculators visited by the user.
+ * Renders an empty shell on the server; populated on the client from localStorage.
+ *
+ * Props:
+ *   heading  — Section heading (default: "Recently used")
+ *   limit    — Maximum entries to show (default: 8)
+ *   compact  — Render in compact list mode (default: false)
+ */
+
+interface Props {
+  heading?: string;
+  limit?: number;
+  compact?: boolean;
+}
+
+const { heading = 'Recently used', limit = 8, compact = false } = Astro.props;
+---
+
+<div
+  class:list={['recent-calcs', { 'recent-calcs--compact': compact }]}
+  id="recent-calculators"
+  data-limit={limit}
+  hidden
+>
+  <p class:list={['recent-heading', { 'recent-heading--compact': compact }]}>
+    {heading}
+  </p>
+  <div class="recent-list" id="recent-list" role="list"></div>
+</div>
+
+<script>
+  import { getRecent } from '@/lib/recent.js';
+  import { getToolBySlug } from '@/data/tools.js';
+
+  const container = document.getElementById('recent-calculators') as HTMLElement | null;
+  const listEl    = document.getElementById('recent-list')        as HTMLElement | null;
+  const limit     = parseInt(container?.dataset.limit ?? '8', 10);
+
+  function render() {
+    if (!listEl || !container) return;
+    const slugs = getRecent(limit);
+    if (slugs.length === 0) return;
+
+    listEl.innerHTML = '';
+    slugs.forEach((slug) => {
+      const tool = getToolBySlug(slug);
+      if (!tool || tool.status !== 'live') return;
+
+      const item = document.createElement('a');
+      item.href = tool.href;
+      item.className = 'recent-item';
+      item.setAttribute('role', 'listitem');
+      item.innerHTML = `
+        <span class="recent-item-title">${tool.title}</span>
+        <span class="recent-item-arrow" aria-hidden="true">→</span>
+      `;
+      listEl.appendChild(item);
+    });
+
+    if (listEl.children.length > 0) {
+      container.hidden = false;
+    }
+  }
+
+  render();
+</script>
+
+<style>
+  .recent-calcs {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-xs);
+  }
+
+  .recent-heading {
+    font-family: var(--font-family-mono);
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--color-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin: 0;
+  }
+
+  .recent-list {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .recent-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--spacing-sm);
+    padding: 7px var(--spacing-sm);
+    border-radius: var(--radius-sm);
+    text-decoration: none;
+    color: var(--color-body);
+    transition: background-color 100ms ease, color 100ms ease;
+  }
+
+  .recent-item:hover {
+    background-color: var(--color-canvas-soft);
+    color: var(--color-ink);
+  }
+
+  .recent-item-title {
+    font-size: var(--font-size-body-sm);
+    font-weight: 500;
+    flex: 1;
+  }
+
+  .recent-item-arrow {
+    font-size: 12px;
+    color: var(--color-muted);
+    flex-shrink: 0;
+  }
+
+  /* Compact variant for homepage sidebar */
+  .recent-calcs--compact .recent-item {
+    padding: 5px var(--spacing-xs);
+  }
+
+  .recent-calcs--compact .recent-item-title {
+    font-size: var(--font-size-caption);
+  }
+</style>

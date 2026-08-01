@@ -1,0 +1,248 @@
+---
+/**
+ * WindowMetrics — Share & Export Bar
+ *
+ * Provides copy link, copy summary, native share (when supported),
+ * print/PDF, copy results, and JSON download actions.
+ *
+ * This component renders the buttons. All functionality is wired by
+ * the parent calculator's script via the `wm:share-export` custom event,
+ * or the parent can use the window.wmShareExport API directly.
+ *
+ * Props:
+ *   calculatorTitle — Human-readable name (e.g. "Window Size Calculator")
+ */
+
+interface Props {
+  calculatorTitle: string;
+}
+
+const { calculatorTitle } = Astro.props;
+---
+
+<div class="share-export-bar" id="share-export-bar" data-title={calculatorTitle} hidden>
+  <span class="seb-label">Share & Export</span>
+
+  <div class="seb-actions">
+    <!-- Share actions -->
+    <button type="button" class="seb-btn" id="seb-copy-link" aria-label="Copy shareable link">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+        <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
+        <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
+      </svg>
+      Copy link
+    </button>
+
+    <button type="button" class="seb-btn" id="seb-copy-summary" aria-label="Copy results as text">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+        <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+      </svg>
+      Copy summary
+    </button>
+
+    <button type="button" class="seb-btn seb-btn--native-share" id="seb-native-share" aria-label="Share via device" hidden>
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+        <circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/>
+        <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/>
+        <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
+      </svg>
+      Share
+    </button>
+
+    <div class="seb-divider" aria-hidden="true"></div>
+
+    <!-- Export actions -->
+    <button type="button" class="seb-btn" id="seb-print" aria-label="Print or save as PDF">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+        <polyline points="6 9 6 2 18 2 18 9"/>
+        <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/>
+        <rect x="6" y="14" width="12" height="8"/>
+      </svg>
+      Print / PDF
+    </button>
+
+    <button type="button" class="seb-btn" id="seb-download-json" aria-label="Download results as JSON">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+        <polyline points="7 10 12 15 17 10"/>
+        <line x1="12" y1="15" x2="12" y2="3"/>
+      </svg>
+      JSON
+    </button>
+  </div>
+
+  <!-- Transient feedback toast -->
+  <span class="seb-toast" id="seb-toast" role="status" aria-live="polite"></span>
+</div>
+
+<script>
+  import { copyLink, copySummary, nativeShare, isNativeShareSupported } from '@/lib/share.js';
+  import { printPage, downloadJSON } from '@/lib/export.js';
+  import { buildShareUrl } from '@/lib/url-state.js';
+
+  const bar          = document.getElementById('share-export-bar')  as HTMLElement | null;
+  const copyLinkBtn  = document.getElementById('seb-copy-link')     as HTMLButtonElement | null;
+  const copySumBtn   = document.getElementById('seb-copy-summary')  as HTMLButtonElement | null;
+  const nativeBtn    = document.getElementById('seb-native-share')  as HTMLButtonElement | null;
+  const printBtn     = document.getElementById('seb-print')         as HTMLButtonElement | null;
+  const jsonBtn      = document.getElementById('seb-download-json') as HTMLButtonElement | null;
+  const toast        = document.getElementById('seb-toast')         as HTMLElement | null;
+
+  // ── Toast feedback ───────────────────────────────────────────────────────
+
+  let toastTimer: ReturnType<typeof setTimeout> | null = null;
+
+  function showToast(message: string, success = true) {
+    if (!toast) return;
+    toast.textContent = message;
+    toast.dataset.ok = success ? 'true' : 'false';
+    if (toastTimer) clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => {
+      if (toast) toast.textContent = '';
+    }, 2500);
+  }
+
+  // ── Show native share button if supported ────────────────────────────────
+
+  if (isNativeShareSupported() && nativeBtn) {
+    nativeBtn.hidden = false;
+  }
+
+  // ── Event handlers ───────────────────────────────────────────────────────
+
+  copyLinkBtn?.addEventListener('click', async () => {
+    const url = buildShareUrl((window as any).wmCurrentState ?? {});
+    const ok = await copyLink(url);
+    showToast(ok ? 'Link copied!' : 'Could not copy — try manually.', ok);
+    bar?.dispatchEvent(new CustomEvent('wm:share-export', {
+      bubbles: true,
+      detail: { action: 'copy_link' },
+    }));
+  });
+
+  copySumBtn?.addEventListener('click', async () => {
+    const summary = ((window as any).wmBuildSummary?.() ?? 'No results available') as string;
+    const ok = await copySummary(summary);
+    showToast(ok ? 'Summary copied!' : 'Could not copy.', ok);
+    bar?.dispatchEvent(new CustomEvent('wm:share-export', {
+      bubbles: true,
+      detail: { action: 'copy_summary' },
+    }));
+  });
+
+  nativeBtn?.addEventListener('click', async () => {
+    const title = bar?.dataset.title ?? 'Calculator Result';
+    await nativeShare({
+      title,
+      url: buildShareUrl((window as any).wmCurrentState ?? {}),
+    });
+  });
+
+  printBtn?.addEventListener('click', () => {
+    printPage();
+    bar?.dispatchEvent(new CustomEvent('wm:share-export', {
+      bubbles: true,
+      detail: { action: 'print' },
+    }));
+  });
+
+  jsonBtn?.addEventListener('click', () => {
+    const payload = (window as any).wmBuildExport?.();
+    if (!payload) { showToast('No results to export yet.', false); return; }
+
+    downloadJSON(payload, payload.calculator);
+    bar?.dispatchEvent(new CustomEvent('wm:share-export', {
+      bubbles: true,
+      detail: { action: 'json' },
+    }));
+  });
+
+  // ── Public API ───────────────────────────────────────────────────────────
+
+  /** Show the bar (called by the parent after first successful calculation). */
+  function show() {
+    if (bar) bar.hidden = false;
+  }
+
+  (window as unknown as Record<string, unknown>).wmShareExportBar = { show };
+</script>
+
+<style>
+  .share-export-bar {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-sm) var(--spacing-md);
+    border: 1px solid var(--color-hairline);
+    border-radius: var(--radius-md);
+    background-color: var(--color-canvas-soft);
+    flex-wrap: wrap;
+  }
+
+  .seb-label {
+    font-family: var(--font-family-mono);
+    font-size: 10px;
+    font-weight: 500;
+    color: var(--color-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    flex-shrink: 0;
+  }
+
+  .seb-actions {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    flex-wrap: wrap;
+    flex: 1;
+  }
+
+  .seb-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 5px 10px;
+    font-size: 12px;
+    font-family: var(--font-family-sans);
+    color: var(--color-body);
+    background-color: var(--color-canvas);
+    border: 1px solid var(--color-hairline-strong);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background-color 100ms ease, border-color 100ms ease, color 100ms ease;
+  }
+
+  .seb-btn:hover {
+    background-color: var(--color-canvas-soft-2);
+    border-color: var(--color-ink);
+    color: var(--color-ink);
+  }
+
+  .seb-divider {
+    width: 1px;
+    height: 18px;
+    background-color: var(--color-hairline);
+    flex-shrink: 0;
+    margin: 0 2px;
+  }
+
+  .seb-toast {
+    font-family: var(--font-family-mono);
+    font-size: 10px;
+    color: #16a34a;
+    margin-left: auto;
+    white-space: nowrap;
+  }
+
+  .seb-toast[data-ok='false'] {
+    color: var(--color-error);
+  }
+
+  @media print {
+    .share-export-bar {
+      display: none;
+    }
+  }
+</style>

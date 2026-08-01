@@ -1,0 +1,281 @@
+---
+/**
+ * WindowMetrics — Calculator History Panel
+ *
+ * Displays the last 10 calculations for a given calculator.
+ * Populated entirely by client-side JavaScript (localStorage).
+ * Renders an empty shell on the server.
+ *
+ * Props:
+ *   slug   — Calculator slug for localStorage keying (e.g. 'window-size-calculator')
+ *   label  — Panel heading (default: "Recent calculations")
+ *
+ * JS API (called by the parent page after each calculation):
+ *   window.wmHistoryPanel.refresh() — re-render entries from localStorage
+ *
+ * The parent page calls `window.wmHistoryPanel.add(label, inputs)` to save an
+ * entry and refresh the panel in one call.
+ */
+
+interface Props {
+  slug: string;
+  label?: string;
+}
+
+const { slug, label = 'Recent calculations' } = Astro.props;
+---
+
+<div class="history-panel" id="history-panel" data-slug={slug}>
+  <div class="history-header">
+    <span class="history-heading">{label}</span>
+    <button
+      type="button"
+      class="history-clear-btn"
+      id="history-clear-btn"
+      aria-label="Clear calculation history"
+      hidden
+    >
+      Clear
+    </button>
+  </div>
+
+  <!-- Entries populated by JS -->
+  <div class="history-list" id="history-list" role="list">
+    <p class="history-empty" id="history-empty">No saved calculations yet.</p>
+  </div>
+</div>
+
+<script>
+  import {
+    historyAdd,
+    historyGetAll,
+    historyRemove,
+    historyClear,
+    historyFormatTime,
+  } from '@/lib/history.js';
+  import type { HistoryEntry } from '@/lib/history.js';
+
+  const panel     = document.getElementById('history-panel')    as HTMLElement | null;
+  const listEl    = document.getElementById('history-list')     as HTMLElement | null;
+  const emptyEl   = document.getElementById('history-empty')    as HTMLElement | null;
+  const clearBtn  = document.getElementById('history-clear-btn') as HTMLButtonElement | null;
+
+  const slug = panel?.dataset.slug ?? '';
+
+  // ── Render ───────────────────────────────────────────────────────────────
+
+  function renderEntry(entry: HistoryEntry): HTMLElement {
+    const li = document.createElement('div');
+    li.className = 'history-entry';
+    li.setAttribute('role', 'listitem');
+    li.dataset.id = entry.id;
+
+    li.innerHTML = `
+      <button type="button" class="history-restore-btn" data-id="${entry.id}" aria-label="Restore: ${entry.label}">
+        <span class="history-entry-label">${entry.label}</span>
+        <span class="history-entry-time">${historyFormatTime(entry.timestamp)}</span>
+      </button>
+      <button type="button" class="history-delete-btn" data-id="${entry.id}" aria-label="Delete entry: ${entry.label}">×</button>
+    `;
+
+    return li;
+  }
+
+  function refresh() {
+    if (!listEl || !slug) return;
+    const entries = historyGetAll(slug);
+
+    // Clear current items (keep the empty message element)
+    listEl.querySelectorAll('.history-entry').forEach((el) => el.remove());
+
+    if (entries.length === 0) {
+      if (emptyEl)  emptyEl.hidden  = false;
+      if (clearBtn) clearBtn.hidden = true;
+      return;
+    }
+
+    if (emptyEl)  emptyEl.hidden  = true;
+    if (clearBtn) clearBtn.hidden = false;
+
+    entries.forEach((entry) => {
+      listEl.appendChild(renderEntry(entry));
+    });
+  }
+
+  // ── Events ───────────────────────────────────────────────────────────────
+
+  listEl?.addEventListener('click', (e) => {
+    const target = e.target as HTMLElement;
+
+    // Delete button
+    const deleteBtn = target.closest('.history-delete-btn') as HTMLElement | null;
+    if (deleteBtn?.dataset.id) {
+      historyRemove(slug, deleteBtn.dataset.id);
+      refresh();
+      return;
+    }
+
+    // Restore button
+    const restoreBtn = target.closest('.history-restore-btn') as HTMLElement | null;
+    if (restoreBtn?.dataset.id) {
+      const entries = historyGetAll(slug);
+      const entry = entries.find((e) => e.id === restoreBtn.dataset.id);
+      if (!entry) return;
+
+      // Dispatch a restore event for the parent calculator to handle
+      panel?.dispatchEvent(
+        new CustomEvent('wm:history-restore', {
+          bubbles: true,
+          detail: { inputs: entry.inputs, entryId: entry.id },
+        }),
+      );
+    }
+  });
+
+  clearBtn?.addEventListener('click', () => {
+    historyClear(slug);
+    refresh();
+    panel?.dispatchEvent(
+      new CustomEvent('wm:history-cleared', { bubbles: true, detail: { slug } }),
+    );
+  });
+
+  // ── Public API ───────────────────────────────────────────────────────────
+
+  /** Add an entry and refresh the panel. Called by the parent calculator after each successful calculation. */
+  function add(label: string, inputs: Record<string, string>): void {
+    historyAdd(slug, label, inputs);
+    refresh();
+  }
+
+  // Expose API on window for parent page scripts
+  (window as unknown as Record<string, unknown>).wmHistoryPanel = { add, refresh };
+
+  // Initial render on page load
+  refresh();
+</script>
+
+<style>
+  .history-panel {
+    display: flex;
+    flex-direction: column;
+    border: 1px solid var(--color-hairline);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    background-color: var(--color-canvas);
+  }
+
+  .history-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--spacing-sm) var(--spacing-md);
+    border-bottom: 1px solid var(--color-hairline);
+    background-color: var(--color-canvas-soft);
+  }
+
+  .history-heading {
+    font-family: var(--font-family-mono);
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--color-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+
+  .history-clear-btn {
+    font-family: var(--font-family-mono);
+    font-size: 10px;
+    color: var(--color-error);
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 1px 4px;
+    border-radius: 3px;
+    transition: background-color 100ms ease;
+  }
+
+  .history-clear-btn:hover {
+    background-color: color-mix(in srgb, var(--color-error) 10%, transparent);
+  }
+
+  .history-list {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .history-empty {
+    font-size: var(--font-size-caption);
+    color: var(--color-muted);
+    padding: var(--spacing-md);
+    margin: 0;
+    text-align: center;
+  }
+
+  .history-entry {
+    display: flex;
+    align-items: center;
+    border-bottom: 1px solid var(--color-hairline);
+  }
+
+  .history-entry:last-child {
+    border-bottom: none;
+  }
+
+  .history-restore-btn {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1px;
+    padding: var(--spacing-sm) var(--spacing-md);
+    background: none;
+    border: none;
+    cursor: pointer;
+    text-align: left;
+    transition: background-color 100ms ease;
+    min-width: 0;
+  }
+
+  .history-restore-btn:hover {
+    background-color: var(--color-canvas-soft);
+  }
+
+  .history-entry-label {
+    font-size: var(--font-size-body-sm);
+    font-weight: 500;
+    color: var(--color-ink);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+  }
+
+  .history-entry-time {
+    font-family: var(--font-family-mono);
+    font-size: 10px;
+    color: var(--color-muted);
+  }
+
+  .history-delete-btn {
+    width: 28px;
+    height: 100%;
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: none;
+    border: none;
+    border-left: 1px solid var(--color-hairline);
+    cursor: pointer;
+    color: var(--color-muted);
+    font-size: 14px;
+    flex-shrink: 0;
+    transition: background-color 100ms ease, color 100ms ease;
+  }
+
+  .history-delete-btn:hover {
+    background-color: color-mix(in srgb, var(--color-error) 8%, transparent);
+    color: var(--color-error);
+  }
+</style>
