@@ -1,0 +1,1417 @@
+---
+/**
+ * WindowMetrics — Curtain Size Calculator
+ * Route: /tools/curtain-size-calculator
+ *
+ * Calculates curtain width, drop, rod length, and fabric needed for any window.
+ * Reuses the full Phase 5 platform: history, favorites, URL state, share, export, analytics.
+ */
+
+import ToolLayout from '@/layouts/ToolLayout.astro';
+import InputCard from '@/components/calculator/InputCard.astro';
+import UnitSelector from '@/components/calculator/UnitSelector.astro';
+import ResultCard from '@/components/calculator/ResultCard.astro';
+import EmptyState from '@/components/calculator/EmptyState.astro';
+import WarningBanner from '@/components/calculator/WarningBanner.astro';
+import RecommendationCard from '@/components/calculator/RecommendationCard.astro';
+import RelatedTools from '@/components/calculator/RelatedTools.astro';
+import FAQSection from '@/components/content/FAQSection.astro';
+import ToolIcon from '@/components/ui/ToolIcon.astro';
+import TrustStrip from '@/components/ui/TrustStrip.astro';
+import HistoryPanel from '@/components/calculator/HistoryPanel.astro';
+import ShareExportBar from '@/components/calculator/ShareExportBar.astro';
+import FavoriteButton from '@/components/ui/FavoriteButton.astro';
+
+import { getToolBySlug, getRelatedTools } from '@/data/tools.js';
+import type { BreadcrumbItem, FAQ } from '@/types/calculator.js';
+
+const tool = getToolBySlug('curtain-size-calculator')!;
+const relatedTools = getRelatedTools('curtain-size-calculator');
+
+const breadcrumbs: BreadcrumbItem[] = [
+  { label: 'Home', href: '/' },
+  { label: 'Tools', href: '/tools' },
+  { label: tool.title, href: tool.href, current: true },
+];
+
+const faqs: FAQ[] = [
+  {
+    question: 'How wide should curtains be?',
+    answer:
+      'Curtains should be 1.5–3× the width of the curtain rod. For a standard gathered look, use 2× fullness (double the rod width in fabric). For a luxurious, formal appearance, use 2.5–3×. At minimum 1.5×, panels look flat and sparse.',
+  },
+  {
+    question: 'How high should I hang the curtain rod?',
+    answer:
+      'For most rooms, hang the rod 4–6 inches (10–15 cm) above the window frame. To create the illusion of taller ceilings, hang the rod close to the ceiling line. The higher the rod, the taller the room will appear.',
+  },
+  {
+    question: 'What is the difference between inside and outside mount?',
+    answer:
+      'Inside mount places the rod within the window frame for a clean, tailored look — best for windows with a deep reveal. Outside mount extends the rod past the frame (typically 3–6 in per side) for better light blockage, a wider visual appearance, and more daylight when curtains are open.',
+  },
+  {
+    question: 'How do I measure curtain drop?',
+    answer:
+      'Measure from the bottom of the curtain ring or the top of the rod pocket to where you want the curtain to end. For sill length, measure to the window sill. For floor length, measure to 0.5 in above the floor. For puddle curtains, add 4–6 in beyond floor length.',
+  },
+  {
+    question: 'What fullness is right for my curtain style?',
+    answer:
+      'Standard and grommet: 2× fullness. Rod pocket and pinch pleat: 2.5×. Eyelet: 2×. Higher fullness creates more volume and a more formal look; lower fullness is more modern and minimalist.',
+  },
+  {
+    question: 'How much fabric do I need for curtains?',
+    answer:
+      'Each panel needs its finished width plus about 4 in for side hems, and its finished drop plus 4–6 in for top and bottom hems. Our calculator includes all allowances automatically so you know exactly how much fabric to order.',
+  },
+  {
+    question: 'Should I use 2 or 4 curtain panels?',
+    answer:
+      '2 panels (one pair) works for most windows. Use 4 panels for very wide windows (over 72 in / 180 cm) or when you want a fuller, more dramatic look. 4 panels also provide more flexible light control — open the outer panels while keeping the inner panels closed.',
+  },
+];
+---
+
+<ToolLayout tool={tool} breadcrumbs={breadcrumbs} faqs={faqs}>
+
+  <!-- ── Page Hero ──────────────────────────────────────────────────── -->
+  <header class="calc-hero">
+    <div class="calc-hero-left">
+      <div class="icon-container icon-container-lg">
+        <ToolIcon name={tool.icon ?? 'Blinds'} size={22} />
+      </div>
+      <div>
+        <div class="calc-status-badge">
+          <span class="calc-status-dot" aria-hidden="true"></span>
+          Available
+        </div>
+        <h1 class="calc-hero-title">{tool.title}</h1>
+        <p class="calc-hero-desc">
+          Enter your window size and preferences. Get curtain width, drop, rod length,
+          and fabric needed — with a live illustration that updates as you type.
+        </p>
+        <TrustStrip
+          compact
+          items={[
+            { label: 'Industry-standard sizing' },
+            { label: 'All units' },
+            { label: 'Live SVG preview' },
+            { label: 'No signup' },
+          ]}
+          class="calc-trust"
+        />
+      </div>
+    </div>
+    <FavoriteButton slug="curtain-size-calculator" label="Favorite this calculator" />
+  </header>
+
+  <!-- ── Dashboard Grid ─────────────────────────────────────────── -->
+  <div class="calc-dashboard">
+
+    <!-- LEFT PANEL — Inputs ──────────────────────────────────── -->
+    <div class="calc-panel calc-panel-inputs">
+
+      <!-- Section: Window Dimensions -->
+      <div class="panel-header">
+        <span class="panel-label">Window dimensions</span>
+        <span class="panel-hint">Frame size, not glass area</span>
+      </div>
+
+      <div class="unit-row">
+        <span class="unit-row-label">Unit</span>
+        <UnitSelector selected="in" id="unit-selector" name="unit" />
+      </div>
+
+      <InputCard label="Window Width" inputId="input-width" hint="e.g. 48 or 48 1/2" required>
+        <input
+          type="text"
+          id="input-width"
+          name="width"
+          class="input"
+          placeholder="48"
+          inputmode="decimal"
+          autocomplete="off"
+          aria-describedby="input-width-hint"
+        />
+      </InputCard>
+
+      <InputCard label="Window Height" inputId="input-height" hint="e.g. 60 or 60 1/4" required>
+        <input
+          type="text"
+          id="input-height"
+          name="height"
+          class="input"
+          placeholder="60"
+          inputmode="decimal"
+          autocomplete="off"
+          aria-describedby="input-height-hint"
+        />
+      </InputCard>
+
+      <!-- Error / warning banner -->
+      <WarningBanner />
+
+      <!-- Section: Mount & Style -->
+      <div class="panel-section-header">
+        <span class="panel-label">Mount &amp; style</span>
+      </div>
+
+      <InputCard label="Mount Type" inputId="mount-selector">
+        <div class="option-selector" id="mount-selector" role="group" aria-label="Mount type">
+          <button type="button" class="option-btn option-btn--wide" aria-pressed="false" data-value="inside">
+            Inside Mount
+          </button>
+          <button type="button" class="option-btn option-btn--wide" aria-pressed="true" data-value="outside">
+            Outside Mount
+          </button>
+        </div>
+      </InputCard>
+
+      <InputCard label="Curtain Style" inputId="input-style">
+        <select id="input-style" class="input-select" name="style">
+          <option value="standard">Standard / Back-Tab</option>
+          <option value="grommet" selected>Grommet</option>
+          <option value="rod-pocket">Rod Pocket</option>
+          <option value="pinch-pleat">Pinch Pleat</option>
+          <option value="eyelet">Eyelet</option>
+        </select>
+      </InputCard>
+
+      <InputCard label="Number of Panels" inputId="panels-selector">
+        <div class="option-selector" id="panels-selector" role="group" aria-label="Number of panels">
+          <button type="button" class="option-btn" aria-pressed="false" data-value="1">1</button>
+          <button type="button" class="option-btn" aria-pressed="true"  data-value="2">2</button>
+          <button type="button" class="option-btn" aria-pressed="false" data-value="3">3</button>
+          <button type="button" class="option-btn" aria-pressed="false" data-value="4">4</button>
+        </div>
+      </InputCard>
+
+      <!-- Section: Fullness -->
+      <div class="panel-section-header">
+        <span class="panel-label">Desired fullness</span>
+      </div>
+
+      <InputCard label="Fullness Ratio" inputId="fullness-selector">
+        <div class="option-selector" id="fullness-selector" role="group" aria-label="Desired fullness">
+          <button type="button" class="option-btn" aria-pressed="false" data-value="1.5">1.5×</button>
+          <button type="button" class="option-btn" aria-pressed="true"  data-value="2">2×</button>
+          <button type="button" class="option-btn" aria-pressed="false" data-value="2.5">2.5×</button>
+          <button type="button" class="option-btn" aria-pressed="false" data-value="3">3×</button>
+        </div>
+      </InputCard>
+
+      <!-- Section: Positioning -->
+      <div class="panel-section-header">
+        <span class="panel-label">Rod &amp; floor position</span>
+      </div>
+
+      <InputCard label="Rod Position" inputId="rod-pos-selector">
+        <div class="option-selector" id="rod-pos-selector" role="group" aria-label="Rod position">
+          <button type="button" class="option-btn option-btn--wide" aria-pressed="true"  data-value="above-window">Above Window</button>
+          <button type="button" class="option-btn option-btn--wide" aria-pressed="false" data-value="at-trim">At Trim</button>
+          <button type="button" class="option-btn option-btn--wide" aria-pressed="false" data-value="custom">Custom</button>
+        </div>
+      </InputCard>
+
+      <!-- Custom rod offset (shown only when rodPosition === 'custom') -->
+      <div id="rod-custom-row" hidden>
+        <InputCard label="Custom Offset Above Window" inputId="input-rod-offset" hint="e.g. 6 (inches above window top)">
+          <input
+            type="text"
+            id="input-rod-offset"
+            name="rod-offset"
+            class="input"
+            placeholder="5"
+            inputmode="decimal"
+            autocomplete="off"
+            aria-describedby="input-rod-offset-hint"
+          />
+        </InputCard>
+      </div>
+
+      <InputCard label="Floor Position" inputId="floor-pos-selector">
+        <div class="option-selector" id="floor-pos-selector" role="group" aria-label="Floor position">
+          <button type="button" class="option-btn" aria-pressed="true"  data-value="sill">Sill</button>
+          <button type="button" class="option-btn" aria-pressed="false" data-value="below-sill">Below Sill</button>
+          <button type="button" class="option-btn" aria-pressed="false" data-value="floor">Floor</button>
+          <button type="button" class="option-btn" aria-pressed="false" data-value="puddle">Puddle</button>
+        </div>
+      </InputCard>
+
+      <!-- Rod to floor distance (shown when floorPosition === 'floor' | 'puddle') -->
+      <div id="floor-dist-row" hidden>
+        <InputCard label="Rod to Floor Distance" inputId="input-rod-floor" hint="Measure from rod center to floor">
+          <input
+            type="text"
+            id="input-rod-floor"
+            name="rod-floor"
+            class="input"
+            placeholder="84"
+            inputmode="decimal"
+            autocomplete="off"
+            aria-describedby="input-rod-floor-hint"
+          />
+        </InputCard>
+      </div>
+
+      <!-- Calculate button -->
+      <button
+        type="button"
+        id="btn-calculate"
+        class="btn-primary"
+        aria-label="Calculate curtain size"
+      >
+        Calculate
+      </button>
+
+    </div>
+
+    <!-- RIGHT PANEL — Results ────────────────────────────────── -->
+    <div class="calc-panel calc-panel-results" aria-label="Calculation results" aria-live="polite">
+
+      <div class="panel-header">
+        <span class="panel-label">Results</span>
+        <span class="panel-hint" id="results-unit-display">—</span>
+      </div>
+
+      <EmptyState
+        title="Enter window dimensions"
+        sub="Fill in Width and Height to see your curtain size recommendation"
+        icon="ruler"
+      />
+
+      <div id="results-grid" hidden class="results-grid-container">
+
+        <!-- Primary: Recommended Width (min/ideal/max) -->
+        <div class="width-range-card result-card result-card--highlight">
+          <div class="width-range-label">Recommended Curtain Width</div>
+          <div class="width-range-row">
+            <div class="width-range-item">
+              <span class="width-range-val" id="result-min-width">—</span>
+              <span class="width-range-sub">Minimum (1.5×)</span>
+            </div>
+            <div class="width-range-item width-range-item--ideal">
+              <span class="width-range-val width-range-val--ideal" id="result-ideal-width">—</span>
+              <span class="width-range-sub">Ideal</span>
+            </div>
+            <div class="width-range-item">
+              <span class="width-range-val" id="result-max-width">—</span>
+              <span class="width-range-sub">Max (3×)</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Secondary row: Panel Width | Drop -->
+        <div class="results-secondary-row">
+          <ResultCard
+            id="result-panel-width"
+            label="Panel Width"
+            value="—"
+            unit=""
+            sublabel="Per panel (finished)"
+          />
+          <ResultCard
+            id="result-drop"
+            label="Curtain Drop"
+            value="—"
+            unit=""
+            sublabel="Rod to hem"
+          />
+        </div>
+
+        <!-- Secondary row: Rod Length | Fullness -->
+        <div class="results-secondary-row">
+          <ResultCard
+            id="result-rod-length"
+            label="Rod Length"
+            value="—"
+            unit=""
+            sublabel="Including side extension"
+          />
+          <ResultCard
+            id="result-fullness"
+            label="Fullness Ratio"
+            value="—"
+            unit="×"
+            sublabel="Width ÷ rod length"
+          />
+        </div>
+
+        <!-- Fabric section -->
+        <div class="fabric-section">
+          <div class="fabric-section-label">Fabric needed per panel</div>
+          <div class="fabric-row">
+            <div class="fabric-item">
+              <span class="fabric-val" id="result-fabric-width">—</span>
+              <span class="fabric-key">Width (with hems)</span>
+            </div>
+            <span class="fabric-sep">×</span>
+            <div class="fabric-item">
+              <span class="fabric-val" id="result-fabric-drop">—</span>
+              <span class="fabric-key">Drop (with hems)</span>
+            </div>
+          </div>
+          <div class="fabric-total">
+            Total fabric: <strong id="result-fabric-total">—</strong> wide for all panels
+          </div>
+        </div>
+
+        <!-- Header height -->
+        <ResultCard
+          id="result-header"
+          label="Recommended Header Height"
+          value="—"
+          unit=""
+          sublabel="For selected curtain style"
+        />
+
+        <!-- Live SVG Illustration -->
+        <div class="svg-card">
+          <div class="svg-card-label">Live illustration</div>
+          <svg
+            id="curtain-svg"
+            viewBox="0 0 280 310"
+            xmlns="http://www.w3.org/2000/svg"
+            aria-label="Curtain layout illustration"
+            role="img"
+          >
+            <!-- Background wall -->
+            <rect id="svg-wall" x="0" y="0" width="280" height="310" class="svg-wall" />
+
+            <!-- Floor line -->
+            <line id="svg-floor" x1="0" y1="290" x2="280" y2="290" class="svg-floor" />
+
+            <!-- Window frame shadow -->
+            <rect id="svg-win-shadow" x="72" y="52" width="138" height="128" rx="1" class="svg-win-shadow" />
+
+            <!-- Window frame -->
+            <rect id="svg-win-frame" x="70" y="50" width="138" height="128" rx="2" class="svg-win-frame" />
+
+            <!-- Window glass -->
+            <rect id="svg-win-glass" x="74" y="54" width="130" height="120" rx="1" class="svg-win-glass" />
+
+            <!-- Window pane lines (decorative) -->
+            <line id="svg-pane-h" x1="74" y1="114" x2="204" y2="114" class="svg-pane" />
+            <line id="svg-pane-v" x1="139" y1="54" x2="139" y2="174" class="svg-pane" />
+
+            <!-- Left side extension indicator (for outside mount) -->
+            <line id="svg-ext-left" x1="40" y1="38" x2="70" y2="38" class="svg-ext-line" />
+            <!-- Right side extension indicator -->
+            <line id="svg-ext-right" x1="208" y1="38" x2="238" y2="38" class="svg-ext-line" />
+
+            <!-- Curtain rod -->
+            <line id="svg-rod" x1="40" y1="40" x2="238" y2="40" class="svg-rod" />
+            <!-- Rod end caps -->
+            <circle id="svg-rod-left"  cx="40"  cy="40" r="3.5" class="svg-rod-cap" />
+            <circle id="svg-rod-right" cx="238" cy="40" r="3.5" class="svg-rod-cap" />
+
+            <!-- Curtain bracket lines (small vertical ticks on rod) -->
+            <line x1="75"  y1="36" x2="75"  y2="44" class="svg-bracket" />
+            <line x1="203" y1="36" x2="203" y2="44" class="svg-bracket" />
+
+            <!-- Left curtain panel -->
+            <rect id="svg-panel-left" x="40" y="40" width="28" height="198" rx="2" class="svg-curtain" />
+            <!-- Left panel fold lines (decorative) -->
+            <line id="svg-fold-l1" x1="47" y1="40" x2="44" y2="238" class="svg-fold" />
+            <line id="svg-fold-l2" x1="54" y1="40" x2="51" y2="238" class="svg-fold" />
+            <line id="svg-fold-l3" x1="61" y1="40" x2="58" y2="238" class="svg-fold" />
+
+            <!-- Right curtain panel -->
+            <rect id="svg-panel-right" x="210" y="40" width="28" height="198" rx="2" class="svg-curtain" />
+            <!-- Right panel fold lines -->
+            <line id="svg-fold-r1" x1="231" y1="40" x2="234" y2="238" class="svg-fold" />
+            <line id="svg-fold-r2" x1="224" y1="40" x2="227" y2="238" class="svg-fold" />
+            <line id="svg-fold-r3" x1="217" y1="40" x2="220" y2="238" class="svg-fold" />
+
+            <!-- Drop measurement indicator -->
+            <line id="svg-drop-line" x1="250" y1="40" x2="250" y2="238" class="svg-measure-line" />
+            <polygon id="svg-drop-arrow-top" points="250,40 247,47 253,47" class="svg-measure-arrow" />
+            <polygon id="svg-drop-arrow-bot" points="250,238 247,231 253,231" class="svg-measure-arrow" />
+
+            <!-- Drop label -->
+            <text id="svg-drop-label" x="258" y="140" class="svg-measure-text" writing-mode="tb">Drop</text>
+
+            <!-- Rod length indicator -->
+            <line id="svg-rod-measure" x1="40" y1="20" x2="238" y2="20" class="svg-measure-line" />
+            <polygon id="svg-rod-arr-l" points="40,20 47,17 47,23" class="svg-measure-arrow" />
+            <polygon id="svg-rod-arr-r" points="238,20 231,17 231,23" class="svg-measure-arrow" />
+            <text id="svg-rod-label" x="139" y="16" class="svg-measure-text svg-measure-text--center">Rod length</text>
+
+            <!-- Sill indicator line -->
+            <line id="svg-sill-line" x1="70" y1="178" x2="208" y2="178" class="svg-sill-line" />
+          </svg>
+        </div>
+
+      </div><!-- /#results-grid -->
+
+    </div>
+
+  </div><!-- /.calc-dashboard -->
+
+  <!-- ── Share + History ────────────────────────────────────────── -->
+  <div class="calc-extras">
+    <ShareExportBar />
+    <HistoryPanel slug="curtain-size-calculator" />
+  </div>
+
+  <!-- ── Recommendations ───────────────────────────────────────── -->
+  <section id="rec-section" hidden aria-label="Recommendations">
+
+    <div class="rec-section-header">
+      <h2 class="rec-section-title">Recommendations</h2>
+    </div>
+
+    <!-- Warnings shown inline at top of rec section -->
+    <div id="rec-warnings" class="rec-warnings-list"></div>
+
+    <!-- Dynamic recommendation cards -->
+    <div id="rec-cards" class="rec-cards-grid"></div>
+
+  </section>
+
+  <!-- ── Related Tools ─────────────────────────────────────────── -->
+  <RelatedTools
+    heading="Related calculators"
+    links={relatedTools.map((t) => ({
+      title:       t.title,
+      description: t.description,
+      href:        t.href,
+    }))}
+  />
+
+  <!-- ── FAQ ───────────────────────────────────────────────────── -->
+  <FAQSection faqs={faqs} />
+
+</ToolLayout>
+
+<script>
+  import {
+    normalizeInput,
+    toMm,
+    fromMm,
+    fmtDim,
+    isMetricUnit,
+  } from '@/engine/units.js';
+
+  import {
+    calculateCurtain,
+    validateCurtainDimension,
+    DEFAULT_ROD_TO_FLOOR_MM,
+    ROD_ABOVE_WINDOW_MM,
+    type MountType,
+    type CurtainStyle,
+    type FloorPosition,
+    type RodPosition,
+  } from '@/engine/curtain.js';
+
+  import type { MeasurementUnit } from '@/types/calculator.js';
+
+  import { readUrlState, pushUrlState, buildShareUrl } from '@/lib/url-state.js';
+  import { buildSummary } from '@/lib/share.js';
+  import { buildExportPayload } from '@/lib/export.js';
+  import { recordVisit } from '@/lib/recent.js';
+  import { track } from '@/lib/analytics.js';
+
+  // ── Track visit ───────────────────────────────────────────────────────────
+  recordVisit('curtain-size-calculator');
+
+  // ── DOM references ────────────────────────────────────────────────────────
+  const widthInput    = document.getElementById('input-width')       as HTMLInputElement | null;
+  const heightInput   = document.getElementById('input-height')      as HTMLInputElement | null;
+  const styleSelect   = document.getElementById('input-style')       as HTMLSelectElement | null;
+  const rodOffsetInput = document.getElementById('input-rod-offset') as HTMLInputElement | null;
+  const rodFloorInput  = document.getElementById('input-rod-floor')  as HTMLInputElement | null;
+
+  const rodCustomRow  = document.getElementById('rod-custom-row');
+  const floorDistRow  = document.getElementById('floor-dist-row');
+
+  const resultsEmpty  = document.querySelector<HTMLElement>('.empty-state');
+  const resultsGrid   = document.getElementById('results-grid');
+  const recSection    = document.getElementById('rec-section');
+  const recCards      = document.getElementById('rec-cards');
+  const recWarnings   = document.getElementById('rec-warnings');
+
+  const errorEl     = document.querySelector<HTMLElement>('[data-wm-warning]');
+  const unitDisplay = document.getElementById('results-unit-display');
+
+  // ── State ─────────────────────────────────────────────────────────────────
+  let currentUnit: MeasurementUnit = 'in';
+  let currentMount: MountType      = 'outside';
+  let currentFloorPos: FloorPosition = 'sill';
+  let currentRodPos: RodPosition   = 'above-window';
+  let currentFullness              = 2;
+  let currentPanels: 1 | 2 | 3 | 4 = 2;
+
+  // ── Helpers ────────────────────────────────────────────────────────────────
+
+  function setEl(id: string, text: string) {
+    const el = document.getElementById(id);
+    if (el) el.textContent = text;
+  }
+
+  function setResult(card: Element | null, value: string, unit: string) {
+    if (!card) return;
+    const valEl  = card.querySelector('[data-result-value]');
+    const unitEl = card.querySelector('[data-result-unit]');
+    if (valEl)  valEl.textContent  = value;
+    if (unitEl) unitEl.textContent = unit;
+  }
+
+  function showError(msg: string, field?: string) {
+    if (!errorEl) return;
+    errorEl.textContent = msg;
+    errorEl.removeAttribute('hidden');
+    errorEl.setAttribute('data-level', 'error');
+    if (field) {
+      document.getElementById(`input-${field}`)?.setAttribute('aria-invalid', 'true');
+    }
+  }
+
+  function showWarning(msg: string) {
+    if (!errorEl) return;
+    errorEl.textContent = msg;
+    errorEl.removeAttribute('hidden');
+    errorEl.setAttribute('data-level', 'warning');
+  }
+
+  function clearError() {
+    if (!errorEl) return;
+    errorEl.textContent = '';
+    errorEl.setAttribute('hidden', '');
+    errorEl.removeAttribute('data-level');
+    widthInput?.removeAttribute('aria-invalid');
+    heightInput?.removeAttribute('aria-invalid');
+  }
+
+  function fmtLen(mm: number, unit: MeasurementUnit): string {
+    const val = fromMm(mm, unit);
+    if (unit === 'mm') return `${Math.round(val)} mm`;
+    if (unit === 'cm') return `${val.toFixed(1)} cm`;
+    if (unit === 'm')  return `${val.toFixed(2)} m`;
+    if (unit === 'ft') return `${val.toFixed(2)} ft`;
+    // inches — show as fraction-friendly decimal
+    return `${val.toFixed(2)}"`;
+  }
+
+  // ── Option selector wiring ────────────────────────────────────────────────
+
+  function wireOptionGroup(containerId: string, onChange: (val: string) => void) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+    container.querySelectorAll<HTMLButtonElement>('.option-btn').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        container.querySelectorAll<HTMLButtonElement>('.option-btn').forEach((b) => {
+          b.setAttribute('aria-pressed', 'false');
+        });
+        btn.setAttribute('aria-pressed', 'true');
+        onChange(btn.dataset.value ?? '');
+      });
+    });
+  }
+
+  wireOptionGroup('mount-selector', (val) => {
+    currentMount = val as MountType;
+    calculate();
+  });
+
+  wireOptionGroup('fullness-selector', (val) => {
+    currentFullness = parseFloat(val);
+    calculate();
+  });
+
+  wireOptionGroup('panels-selector', (val) => {
+    currentPanels = parseInt(val, 10) as 1 | 2 | 3 | 4;
+    calculate();
+  });
+
+  wireOptionGroup('rod-pos-selector', (val) => {
+    currentRodPos = val as RodPosition;
+    if (rodCustomRow) rodCustomRow.hidden = val !== 'custom';
+    calculate();
+  });
+
+  wireOptionGroup('floor-pos-selector', (val) => {
+    currentFloorPos = val as FloorPosition;
+    const needsFloorDist = val === 'floor' || val === 'puddle';
+    if (floorDistRow) floorDistRow.hidden = !needsFloorDist;
+    calculate();
+  });
+
+  // ── Unit selector ─────────────────────────────────────────────────────────
+  document.querySelectorAll<HTMLButtonElement>('.unit-btn').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const newUnit = btn.dataset.unit as MeasurementUnit;
+      if (newUnit === currentUnit) return;
+
+      const oldUnit = currentUnit;
+      currentUnit = newUnit;
+
+      // Update input placeholder for rod-floor distance
+      if (rodFloorInput) {
+        if (newUnit === 'in' || newUnit === 'ft') {
+          rodFloorInput.placeholder = newUnit === 'in' ? '84' : '7';
+        } else {
+          const mmVal = DEFAULT_ROD_TO_FLOOR_MM;
+          rodFloorInput.placeholder = fmtLen(mmVal, newUnit).replace(/[^\d.]/g, '');
+        }
+      }
+
+      track({ type: 'unit_changed', properties: { slug: 'curtain-size-calculator', from: oldUnit, to: newUnit } });
+      calculate();
+    });
+  });
+
+  // ── Input event listeners ─────────────────────────────────────────────────
+  [widthInput, heightInput, rodOffsetInput, rodFloorInput].forEach((el) => {
+    el?.addEventListener('input', () => calculate());
+    el?.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') calculate();
+    });
+  });
+
+  styleSelect?.addEventListener('change', () => calculate());
+
+  document.getElementById('btn-calculate')?.addEventListener('click', () => calculate());
+
+  // ── Keyboard UX ───────────────────────────────────────────────────────────
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && errorEl?.textContent) clearError();
+  });
+
+  // ── URL state restore ─────────────────────────────────────────────────────
+  {
+    const saved = readUrlState();
+    const validUnits: MeasurementUnit[] = ['mm', 'cm', 'm', 'in', 'ft'];
+    const savedUnit = saved.unit as MeasurementUnit;
+    if (savedUnit && validUnits.includes(savedUnit)) {
+      currentUnit = savedUnit;
+      document.querySelectorAll<HTMLButtonElement>('.unit-btn').forEach((b) => {
+        b.setAttribute('aria-pressed', b.dataset.unit === savedUnit ? 'true' : 'false');
+      });
+    }
+
+    if (saved.width  && widthInput)  widthInput.value  = saved.width;
+    if (saved.height && heightInput) heightInput.value = saved.height;
+
+    if (saved.mount) {
+      currentMount = saved.mount as MountType;
+      document.querySelectorAll<HTMLButtonElement>('#mount-selector .option-btn').forEach((b) => {
+        b.setAttribute('aria-pressed', b.dataset.value === saved.mount ? 'true' : 'false');
+      });
+    }
+
+    if (saved.style && styleSelect) styleSelect.value = saved.style;
+
+    if (saved.fullness) {
+      currentFullness = parseFloat(saved.fullness);
+      document.querySelectorAll<HTMLButtonElement>('#fullness-selector .option-btn').forEach((b) => {
+        b.setAttribute('aria-pressed', b.dataset.value === saved.fullness ? 'true' : 'false');
+      });
+    }
+
+    if (saved.panels) {
+      currentPanels = parseInt(saved.panels, 10) as 1 | 2 | 3 | 4;
+      document.querySelectorAll<HTMLButtonElement>('#panels-selector .option-btn').forEach((b) => {
+        b.setAttribute('aria-pressed', b.dataset.value === saved.panels ? 'true' : 'false');
+      });
+    }
+
+    if (saved.rodPos) {
+      currentRodPos = saved.rodPos as RodPosition;
+      document.querySelectorAll<HTMLButtonElement>('#rod-pos-selector .option-btn').forEach((b) => {
+        b.setAttribute('aria-pressed', b.dataset.value === saved.rodPos ? 'true' : 'false');
+      });
+      if (rodCustomRow) rodCustomRow.hidden = saved.rodPos !== 'custom';
+      if (saved.rodOffset && rodOffsetInput) rodOffsetInput.value = saved.rodOffset;
+    }
+
+    if (saved.floorPos) {
+      currentFloorPos = saved.floorPos as FloorPosition;
+      document.querySelectorAll<HTMLButtonElement>('#floor-pos-selector .option-btn').forEach((b) => {
+        b.setAttribute('aria-pressed', b.dataset.value === saved.floorPos ? 'true' : 'false');
+      });
+      const needsFloorDist = saved.floorPos === 'floor' || saved.floorPos === 'puddle';
+      if (floorDistRow) floorDistRow.hidden = !needsFloorDist;
+      if (saved.rodFloor && rodFloorInput) rodFloorInput.value = saved.rodFloor;
+    }
+  }
+
+  // ── History restore listener ──────────────────────────────────────────────
+  document.addEventListener('wm:history-restore', (e) => {
+    const detail = (e as CustomEvent<{ inputs: Record<string, string>; entryId: string }>).detail;
+    const { inputs } = detail;
+
+    const validUnits: MeasurementUnit[] = ['mm', 'cm', 'm', 'in', 'ft'];
+    const savedUnit = inputs.unit as MeasurementUnit;
+    if (savedUnit && validUnits.includes(savedUnit) && savedUnit !== currentUnit) {
+      currentUnit = savedUnit;
+      document.querySelectorAll<HTMLButtonElement>('.unit-btn').forEach((b) => {
+        b.setAttribute('aria-pressed', b.dataset.unit === savedUnit ? 'true' : 'false');
+      });
+    }
+
+    if (inputs.width  && widthInput)  widthInput.value  = inputs.width;
+    if (inputs.height && heightInput) heightInput.value = inputs.height;
+
+    if (inputs.mount) {
+      currentMount = inputs.mount as MountType;
+      document.querySelectorAll<HTMLButtonElement>('#mount-selector .option-btn').forEach((b) => {
+        b.setAttribute('aria-pressed', b.dataset.value === inputs.mount ? 'true' : 'false');
+      });
+    }
+    if (inputs.style && styleSelect) styleSelect.value = inputs.style;
+    if (inputs.fullness) {
+      currentFullness = parseFloat(inputs.fullness);
+      document.querySelectorAll<HTMLButtonElement>('#fullness-selector .option-btn').forEach((b) => {
+        b.setAttribute('aria-pressed', b.dataset.value === inputs.fullness ? 'true' : 'false');
+      });
+    }
+    if (inputs.panels) {
+      currentPanels = parseInt(inputs.panels, 10) as 1 | 2 | 3 | 4;
+      document.querySelectorAll<HTMLButtonElement>('#panels-selector .option-btn').forEach((b) => {
+        b.setAttribute('aria-pressed', b.dataset.value === inputs.panels ? 'true' : 'false');
+      });
+    }
+    if (inputs.rodPos) {
+      currentRodPos = inputs.rodPos as RodPosition;
+      document.querySelectorAll<HTMLButtonElement>('#rod-pos-selector .option-btn').forEach((b) => {
+        b.setAttribute('aria-pressed', b.dataset.value === inputs.rodPos ? 'true' : 'false');
+      });
+      if (rodCustomRow) rodCustomRow.hidden = inputs.rodPos !== 'custom';
+      if (inputs.rodOffset && rodOffsetInput) rodOffsetInput.value = inputs.rodOffset;
+    }
+    if (inputs.floorPos) {
+      currentFloorPos = inputs.floorPos as FloorPosition;
+      document.querySelectorAll<HTMLButtonElement>('#floor-pos-selector .option-btn').forEach((b) => {
+        b.setAttribute('aria-pressed', b.dataset.value === inputs.floorPos ? 'true' : 'false');
+      });
+      const needsFloorDist = inputs.floorPos === 'floor' || inputs.floorPos === 'puddle';
+      if (floorDistRow) floorDistRow.hidden = !needsFloorDist;
+      if (inputs.rodFloor && rodFloorInput) rodFloorInput.value = inputs.rodFloor;
+    }
+
+    calculate();
+    track({ type: 'history_restored', properties: { slug: 'curtain-size-calculator', entryId: detail.entryId } });
+  });
+
+  // ── SVG updater ───────────────────────────────────────────────────────────
+
+  function updateSVG(params: {
+    windowWidthMm: number;
+    windowHeightMm: number;
+    dropMm: number;
+    rodLengthMm: number;
+    sideExtensionMm: number;
+    rodAboveWindowMm: number;
+    isOutsideMount: boolean;
+  }) {
+    const SVG_W = 280, SVG_H = 310;
+    const PAD_L = 20, PAD_R = 55, PAD_T = 30, PAD_B = 35;
+    const availW = SVG_W - PAD_L - PAD_R; // 205
+    const availH = SVG_H - PAD_T - PAD_B; // 245
+
+    const { windowWidthMm, windowHeightMm, dropMm, rodLengthMm, sideExtensionMm, rodAboveWindowMm, isOutsideMount } = params;
+
+    // Scene: rod length wide, drop tall
+    const sceneW = rodLengthMm;
+    const sceneH = Math.max(dropMm, rodAboveWindowMm + windowHeightMm + 20);
+
+    const scaleX = availW / sceneW;
+    const scaleY = availH / sceneH;
+    const scale  = Math.min(scaleX, scaleY);
+
+    // Center in available area
+    const sceneWidthPx  = sceneW * scale;
+    const sceneHeightPx = sceneH * scale;
+    const ox = PAD_L + (availW - sceneWidthPx) / 2;
+    const oy = PAD_T + (availH - sceneHeightPx) / 2;
+
+    // Key Y coordinates
+    const rodY       = oy;
+    const winTopY    = oy + rodAboveWindowMm * scale;
+    const winBotY    = winTopY + windowHeightMm * scale;
+    const dropBotY   = oy + dropMm * scale;
+
+    // Key X coordinates
+    const rodLeftX   = ox;
+    const rodRightX  = ox + sceneWidthPx;
+    const winLeftX   = ox + sideExtensionMm * scale;
+    const winRightX  = winLeftX + windowWidthMm * scale;
+
+    // Panel visual width: side extension width, min 15px
+    const panelW = Math.max(15, sideExtensionMm * scale);
+
+    const svg = document.getElementById('curtain-svg');
+    if (!svg) return;
+
+    function setAttr(id: string, attrs: Record<string, string | number>) {
+      const el = svg!.querySelector(`#${id}`);
+      if (!el) return;
+      Object.entries(attrs).forEach(([k, v]) => el.setAttribute(k, String(v)));
+    }
+
+    // Floor line
+    setAttr('svg-floor', { x1: 0, y1: Math.min(dropBotY + 10, SVG_H - 5), x2: SVG_W, y2: Math.min(dropBotY + 10, SVG_H - 5) });
+
+    // Window frame & glass
+    const winW = winRightX - winLeftX;
+    const winH = winBotY - winTopY;
+    setAttr('svg-win-shadow', { x: winLeftX + 2, y: winTopY + 2, width: winW, height: winH });
+    setAttr('svg-win-frame',  { x: winLeftX, y: winTopY, width: winW, height: winH });
+    const glassInset = 4;
+    setAttr('svg-win-glass', { x: winLeftX + glassInset, y: winTopY + glassInset, width: Math.max(0, winW - glassInset * 2), height: Math.max(0, winH - glassInset * 2) });
+
+    // Pane lines
+    const midX = winLeftX + winW / 2;
+    const midY = winTopY + winH / 2;
+    setAttr('svg-pane-h', { x1: winLeftX + glassInset, y1: midY, x2: winRightX - glassInset, y2: midY });
+    setAttr('svg-pane-v', { x1: midX, y1: winTopY + glassInset, x2: midX, y2: winBotY - glassInset });
+
+    // Sill indicator
+    setAttr('svg-sill-line', { x1: winLeftX - 2, y1: winBotY, x2: winRightX + 2, y2: winBotY });
+
+    // Rod
+    setAttr('svg-rod', { x1: rodLeftX, y1: rodY, x2: rodRightX, y2: rodY });
+    setAttr('svg-rod-left',  { cx: rodLeftX,  cy: rodY });
+    setAttr('svg-rod-right', { cx: rodRightX, cy: rodY });
+
+    // Bracket tick marks
+    const bL = winLeftX - 4;
+    const bR = winRightX + 4;
+    svg.querySelector('#svg-rod')?.parentElement?.querySelectorAll('.svg-bracket').forEach((b, i) => {
+      const bx = i === 0 ? bL : bR;
+      b.setAttribute('x1', String(bx));
+      b.setAttribute('x2', String(bx));
+      b.setAttribute('y1', String(rodY - 4));
+      b.setAttribute('y2', String(rodY + 4));
+    });
+
+    // Side extension indicators
+    const extVisible = isOutsideMount && sideExtensionMm > 0;
+    const extLeftEl  = document.getElementById('svg-ext-left');
+    const extRightEl = document.getElementById('svg-ext-right');
+    if (extLeftEl)  { extLeftEl.setAttribute('x1', String(rodLeftX));  extLeftEl.setAttribute('x2', String(winLeftX));  extLeftEl.setAttribute('y1', String(rodY - 5)); extLeftEl.setAttribute('y2', String(rodY - 5)); extLeftEl.setAttribute('visibility', extVisible ? 'visible' : 'hidden'); }
+    if (extRightEl) { extRightEl.setAttribute('x1', String(winRightX)); extRightEl.setAttribute('x2', String(rodRightX)); extRightEl.setAttribute('y1', String(rodY - 5)); extRightEl.setAttribute('y2', String(rodY - 5)); extRightEl.setAttribute('visibility', extVisible ? 'visible' : 'hidden'); }
+
+    // Left curtain panel
+    setAttr('svg-panel-left',  { x: rodLeftX, y: rodY, width: panelW, height: dropBotY - rodY });
+    // Left fold lines
+    const foldOffsets = [0.25, 0.5, 0.75];
+    const foldEls = ['svg-fold-l1', 'svg-fold-l2', 'svg-fold-l3'];
+    foldEls.forEach((id, i) => {
+      const fx = rodLeftX + panelW * foldOffsets[i];
+      setAttr(id, { x1: fx, y1: rodY, x2: fx - 3, y2: dropBotY });
+    });
+
+    // Right curtain panel
+    setAttr('svg-panel-right', { x: rodRightX - panelW, y: rodY, width: panelW, height: dropBotY - rodY });
+    // Right fold lines
+    const foldRightEls = ['svg-fold-r1', 'svg-fold-r2', 'svg-fold-r3'];
+    foldRightEls.forEach((id, i) => {
+      const fx = rodRightX - panelW * foldOffsets[i];
+      setAttr(id, { x1: fx, y1: rodY, x2: fx + 3, y2: dropBotY });
+    });
+
+    // Drop measurement indicator
+    const measX = Math.min(rodRightX + 12, SVG_W - 12);
+    setAttr('svg-drop-line', { x1: measX, y1: rodY, x2: measX, y2: dropBotY });
+    setAttr('svg-drop-arrow-top', { points: `${measX},${rodY} ${measX - 3},${rodY + 7} ${measX + 3},${rodY + 7}` });
+    setAttr('svg-drop-arrow-bot', { points: `${measX},${dropBotY} ${measX - 3},${dropBotY - 7} ${measX + 3},${dropBotY - 7}` });
+    const dropLabelEl = document.getElementById('svg-drop-label');
+    if (dropLabelEl) {
+      dropLabelEl.setAttribute('x', String(measX + 10));
+      dropLabelEl.setAttribute('y', String((rodY + dropBotY) / 2));
+    }
+
+    // Rod length indicator
+    setAttr('svg-rod-measure', { x1: rodLeftX, y1: rodY - 12, x2: rodRightX, y2: rodY - 12 });
+    setAttr('svg-rod-arr-l', { points: `${rodLeftX},${rodY - 12} ${rodLeftX + 7},${rodY - 15} ${rodLeftX + 7},${rodY - 9}` });
+    setAttr('svg-rod-arr-r', { points: `${rodRightX},${rodY - 12} ${rodRightX - 7},${rodY - 15} ${rodRightX - 7},${rodY - 9}` });
+    const rodLabelEl = document.getElementById('svg-rod-label');
+    if (rodLabelEl) {
+      rodLabelEl.setAttribute('x', String((rodLeftX + rodRightX) / 2));
+      rodLabelEl.setAttribute('y', String(rodY - 16));
+    }
+  }
+
+  // ── Main calculation ──────────────────────────────────────────────────────
+
+  function calculate() {
+    clearError();
+
+    const rawWidth  = widthInput?.value.trim()  ?? '';
+    const rawHeight = heightInput?.value.trim() ?? '';
+
+    // Empty required fields — show neutral empty state
+    if (!rawWidth || !rawHeight) {
+      if (resultsEmpty) resultsEmpty.hidden = false;
+      if (resultsGrid)  resultsGrid.hidden  = true;
+      if (recSection)   recSection.hidden   = true;
+      return;
+    }
+
+    // ── Parse width ──
+    const parsedWidth = normalizeInput(rawWidth, currentUnit);
+    if (parsedWidth === null || parsedWidth <= 0) {
+      showError(`"${rawWidth}" is not a valid width. Enter a number (48), decimal (48.5), or fraction (48 1/2).`, 'width');
+      if (resultsEmpty) resultsEmpty.hidden = false;
+      if (resultsGrid)  resultsGrid.hidden  = true;
+      return;
+    }
+
+    // ── Parse height ──
+    const parsedHeight = normalizeInput(rawHeight, currentUnit);
+    if (parsedHeight === null || parsedHeight <= 0) {
+      showError(`"${rawHeight}" is not a valid height. Enter a number (60), decimal (60.5), or fraction (60 1/4).`, 'height');
+      if (resultsEmpty) resultsEmpty.hidden = false;
+      if (resultsGrid)  resultsGrid.hidden  = true;
+      return;
+    }
+
+    // ── Convert to mm ──
+    const widthMm  = toMm(parsedWidth,  currentUnit);
+    const heightMm = toMm(parsedHeight, currentUnit);
+
+    // ── Validate dimensions ──
+    const widthVal  = validateCurtainDimension(widthMm,  'width');
+    const heightVal = validateCurtainDimension(heightMm, 'height');
+
+    if (!widthVal.valid && widthVal.level === 'error') {
+      showError(widthVal.message ?? 'Invalid window width.', 'width');
+      if (resultsEmpty) resultsEmpty.hidden = false;
+      if (resultsGrid)  resultsGrid.hidden  = true;
+      return;
+    }
+    if (!heightVal.valid && heightVal.level === 'error') {
+      showError(heightVal.message ?? 'Invalid window height.', 'height');
+      if (resultsEmpty) resultsEmpty.hidden = false;
+      if (resultsGrid)  resultsGrid.hidden  = true;
+      return;
+    }
+
+    // ── Parse optional: custom rod offset ──
+    let rodCustomOffsetMm = ROD_ABOVE_WINDOW_MM;
+    const rawRodOffset = rodOffsetInput?.value.trim() ?? '';
+    if (currentRodPos === 'custom' && rawRodOffset) {
+      const parsed = normalizeInput(rawRodOffset, currentUnit);
+      if (parsed !== null && parsed >= 0) {
+        rodCustomOffsetMm = toMm(parsed, currentUnit);
+      }
+    }
+
+    // ── Parse optional: rod to floor distance ──
+    let rodToFloorMm = DEFAULT_ROD_TO_FLOOR_MM;
+    const rawRodFloor = rodFloorInput?.value.trim() ?? '';
+    if ((currentFloorPos === 'floor' || currentFloorPos === 'puddle') && rawRodFloor) {
+      const parsed = normalizeInput(rawRodFloor, currentUnit);
+      if (parsed !== null && parsed > 0) {
+        rodToFloorMm = toMm(parsed, currentUnit);
+      }
+    }
+
+    // ── Get select value ──
+    const style = (styleSelect?.value ?? 'grommet') as CurtainStyle;
+
+    // ── Run calculation ──
+    const result = calculateCurtain({
+      windowWidthMm:    widthMm,
+      windowHeightMm:   heightMm,
+      mountType:        currentMount,
+      style,
+      fullness:         currentFullness,
+      floorPosition:    currentFloorPos,
+      rodPosition:      currentRodPos,
+      rodCustomOffsetMm,
+      rodToFloorMm,
+      panelCount:       currentPanels,
+    });
+
+    // ── Show non-blocking warnings ──
+    if (result.warnings.length > 0) {
+      const top = result.warnings[0];
+      showWarning(top.message);
+    }
+
+    // ── Unit display header ──
+    if (unitDisplay) {
+      unitDisplay.textContent = `${parsedWidth} × ${parsedHeight} ${currentUnit}`;
+    }
+
+    // ── Update width range card ──
+    setEl('result-min-width',   fmtLen(result.minWidthMm,   currentUnit));
+    setEl('result-ideal-width', fmtLen(result.idealWidthMm, currentUnit));
+    setEl('result-max-width',   fmtLen(result.maxWidthMm,   currentUnit));
+
+    // ── Update result cards ──
+    const panelCard = document.getElementById('result-panel-width');
+    setResult(panelCard, fmtLen(result.panelWidthMm, currentUnit), 'per panel');
+
+    const dropCard = document.getElementById('result-drop');
+    setResult(dropCard, fmtLen(result.dropMm, currentUnit), 'drop');
+
+    const rodCard = document.getElementById('result-rod-length');
+    setResult(rodCard, fmtLen(result.rodLengthMm, currentUnit), '');
+
+    const fullnessCard = document.getElementById('result-fullness');
+    setResult(fullnessCard, result.fullnessRatio.toFixed(1), '×');
+
+    const headerCard = document.getElementById('result-header');
+    setResult(headerCard, fmtLen(result.headerHeightMm, currentUnit), '');
+
+    // ── Fabric ──
+    setEl('result-fabric-width', fmtLen(result.fabricWidthPerPanelMm, currentUnit));
+    setEl('result-fabric-drop',  fmtLen(result.fabricDropMm,          currentUnit));
+    setEl('result-fabric-total', fmtLen(result.totalFabricWidthMm,    currentUnit));
+
+    // ── SVG illustration ──
+    updateSVG({
+      windowWidthMm:    widthMm,
+      windowHeightMm:   heightMm,
+      dropMm:           result.dropMm,
+      rodLengthMm:      result.rodLengthMm,
+      sideExtensionMm:  result.sideExtensionMm,
+      rodAboveWindowMm: result.rodAboveWindowMm,
+      isOutsideMount:   currentMount === 'outside',
+    });
+
+    // ── Recommendations section ──
+    if (recCards) {
+      recCards.innerHTML = '';
+      result.recommendations.forEach((rec) => {
+        const card = document.createElement('div');
+        card.className = 'dyn-rec-card';
+        card.innerHTML = `
+          <div class="dyn-rec-top">
+            <span class="dyn-rec-label">${rec.title}</span>
+          </div>
+          <p class="dyn-rec-body">${rec.body.replace(/\n/g, '<br>')}</p>
+          ${rec.tip ? `<p class="dyn-rec-tip">${rec.tip}</p>` : ''}
+        `;
+        recCards.appendChild(card);
+      });
+    }
+
+    // Warnings in rec section
+    if (recWarnings) {
+      recWarnings.innerHTML = '';
+      result.warnings.forEach((w) => {
+        const el = document.createElement('div');
+        el.className = 'warning-banner';
+        el.setAttribute('data-level', w.level);
+        el.textContent = w.message;
+        recWarnings.appendChild(el);
+      });
+    }
+
+    // ── Show results ──
+    if (resultsEmpty) resultsEmpty.hidden = true;
+    if (resultsGrid)  resultsGrid.hidden  = false;
+    if (recSection)   recSection.hidden   = false;
+
+    // ── Phase 5: URL state, history, share/export, analytics ─────────────────
+    const curtainInputs: Record<string, string> = {
+      width:    rawWidth,
+      height:   rawHeight,
+      unit:     currentUnit,
+      mount:    currentMount,
+      style,
+      fullness: String(currentFullness),
+      panels:   String(currentPanels),
+      rodPos:   currentRodPos,
+      floorPos: currentFloorPos,
+    };
+    if (currentRodPos === 'custom' && rawRodOffset) curtainInputs.rodOffset = rawRodOffset;
+    if ((currentFloorPos === 'floor' || currentFloorPos === 'puddle') && rawRodFloor) curtainInputs.rodFloor = rawRodFloor;
+
+    pushUrlState(curtainInputs);
+
+    const histLabel = `${rawWidth} × ${rawHeight} ${currentUnit} · ${currentMount} · ${fmtLen(result.dropMm, currentUnit)} drop`;
+    (window as any).wmHistoryPanel?.add(histLabel, curtainInputs);
+    (window as any).wmShareExportBar?.show();
+
+    (window as any).wmCurrentState = curtainInputs;
+    (window as any).wmBuildSummary = () => buildSummary(
+      'Curtain Size Calculator',
+      [
+        ['Window Width',         `${rawWidth} ${currentUnit}`],
+        ['Window Height',        `${rawHeight} ${currentUnit}`],
+        ['Mount Type',           currentMount === 'outside' ? 'Outside Mount' : 'Inside Mount'],
+        ['Curtain Style',        style],
+        ['Fullness',             `${currentFullness}×`],
+        ['Ideal Curtain Width',  fmtLen(result.idealWidthMm, currentUnit)],
+        ['Panel Width',          fmtLen(result.panelWidthMm, currentUnit)],
+        ['Curtain Drop',         fmtLen(result.dropMm, currentUnit)],
+        ['Rod Length',           fmtLen(result.rodLengthMm, currentUnit)],
+        ['Fabric (per panel)',    `${fmtLen(result.fabricWidthPerPanelMm, currentUnit)} × ${fmtLen(result.fabricDropMm, currentUnit)}`],
+      ],
+      buildShareUrl(curtainInputs),
+    );
+    (window as any).wmBuildExport = () => buildExportPayload(
+      'curtain-size-calculator',
+      curtainInputs,
+      {
+        idealWidthMm:           result.idealWidthMm,
+        minWidthMm:             result.minWidthMm,
+        maxWidthMm:             result.maxWidthMm,
+        panelWidthMm:           result.panelWidthMm,
+        dropMm:                 result.dropMm,
+        rodLengthMm:            result.rodLengthMm,
+        fabricWidthPerPanelMm:  result.fabricWidthPerPanelMm,
+        fabricDropMm:           result.fabricDropMm,
+        headerHeightMm:         result.headerHeightMm,
+        fullnessRatio:          result.fullnessRatio,
+      },
+    );
+
+    track({
+      type: 'calculation_completed',
+      properties: { slug: 'curtain-size-calculator', unit: currentUnit, inputs: curtainInputs },
+    });
+
+    // Mobile UX: smooth-scroll to results on small screens
+    if (resultsGrid && window.innerWidth < 768) {
+      resultsGrid.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }
+
+  // ── Initial calculation (if URL state restored) ───────────────────────────
+  if (widthInput?.value && heightInput?.value) {
+    calculate();
+  }
+</script>
+
+<style>
+  /* ── Layout ─────────────────────────────────────────────────────────────── */
+  .calc-hero {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: var(--space-4);
+    margin-bottom: var(--space-6);
+  }
+  .calc-hero-left { display: flex; align-items: flex-start; gap: var(--space-4); flex: 1; min-width: 0; }
+  .calc-hero-title { font-size: var(--font-2xl); font-weight: 700; color: var(--color-text-primary); margin: 0 0 var(--space-2); }
+  .calc-hero-desc  { color: var(--color-text-secondary); font-size: var(--font-sm); margin: 0 0 var(--space-3); line-height: 1.5; }
+
+  .calc-status-badge {
+    display: inline-flex; align-items: center; gap: var(--space-1-5);
+    font-size: var(--font-xs); font-weight: 500;
+    color: var(--color-success); margin-bottom: var(--space-2);
+  }
+  .calc-status-dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--color-success);
+    animation: pulse 2s ease-in-out infinite;
+  }
+
+  .calc-dashboard {
+    display: grid;
+    grid-template-columns: 380px 1fr;
+    gap: var(--space-4);
+    align-items: start;
+  }
+
+  .calc-panel {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    padding: var(--space-5);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+  }
+
+  .calc-extras {
+    margin-top: var(--space-4);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+  }
+
+  /* ── Panel headers ──────────────────────────────────────────────────────── */
+  .panel-header { display: flex; align-items: baseline; justify-content: space-between; gap: var(--space-2); margin-bottom: var(--space-1); }
+  .panel-section-header { margin-top: var(--space-2); padding-top: var(--space-3); border-top: 1px solid var(--color-border); }
+  .panel-label { font-size: var(--font-xs); font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--color-text-muted); }
+  .panel-hint  { font-size: var(--font-xs); color: var(--color-text-muted); }
+
+  /* ── Unit row ───────────────────────────────────────────────────────────── */
+  .unit-row { display: flex; align-items: center; gap: var(--space-3); }
+  .unit-row-label { font-size: var(--font-sm); font-weight: 500; color: var(--color-text-secondary); min-width: 2.5rem; }
+
+  /* ── Option selectors ───────────────────────────────────────────────────── */
+  .option-selector { display: flex; flex-wrap: wrap; gap: var(--space-1-5); }
+  .option-btn {
+    padding: var(--space-1-5) var(--space-3);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--color-border);
+    background: var(--color-surface);
+    color: var(--color-text-secondary);
+    font-size: var(--font-sm);
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    line-height: 1.4;
+  }
+  .option-btn:hover { border-color: var(--color-primary); color: var(--color-primary); }
+  .option-btn[aria-pressed="true"] {
+    background: var(--color-primary);
+    border-color: var(--color-primary);
+    color: white;
+  }
+  .option-btn--wide { flex: 1; min-width: 90px; text-align: center; }
+
+  /* ── Calculate button ───────────────────────────────────────────────────── */
+  .btn-primary {
+    width: 100%;
+    padding: var(--space-3) var(--space-4);
+    border-radius: var(--radius-md);
+    border: none;
+    background: var(--color-primary);
+    color: white;
+    font-size: var(--font-sm);
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s ease;
+    margin-top: var(--space-2);
+  }
+  .btn-primary:hover  { background: var(--color-primary-hover, #1d4ed8); }
+  .btn-primary:active { transform: translateY(1px); }
+
+  /* ── Results ─────────────────────────────────────────────────────────────── */
+  .results-grid-container { display: flex; flex-direction: column; gap: var(--space-3); }
+
+  .results-secondary-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-3);
+  }
+
+  /* ── Width range card ───────────────────────────────────────────────────── */
+  .width-range-card {
+    padding: var(--space-4);
+    border-radius: var(--radius-md);
+    border: 2px solid var(--color-primary);
+    background: color-mix(in srgb, var(--color-primary) 5%, transparent);
+  }
+  .width-range-label {
+    font-size: var(--font-xs);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--color-primary);
+    margin-bottom: var(--space-3);
+  }
+  .width-range-row { display: grid; grid-template-columns: 1fr auto 1fr; gap: var(--space-2); align-items: center; }
+  .width-range-item { display: flex; flex-direction: column; align-items: center; gap: var(--space-1); }
+  .width-range-item--ideal { padding: var(--space-2); }
+  .width-range-val { font-size: var(--font-lg); font-weight: 700; color: var(--color-text-primary); }
+  .width-range-val--ideal { font-size: var(--font-2xl); color: var(--color-primary); }
+  .width-range-sub { font-size: var(--font-xs); color: var(--color-text-muted); text-align: center; }
+
+  /* ── Fabric section ─────────────────────────────────────────────────────── */
+  .fabric-section {
+    padding: var(--space-3) var(--space-4);
+    background: var(--color-surface-2, var(--color-muted));
+    border-radius: var(--radius-md);
+    border: 1px solid var(--color-border);
+  }
+  .fabric-section-label { font-size: var(--font-xs); font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--color-text-muted); margin-bottom: var(--space-2); }
+  .fabric-row { display: flex; align-items: center; gap: var(--space-3); }
+  .fabric-item { display: flex; flex-direction: column; align-items: center; gap: 2px; }
+  .fabric-val  { font-size: var(--font-xl); font-weight: 700; color: var(--color-text-primary); }
+  .fabric-key  { font-size: var(--font-xs); color: var(--color-text-muted); }
+  .fabric-sep  { font-size: var(--font-xl); font-weight: 300; color: var(--color-text-muted); }
+  .fabric-total { margin-top: var(--space-2); font-size: var(--font-xs); color: var(--color-text-secondary); border-top: 1px solid var(--color-border); padding-top: var(--space-2); }
+
+  /* ── SVG Card ─────────────────────────────────────────────────────────────  */
+  .svg-card {
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    padding: var(--space-3);
+    background: var(--color-surface);
+  }
+  .svg-card-label { font-size: var(--font-xs); font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--color-text-muted); margin-bottom: var(--space-2); }
+  #curtain-svg { width: 100%; height: auto; }
+
+  /* ── SVG elements ────────────────────────────────────────────────────────── */
+  .svg-wall     { fill: #f4f4f5; }
+  .svg-floor    { stroke: #71717a; stroke-width: 1.5; stroke-dasharray: 6 3; }
+  .svg-win-shadow { fill: rgba(0,0,0,0.08); }
+  .svg-win-frame  { fill: #d4d4d8; stroke: #a1a1aa; stroke-width: 1; }
+  .svg-win-glass  { fill: #bfdbfe; opacity: 0.7; }
+  .svg-pane       { stroke: #a1a1aa; stroke-width: 0.75; }
+  .svg-sill-line  { stroke: #71717a; stroke-width: 1; stroke-dasharray: 3 2; }
+  .svg-rod        { stroke: #374151; stroke-width: 2.5; stroke-linecap: round; }
+  .svg-rod-cap    { fill: #374151; }
+  .svg-bracket    { stroke: #6b7280; stroke-width: 1; }
+  .svg-curtain    { fill: #6366f1; opacity: 0.75; }
+  .svg-fold       { stroke: #4338ca; stroke-width: 0.5; opacity: 0.5; }
+  .svg-ext-line   { stroke: #f59e0b; stroke-width: 1.5; stroke-dasharray: 4 2; }
+  .svg-measure-line  { stroke: #374151; stroke-width: 1; }
+  .svg-measure-arrow { fill: #374151; }
+  .svg-measure-text  { font-size: 7px; fill: #4b5563; font-family: sans-serif; }
+  .svg-measure-text--center { text-anchor: middle; dominant-baseline: auto; }
+
+  /* ── Recommendations ────────────────────────────────────────────────────── */
+  .rec-section-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-top: var(--space-6); margin-bottom: var(--space-4);
+    padding-top: var(--space-4); border-top: 1px solid var(--color-border);
+  }
+  .rec-section-title { font-size: var(--font-xl); font-weight: 700; color: var(--color-text-primary); margin: 0; }
+
+  .rec-warnings-list { display: flex; flex-direction: column; gap: var(--space-2); margin-bottom: var(--space-3); }
+  .warning-banner { padding: var(--space-2) var(--space-3); border-radius: var(--radius-md); font-size: var(--font-sm); }
+  .warning-banner[data-level="warning"] { background: #fef3c7; color: #92400e; border: 1px solid #fcd34d; }
+  .warning-banner[data-level="error"]   { background: #fee2e2; color: #991b1b; border: 1px solid #fca5a5; }
+
+  .rec-cards-grid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3); }
+
+  .dyn-rec-card {
+    padding: var(--space-4);
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+  }
+  .dyn-rec-top  { margin-bottom: var(--space-2); }
+  .dyn-rec-label { font-size: var(--font-sm); font-weight: 600; color: var(--color-text-primary); }
+  .dyn-rec-body  { font-size: var(--font-xs); color: var(--color-text-secondary); line-height: 1.6; margin: 0 0 var(--space-2); white-space: pre-line; }
+  .dyn-rec-tip   { font-size: var(--font-xs); color: var(--color-primary); line-height: 1.5; margin: 0; font-style: italic; }
+
+  /* ── Pulse animation ─────────────────────────────────────────────────────── */
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50%       { opacity: 0.4; }
+  }
+
+  /* ── Mobile ─────────────────────────────────────────────────────────────── */
+  @media (max-width: 900px) {
+    .calc-dashboard { grid-template-columns: 1fr; }
+  }
+
+  @media (max-width: 640px) {
+    .calc-hero { flex-direction: column; }
+    .calc-hero-left { flex-direction: column; }
+    .calc-hero-title { font-size: var(--font-xl); }
+
+    .results-secondary-row { grid-template-columns: 1fr; }
+    .width-range-row { grid-template-columns: 1fr 1fr 1fr; }
+    .rec-cards-grid { grid-template-columns: 1fr; }
+
+    .fabric-row { flex-direction: column; gap: var(--space-2); text-align: center; }
+    .fabric-sep { display: none; }
+
+    .btn-primary { font-size: var(--font-base); padding: var(--space-3-5) var(--space-4); }
+    .option-btn  { padding: var(--space-2) var(--space-2-5); }
+  }
+
+  /* ── Print ──────────────────────────────────────────────────────────────── */
+  @media print {
+    .calc-panel-inputs { display: none; }
+    .calc-dashboard { grid-template-columns: 1fr; }
+    .calc-extras { display: none; }
+    .btn-primary { display: none; }
+    .rec-cards-grid { grid-template-columns: 1fr; }
+  }
+</style>
