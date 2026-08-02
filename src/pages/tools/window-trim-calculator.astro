@@ -1,0 +1,878 @@
+---
+/**
+ * WindowMetrics — Window Trim Calculator Page
+ * Route: /tools/window-trim-calculator
+ *
+ * Dedicated finish carpentry window trim and casing calculator.
+ * Calculates top head casing, side casing, window stool sill, apron, and extension jamb lengths
+ * across Colonial, Modern, Craftsman, Ranch, and Victorian trim styles with 45° miter and 90° square cut angles.
+ */
+
+import ToolLayout from '@/layouts/ToolLayout.astro';
+import CalculatorHero from '@/components/calculator/CalculatorHero.astro';
+import InputCard from '@/components/calculator/InputCard.astro';
+import UnitSelector from '@/components/calculator/UnitSelector.astro';
+import ResultMetricCard from '@/components/calculator/ResultMetricCard.astro';
+import ShareExportBar from '@/components/calculator/ShareExportBar.astro';
+import HistoryPanel from '@/components/calculator/HistoryPanel.astro';
+import RelatedTools from '@/components/calculator/RelatedTools.astro';
+import FAQSection from '@/components/content/FAQSection.astro';
+import { getToolBySlug } from '@/data/tools.js';
+
+const tool = getToolBySlug('window-trim-calculator');
+if (!tool) {
+  throw new Error('Tool data for "window-trim-calculator" not found in tool registry.');
+}
+
+const breadcrumbs = [
+  { label: 'Home', href: '/' },
+  { label: 'Tools', href: '/tools' },
+  { label: 'Window Trim Calculator', href: '/tools/window-trim-calculator' },
+];
+
+const faqs = [
+  {
+    question: 'How do I calculate the length of window casing trim?',
+    answer: 'Add 2 times the casing width plus 2 times the reveal margin to your window opening width for the head casing. For side casings, add the casing width (or stool height) plus reveal margin to your window height.',
+  },
+  {
+    question: 'What is a window reveal margin and how much should I leave?',
+    answer: 'The reveal is the small setback (typically 3/16" to 1/4" or 6.35 mm) between the inner edge of the window jamb and the edge of the casing. Leaving a reveal creates a clean shadow line and conceals jamb imperfections.',
+  },
+  {
+    question: 'How is the window stool (sill) length calculated?',
+    answer: 'The window stool length equals the reveal width (Window Width + 2×Reveal) plus 2 times the casing width, plus 2 times the stool horn overhang (typically 1.5 inches / 38.1 mm per side). Stool Length = Width + (2 × Reveal) + (2 × Casing Width) + 3".',
+  },
+  {
+    question: 'What is a window apron and how long should it be?',
+    answer: 'The apron is the horizontal moulding piece installed directly underneath the window stool. Its length equals the outside-to-outside width of the vertical side casings (Window Width + 2×Reveal + 2×Casing Width).',
+  },
+  {
+    question: 'What are extension jambs and when are they needed?',
+    answer: 'Extension jambs are wood strips added to window frame jambs when the wall depth (e.g., 2×6 framing + 1/2" drywall) exceeds the factory window unit depth (e.g., 4-9/16" vinyl frame), bringing the jamb flush with interior drywall.',
+  },
+  {
+    question: 'How does Craftsman style window trim differ from Colonial trim?',
+    answer: 'Colonial trim uses 45° miter joints around 3 or 4 sides. Craftsman trim uses 90° square butt joints with a thicker 5/4 head casing that overhangs the side casings by 1 inch on each side.',
+  },
+  {
+    question: 'What size nails should I use for installing window casing trim?',
+    answer: 'Use 1-1/2 inch 18-gauge brad nails to pin the inner casing edge into the 3/4" window jamb, and 2-1/2 inch 15-gauge finish nails to anchor the outer casing edge into wall studs.',
+  },
+  {
+    question: 'How much waste factor should I add when purchasing moulding?',
+    answer: 'Add 10% waste for standard room casing runs. Add 15% if cutting miter returns on apron ends or installing in rooms with many non-standard windows.',
+  },
+];
+---
+
+<ToolLayout
+  tool={tool}
+  breadcrumbs={breadcrumbs}
+  faqs={faqs}
+  title="Window Trim Calculator | WindowMetrics"
+  description="Calculate trim lengths, casing, stool, apron, extension jambs and material requirements for any window."
+>
+  <CalculatorHero
+    tool={tool}
+    description="Calculate trim lengths, casing, stool, apron, extension jambs and material requirements for any window."
+    features={[
+      '5-Piece Cut List (Head Casing, Sides, Stool, Apron)',
+      'Craftsman, Colonial, Modern, Ranch & Victorian styles',
+      'Window stool sill & horn overhang calculations',
+      'Linear board feet & material cost estimates',
+    ]}
+    trustItems={[
+      { label: 'Exact finish carpentry math' },
+      { label: 'Multi-unit support' },
+      { label: 'No signup' },
+      { label: 'Instant live calculation' },
+    ]}
+  />
+
+  <div class="calc-dashboard">
+    <!-- LEFT PANEL — Inputs -->
+    <div class="calc-panel calc-panel-inputs">
+      <div class="panel-header">
+        <span class="panel-label">Window Opening Dimensions</span>
+        <UnitSelector defaultUnit="in" />
+      </div>
+
+      <div class="panel-section-header">
+        <span class="panel-section-title">Opening & Style</span>
+      </div>
+
+      <InputCard label="Window Width" inputId="input-width" hint="Jamb opening width">
+        <input type="text" id="input-width" class="input" placeholder="e.g., 48" autocomplete="off" />
+      </InputCard>
+
+      <InputCard label="Window Height" inputId="input-height" hint="Jamb opening height">
+        <input type="text" id="input-height" class="input" placeholder="e.g., 60" autocomplete="off" />
+      </InputCard>
+
+      <InputCard label="Trim Architectural Style" inputId="input-trim-style">
+        <select id="input-trim-style" class="input-select" aria-label="Select Trim Architectural Style">
+          <option value="colonial" selected>Colonial Profile (Classic Mitered)</option>
+          <option value="modern">Modern Minimalist (Flat Stock S4S)</option>
+          <option value="craftsman">Craftsman / Farmhouse (Square Butt + Head Overhang)</option>
+          <option value="ranch">Ranch Profile (Streamlined Low-Profile)</option>
+          <option value="victorian">Victorian (Ornate Moulding + Rosette Blocks)</option>
+        </select>
+      </InputCard>
+
+      <div class="panel-section-header">
+        <span class="panel-section-title">Casing Profile & Reveal</span>
+      </div>
+
+      <InputCard label="Casing Profile Width" inputId="input-trim-width" hint="Std: 2.5&quot; (63.5mm)">
+        <input type="number" id="input-trim-width" class="input" value="2.5" min="1.0" max="6.0" step="0.25" />
+      </InputCard>
+
+      <InputCard label="Jamb Reveal Setback" inputId="input-reveal" hint="Std: 0.25&quot; (6.35mm)">
+        <input type="number" id="input-reveal" class="input" value="0.25" min="0.0" max="1.0" step="0.0625" />
+      </InputCard>
+
+      <InputCard label="Extension Jamb Depth" inputId="input-extension-depth" hint="0 for flush wall, >0 for deep wall">
+        <input type="number" id="input-extension-depth" class="input" value="0" min="0" max="12.0" step="0.25" />
+      </InputCard>
+
+      <div class="panel-section-header">
+        <span class="panel-section-title">Stool & Apron Options</span>
+      </div>
+
+      <InputCard label="Include Window Stool (Sill)" inputId="input-include-stool">
+        <select id="input-include-stool" class="input-select" aria-label="Include Window Stool">
+          <option value="true" selected>Yes — Include Stool (3-Sided Casing)</option>
+          <option value="false">No — Picture Frame (4-Sided Miter Casing)</option>
+        </select>
+      </InputCard>
+
+      <InputCard label="Include Apron (Under Stool)" inputId="input-include-apron">
+        <select id="input-include-apron" class="input-select" aria-label="Include Apron">
+          <option value="true" selected>Yes — Include Apron Moulding</option>
+          <option value="false">No Apron</option>
+        </select>
+      </InputCard>
+
+      <InputCard label="Waste Allowance (%)" inputId="input-waste" hint="10% standard waste">
+        <input type="number" id="input-waste" class="input" value="10" min="0" max="50" step="1" />
+      </InputCard>
+
+      <InputCard label="Quantity" inputId="input-quantity" hint="Number of identical windows">
+        <input type="number" id="input-quantity" class="input" value="1" min="1" max="100" step="1" />
+      </InputCard>
+    </div>
+
+    <!-- RIGHT PANEL — Results -->
+    <div class="calc-panel calc-panel-results">
+      <div id="results-empty" class="empty-state">
+        <div class="empty-icon-wrap">
+          <svg width="48" height="48" viewBox="0 0 48 48" fill="none" class="empty-svg">
+            <rect x="8" y="12" width="32" height="24" rx="3" stroke="currentColor" stroke-width="2.5" fill="none"/>
+            <circle cx="24" cy="24" r="6" stroke="currentColor" stroke-width="1.5" stroke-dasharray="2 2"/>
+          </svg>
+        </div>
+        <h3 class="empty-title">Enter window dimensions</h3>
+        <p class="empty-sub">Fill in Width and Height to calculate casing lengths, stool, apron, and 5-piece finish cut list.</p>
+      </div>
+
+      <div id="results-grid" hidden>
+        <!-- SVG Technical Finish Carpentry Casing Diagram Illustration -->
+        <div class="svg-section">
+          <div class="svg-header">
+            <span class="svg-label">Finish Carpentry Casing & Stool Vector Diagram</span>
+            <span class="svg-subtitle" id="svg-subtitle">Head Casing, Side Casing, Stool & Apron</span>
+          </div>
+          <div class="svg-wrap">
+            <svg id="trim-svg" viewBox="0 0 400 340" width="100%" aria-label="Window trim casing cut list diagram"></svg>
+          </div>
+        </div>
+
+        <div class="results-metric-grid">
+          <ResultMetricCard id="card-total-trim" label="Total Trim Required" highlight={true} sublabel="Linear stock needed (10% waste)" animate={true} />
+          <ResultMetricCard id="card-material-cost" label="Estimated Material Cost" highlight={true} sublabel="Est. cost at $2.25/ft" animate={true} />
+          <ResultMetricCard id="card-head-casing" label="Head Casing Length" highlight={true} sublabel="Top trim board length" animate={true} />
+          <ResultMetricCard id="card-side-casing" label="Side Casing Length" highlight={true} sublabel="Left & Right casing length" animate={true} />
+          <ResultMetricCard id="card-stool-length" label="Window Stool Sill Length" sublabel="Includes 1.5&quot; horn overhangs" animate={true} />
+          <ResultMetricCard id="card-apron-length" label="Apron Length" sublabel="Moulding under window stool" animate={true} />
+          <ResultMetricCard id="card-ext-jamb" label="Extension Jamb Stock" sublabel="Linear stock for wall depth" animate={true} />
+          <ResultMetricCard id="card-waste" label="Waste Allowance" sublabel="10% extra linear board feet" animate={true} />
+        </div>
+
+        <!-- Unified Confidence Summary Card -->
+        <div id="card-confidence" class="confidence-summary-card" hidden>
+          <div class="conf-card-header">
+            <span class="conf-stars" id="confidence-stars">★★★★★</span>
+            <span class="conf-title" id="confidence-label">5-Piece Finish Cut List Ready</span>
+          </div>
+          <div class="conf-card-badges">
+            <span class="conf-badge conf-badge-score" id="score-badge">COLONIAL STYLE</span>
+            <span class="conf-badge conf-badge-order" id="confidence-ordering-badge">✓ Stool & Apron Included</span>
+            <span class="conf-badge conf-badge-cost" id="cost-badge">22.8 ft Material Needed</span>
+          </div>
+        </div>
+
+        <!-- Recommendations Grid -->
+        <div id="rec-section" class="rec-section" hidden>
+          <div class="panel-header"><span class="panel-label">Smart Recommendations & Finish Carpentry Advice</span></div>
+          <div id="rec-list" class="rec-list"></div>
+        </div>
+
+        <!-- Share & Export + History Bar -->
+        <div class="calc-extras" id="calc-extras" hidden>
+          <ShareExportBar calculatorTitle="Window Trim Calculator" />
+          <HistoryPanel slug="window-trim-calculator" />
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <Fragment slot="sidebar">
+    <RelatedTools
+      links={[
+        {
+          title: 'Window Frame Calculator',
+          description: 'Calculate frame dimensions, 4-piece cut list, and profile volume.',
+          href: '/tools/window-frame-calculator',
+          icon: 'Frame',
+        },
+        {
+          title: 'Window Opening Calculator',
+          description: 'Calculate rough openings, finished openings, and shim spacing.',
+          href: '/tools/window-opening-calculator',
+          icon: 'Expand',
+        },
+        {
+          title: 'Replacement Window Calculator',
+          description: 'Find standard replacement window sizes and rough openings.',
+          href: '/tools/replacement-window-calculator',
+          icon: 'RefreshCw',
+        },
+        {
+          title: 'Window Cost Calculator',
+          description: 'Calculate total window replacement cost, material costs, and labor.',
+          href: '/tools/window-cost-calculator',
+          icon: 'DollarSign',
+        },
+      ]}
+      tip={{
+        label: 'Finish Tip',
+        text: 'Always mark a light 1/4" reveal pencil line around all three window jamb edges using a combination square before nailing casing boards in place.',
+      }}
+    />
+    <FAQSection faqs={faqs} />
+  </Fragment>
+</ToolLayout>
+
+<script>
+  import {
+    calculateWindowTrim,
+    type WindowTrimInput,
+    type WindowTrimStyle,
+  } from '@/engine/window-trim.js';
+  import { buildWindowTrimRecommendations } from '@/engine/window-trim-recommendations.js';
+  import { toMm, fromMm, formatDimension, normalizeInput } from '@/engine/units.js';
+  import { readUrlState, pushUrlState } from '@/lib/url-state.js';
+  import { buildExportPayload } from '@/lib/export.js';
+  import { buildSummary } from '@/lib/share.js';
+  import { track } from '@/lib/analytics.js';
+  import type { MeasurementUnit } from '@/types/calculator.js';
+
+  let currentResult: ReturnType<typeof calculateWindowTrim> | null = null;
+  let currentUnit: MeasurementUnit = 'in';
+  let currentStyle: WindowTrimStyle = 'colonial';
+
+  // ── DOM references ────────────────────────────────────────────────────────
+  const widthInput      = document.getElementById('input-width')           as HTMLInputElement | null;
+  const heightInput     = document.getElementById('input-height')          as HTMLInputElement | null;
+  const trimWidthInput  = document.getElementById('input-trim-width')      as HTMLInputElement | null;
+  const revealInput     = document.getElementById('input-reveal')          as HTMLInputElement | null;
+  const extDepthInput   = document.getElementById('input-extension-depth') as HTMLInputElement | null;
+  const wasteInput      = document.getElementById('input-waste')            as HTMLInputElement | null;
+  const qtyInput        = document.getElementById('input-quantity')         as HTMLInputElement | null;
+  const styleSelect     = document.getElementById('input-trim-style')      as HTMLSelectElement | null;
+  const stoolSelect     = document.getElementById('input-include-stool')   as HTMLSelectElement | null;
+  const apronSelect     = document.getElementById('input-include-apron')   as HTMLSelectElement | null;
+
+  const resultsEmpty    = document.getElementById('results-empty')          as HTMLElement | null;
+  const resultsGrid     = document.getElementById('results-grid')           as HTMLElement | null;
+  const recSection      = document.getElementById('rec-section')            as HTMLElement | null;
+  const calcExtras      = document.getElementById('calc-extras')            as HTMLElement | null;
+  const cardConf        = document.getElementById('card-confidence')         as HTMLElement | null;
+
+  function updateMetric(cardId: string, value: string, unitStr: string = '') {
+    const valEl = document.querySelector(`#${cardId} .result-value-text`);
+    const unitEl = document.querySelector(`#${cardId} .result-unit`);
+    if (valEl) valEl.textContent = value;
+    if (unitEl) unitEl.textContent = unitStr;
+  }
+
+  // ── Vector SVG Casing & Stool Cut List Renderer ─────────────────────────────
+  function renderTrimSvg(result: ReturnType<typeof calculateWindowTrim>, wMm: number, hMm: number) {
+    const svg = document.getElementById('trim-svg');
+    if (!svg) return;
+
+    const cx = 170, cy = 160;
+    const maxW = 190, maxH = 170;
+    const scale = Math.min(maxW / wMm, maxH / hMm);
+
+    const winW = wMm * scale;
+    const winH = hMm * scale;
+    const casingW = (trimWidthInput ? parseFloat(trimWidthInput.value || '2.5') : 2.5) * 25.4 * scale;
+
+    const incStool = stoolSelect?.value !== 'false';
+    const isCraftsman = currentStyle === 'craftsman';
+
+    svg.innerHTML = `
+      <defs>
+        <pattern id="grid-trim" width="20" height="20" patternUnits="userSpaceOnUse">
+          <path d="M 20 0 L 0 0 0 20" fill="none" stroke="rgba(0,0,0,0.03)" stroke-width="1"/>
+        </pattern>
+      </defs>
+      <rect width="400" height="340" fill="url(#grid-trim)" rx="6"/>
+
+      <!-- Window Inner Glass & Frame -->
+      <rect x="${cx - winW/2}" y="${cy - winH/2}" width="${winW}" height="${winH}" fill="#e0f2fe" stroke="#0284c7" stroke-width="3" rx="2"/>
+
+      <!-- Head Casing Trim -->
+      <rect x="${cx - winW/2 - casingW}" y="${cy - winH/2 - casingW}" width="${winW + 2*casingW}" height="${casingW}" fill="#f1f5f9" stroke="#0f172a" stroke-width="2"/>
+
+      <!-- Left Side Casing -->
+      <rect x="${cx - winW/2 - casingW}" y="${cy - winH/2}" width="${casingW}" height="${winH}" fill="#f1f5f9" stroke="#0f172a" stroke-width="2"/>
+      <!-- Right Side Casing -->
+      <rect x="${cx + winW/2}" y="${cy - winH/2}" width="${casingW}" height="${winH}" fill="#f1f5f9" stroke="#0f172a" stroke-width="2"/>
+
+      ${incStool ? `
+        <!-- Window Stool Sill -->
+        <rect x="${cx - winW/2 - casingW - 15}" y="${cy + winH/2}" width="${winW + 2*casingW + 30}" height="14" rx="2" fill="#0f172a"/>
+        <text x="${cx}" y="${cy + winH/2 + 11}" font-family="sans-serif" font-size="9" font-weight="700" text-anchor="middle" fill="#ffffff">WINDOW STOOL SILL</text>
+        <!-- Apron under stool -->
+        <rect x="${cx - winW/2 - casingW}" y="${cy + winH/2 + 14}" width="${winW + 2*casingW}" height="${casingW}" fill="#cbd5e1" stroke="#334155" stroke-width="1.5"/>
+      ` : `
+        <!-- Bottom Casing (Picture Frame) -->
+        <rect x="${cx - winW/2 - casingW}" y="${cy + winH/2}" width="${winW + 2*casingW}" height="${casingW}" fill="#f1f5f9" stroke="#0f172a" stroke-width="2"/>
+      `}
+
+      <!-- Cut List Summary Side Card -->
+      <rect x="250" y="40" width="135" height="260" rx="6" fill="#0f172a"/>
+      <text x="317" y="62" font-family="sans-serif" font-size="10" font-weight="700" text-anchor="middle" fill="#94a3b8">FINISH CUT LIST</text>
+
+      ${result.cutList.map((item, idx) => `
+        <rect x="260" y="${78 + idx * 44}" width="115" height="38" rx="4" fill="#1e293b"/>
+        <text x="268" y="${92 + idx * 44}" font-family="sans-serif" font-size="8" font-weight="700" fill="#38bdf8">${item.name}</text>
+        <text x="367" y="${92 + idx * 44}" font-family="monospace" font-size="11" font-weight="700" text-anchor="end" fill="#ffffff">${item.lengthIn}"</text>
+        <text x="268" y="${106 + idx * 44}" font-family="sans-serif" font-size="8" fill="#94a3b8">${item.cutLeft} · ${item.quantity}x</text>
+      `).join('')}
+    `;
+
+    const sub = document.getElementById('svg-subtitle');
+    if (sub) {
+      sub.textContent = `Head: ${result.topTrimLengthIn}" · Side: ${result.sideTrimLengthIn}" · Stool: ${result.stoolLengthIn}" · Apron: ${result.apronLengthIn}"`;
+    }
+  }
+
+  function calculate() {
+    const wInput = widthInput?.value.trim() ?? '';
+    const hInput = heightInput?.value.trim() ?? '';
+    const trimWVal = parseFloat(trimWidthInput?.value || '2.5');
+    const revealVal = parseFloat(revealInput?.value || '0.25');
+    const extVal = parseFloat(extDepthInput?.value || '0');
+    const wasteVal = parseFloat(wasteInput?.value || '10');
+    const qVal = parseInt(qtyInput?.value || '1', 10);
+
+    if (!wInput || !hInput) {
+      if (resultsEmpty) resultsEmpty.hidden = false;
+      if (resultsGrid)  resultsGrid.hidden  = true;
+      if (recSection)   recSection.hidden   = true;
+      if (calcExtras)   calcExtras.hidden   = true;
+      if (cardConf)     cardConf.hidden     = true;
+      return;
+    }
+
+    const w = normalizeInput(wInput, currentUnit);
+    const h = normalizeInput(hInput, currentUnit);
+
+    if (!w || !h || w <= 0 || h <= 0) {
+      if (resultsEmpty) resultsEmpty.hidden = false;
+      if (resultsGrid)  resultsGrid.hidden  = true;
+      if (recSection)   recSection.hidden   = true;
+      if (calcExtras)   calcExtras.hidden   = true;
+      if (cardConf)     cardConf.hidden     = true;
+      return;
+    }
+
+    const wMm = toMm(w, currentUnit);
+    const hMm = toMm(h, currentUnit);
+
+    const input: WindowTrimInput = {
+      windowWidthMm: wMm,
+      windowHeightMm: hMm,
+      trimStyle: currentStyle,
+      trimWidthMm: toMm(trimWVal, 'in'),
+      trimThicknessMm: toMm(0.75, 'in'),
+      revealMm: toMm(revealVal, 'in'),
+      extensionJambDepthMm: toMm(extVal, 'in'),
+      includeStool: stoolSelect?.value !== 'false',
+      includeApron: apronSelect?.value !== 'false',
+      wastePct: wasteVal,
+      quantity: qVal,
+    };
+
+    const result = calculateWindowTrim(input);
+    currentResult = result;
+    const recs = buildWindowTrimRecommendations(input, result);
+
+    // ── Metrics ──────────────────────────────────────────────────────────────
+    updateMetric('card-total-trim', `${result.totalLinearLengthWithWasteFt} ft`, `Includes ${input.wastePct}% waste (${result.totalLinearLengthFt} ft net)`);
+    updateMetric('card-material-cost', `$${result.estimatedMaterialCost}`, `Est. cost at $2.25/ft`);
+    updateMetric('card-head-casing', `${result.topTrimLengthIn}"`, `(${result.topTrimLengthMm} mm top trim)`);
+    updateMetric('card-side-casing', `${result.sideTrimLengthIn}"`, `(${result.sideTrimLengthMm} mm side casing)`);
+    updateMetric('card-stool-length', input.includeStool ? `${result.stoolLengthIn}"` : 'N/A', `(${result.stoolLengthMm} mm stool sill)`);
+    updateMetric('card-apron-length', input.includeApron ? `${result.apronLengthIn}"` : 'N/A', `(${result.apronLengthMm} mm apron)`);
+    updateMetric('card-ext-jamb', extVal > 0 ? `${result.extensionJambLengthTotalFt} ft` : '0 ft', `Deep wall extension jambs`);
+    updateMetric('card-waste', `${result.wasteLinearLengthFt} ft`, `10% extra linear board feet`);
+
+    // ── Confidence summary card ───────────────────────────────────────────────
+    const starsEl = document.getElementById('confidence-stars');
+    const labelEl = document.getElementById('confidence-label');
+    const orderBadge = document.getElementById('confidence-ordering-badge');
+    const costBadge = document.getElementById('cost-badge');
+    const scoreBadge = document.getElementById('score-badge');
+
+    if (starsEl) starsEl.textContent = result.confidence === 'excellent' ? '★★★★★' : '★★★★☆';
+    if (labelEl) labelEl.textContent = `5-Piece Finish Cut List Ready`;
+    if (scoreBadge) scoreBadge.textContent = `${currentStyle.toUpperCase()} STYLE`;
+    if (orderBadge) orderBadge.textContent = `✓ ${input.includeStool ? 'Stool & Apron Included' : '4-Sided Picture Frame'}`;
+    if (costBadge) costBadge.textContent = `${result.totalLinearLengthWithWasteFt} ft Material Stock`;
+
+    // ── Recommendation cards ─────────────────────────────────────────────────
+    const recList = document.getElementById('rec-list');
+    if (recList) {
+      const iconMap: Record<string, string> = {
+        'style': `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/></svg>`,
+        'material': `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 3h16v18H4z"/></svg>`,
+        'fastener': `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="2" x2="12" y2="22"/></svg>`,
+        'sequence': `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>`,
+        'paint': `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>`,
+        'waste': `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>`,
+      };
+      recList.innerHTML = recs.items.map((item: any) =>
+        `<div class="rec-card">
+          <div class="rec-card-header">
+            <span class="rec-card-icon" aria-hidden="true">${iconMap[item.type] || iconMap['style']}</span>
+            <span class="rec-card-title">${item.title}</span>
+          </div>
+          <div class="rec-card-body">${item.body}</div>
+          ${item.tip ? `<div class="rec-card-tip">${item.tip}</div>` : ''}
+        </div>`
+      ).join('');
+    }
+
+    try {
+      renderTrimSvg(result, wMm, hMm);
+    } catch (e) {
+      console.error('SVG rendering error:', e);
+    }
+
+    if (resultsEmpty) resultsEmpty.hidden = true;
+    if (resultsGrid)  resultsGrid.hidden  = false;
+    if (recSection)   recSection.hidden   = false;
+    if (calcExtras)   calcExtras.hidden   = false;
+    if (cardConf)     cardConf.hidden     = false;
+
+    const historyLabelText = `${w} × ${h} ${currentUnit} • ${currentStyle.charAt(0).toUpperCase() + currentStyle.slice(1)} Trim`;
+    const summaryText = `${w} × ${h} ${currentUnit}`;
+    const stateParams = {
+      width: String(w),
+      height: String(h),
+      unit: currentUnit,
+      style: currentStyle,
+      trimW: String(trimWVal),
+      reveal: String(revealVal),
+      ext: String(extVal),
+      stool: stoolSelect?.value,
+      apron: apronSelect?.value,
+      waste: String(wasteVal),
+      qty: String(qVal),
+      subtitle: `Trim: ${currentStyle} · Total: ${result.totalLinearLengthWithWasteFt} ft stock`,
+      summary: summaryText,
+      _display: summaryText,
+    };
+
+    (window as any).wmCurrentState = stateParams;
+    pushUrlState(stateParams);
+    (window as any).wmHistoryPanel?.add(historyLabelText, stateParams);
+
+    (window as any).wmBuildSummary = () => buildSummary(
+      'Window Trim Calculator',
+      [
+        ['Window Dimensions', `${w} × ${h} ${currentUnit}`],
+        ['Trim Style', currentStyle],
+        ['Casing Width & Reveal', `${trimWVal}" Casing (${revealVal}" Reveal)`],
+        ['Head Casing Length', `${result.topTrimLengthIn}" (${result.topTrimLengthMm} mm)`],
+        ['Side Casing Length', `${result.sideTrimLengthIn}" (${result.sideTrimLengthMm} mm)`],
+        ['Window Stool Length', `${result.stoolLengthIn}" (${result.stoolLengthMm} mm)`],
+        ['Apron Length', `${result.apronLengthIn}" (${result.apronLengthMm} mm)`],
+        ['Total Linear Stock Needed', `${result.totalLinearLengthWithWasteFt} ft (${result.totalLinearLengthFt} ft net + ${input.wastePct}% waste)`],
+        ['Estimated Material Cost', `$${result.estimatedMaterialCost}`],
+        ['Cut List', result.cutList.map(c => `${c.name}: ${c.lengthIn}" (${c.cutLeft})`).join(' | ')],
+      ],
+      typeof window !== 'undefined' ? window.location.href : undefined,
+    );
+
+    (window as any).wmBuildExport = () => buildExportPayload(
+      'window-trim-calculator',
+      stateParams,
+      {
+        windowWidth: `${w} ${currentUnit}`,
+        windowHeight: `${h} ${currentUnit}`,
+        trimStyle: currentStyle,
+        trimWidthIn: `${trimWVal}"`,
+        revealIn: `${revealVal}"`,
+        headCasingIn: `${result.topTrimLengthIn}"`,
+        sideCasingIn: `${result.sideTrimLengthIn}"`,
+        stoolLengthIn: `${result.stoolLengthIn}"`,
+        apronLengthIn: `${result.apronLengthIn}"`,
+        totalLinearLengthFt: `${result.totalLinearLengthFt} ft`,
+        totalLinearLengthWithWasteFt: `${result.totalLinearLengthWithWasteFt} ft`,
+        estimatedMaterialCost: `$${result.estimatedMaterialCost}`,
+        cutList: result.cutList.map(c => `${c.name}: ${c.lengthIn}" (${c.cutLeft})`).join(' | '),
+        confidence: result.confidence,
+        recommendations: recs.items.map((i: any) => `${i.title}: ${i.body}`).join(' | '),
+        warnings: result.warnings.map((w: any) => w.message).join(' | '),
+      },
+    );
+
+    (window as any).wmShareExportBar?.show();
+
+    track({
+      type: 'calculation_completed',
+      properties: { slug: 'window-trim-calculator', unit: currentUnit, inputs: stateParams },
+    });
+  }
+
+  // ── Event listeners ───────────────────────────────────────────────────────
+  widthInput?.addEventListener('input', calculate);
+  heightInput?.addEventListener('input', calculate);
+  trimWidthInput?.addEventListener('input', calculate);
+  revealInput?.addEventListener('input', calculate);
+  extDepthInput?.addEventListener('input', calculate);
+  wasteInput?.addEventListener('input', calculate);
+  qtyInput?.addEventListener('input', calculate);
+
+  styleSelect?.addEventListener('change', () => {
+    if (styleSelect) currentStyle = styleSelect.value as WindowTrimStyle;
+    calculate();
+  });
+
+  stoolSelect?.addEventListener('change', calculate);
+  apronSelect?.addEventListener('change', calculate);
+
+  document.getElementById('unit-selector')?.addEventListener('unitchange', (e) => {
+    const newUnit = (e as CustomEvent).detail?.unit as MeasurementUnit | undefined;
+    if (!newUnit) return;
+    if (widthInput?.value) {
+      const parsed = normalizeInput(widthInput.value, currentUnit);
+      if (parsed) widthInput.value = String(fromMm(toMm(parsed, currentUnit), newUnit));
+    }
+    if (heightInput?.value) {
+      const parsed = normalizeInput(heightInput.value, currentUnit);
+      if (parsed) heightInput.value = String(fromMm(toMm(parsed, currentUnit), newUnit));
+    }
+    const oldUnit = currentUnit;
+    currentUnit = newUnit;
+    track({ type: 'unit_changed', properties: { slug: 'window-trim-calculator', from: oldUnit, to: newUnit } });
+    calculate();
+  });
+
+  // Restore URL state
+  const urlState = readUrlState();
+  if (urlState.width && widthInput)   widthInput.value  = urlState.width;
+  if (urlState.height && heightInput) heightInput.value = urlState.height;
+  if (urlState.trimW && trimWidthInput) trimWidthInput.value = urlState.trimW;
+  if (urlState.reveal && revealInput) revealInput.value = urlState.reveal;
+  if (urlState.ext && extDepthInput)  extDepthInput.value = urlState.ext;
+  if (urlState.waste && wasteInput)   wasteInput.value  = urlState.waste;
+  if (urlState.qty && qtyInput)       qtyInput.value    = urlState.qty;
+  if (urlState.unit && ['mm','cm','m','in','ft'].includes(urlState.unit)) {
+    currentUnit = urlState.unit as MeasurementUnit;
+    document.querySelectorAll('.unit-btn').forEach(b => (b as HTMLElement).setAttribute('aria-pressed', (b as HTMLElement).dataset.unit === currentUnit ? 'true' : 'false'));
+  }
+  if (urlState.style && styleSelect) {
+    currentStyle = urlState.style as WindowTrimStyle;
+    styleSelect.value = currentStyle;
+  }
+  if (urlState.stool && stoolSelect) stoolSelect.value = urlState.stool;
+  if (urlState.apron && apronSelect) apronSelect.value = urlState.apron;
+
+  // Initial calculation on page load
+  calculate();
+
+  // ── History restore ──────────────────────────────────────────────────────
+  document.addEventListener('wm:history-restore', (e: Event) => {
+    const { inputs } = (e as CustomEvent).detail;
+    if (inputs.width && widthInput)   widthInput.value  = inputs.width;
+    if (inputs.height && heightInput) heightInput.value = inputs.height;
+    if (inputs.trimW && trimWidthInput) trimWidthInput.value = inputs.trimW;
+    if (inputs.reveal && revealInput) revealInput.value = inputs.reveal;
+    if (inputs.ext && extDepthInput)  extDepthInput.value = inputs.ext;
+    if (inputs.waste && wasteInput)   wasteInput.value  = inputs.waste;
+    if (inputs.qty && qtyInput)       qtyInput.value    = inputs.qty;
+    if (inputs.unit && ['mm','cm','m','in','ft'].includes(inputs.unit)) {
+      currentUnit = inputs.unit as MeasurementUnit;
+      document.querySelectorAll('.unit-btn').forEach(b => (b as HTMLElement).setAttribute('aria-pressed', (b as HTMLElement).dataset.unit === currentUnit ? 'true' : 'false'));
+    }
+    if (inputs.style && styleSelect) {
+      currentStyle = inputs.style as WindowTrimStyle;
+      styleSelect.value = currentStyle;
+    }
+    if (inputs.stool && stoolSelect) stoolSelect.value = inputs.stool;
+    if (inputs.apron && apronSelect) apronSelect.value = inputs.apron;
+    calculate();
+    track({ type: 'history_restored', properties: { slug: 'window-trim-calculator', entryId: (e as CustomEvent).detail.entryId ?? '' } });
+  });
+</script>
+
+<style>
+  .calc-dashboard {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--spacing-xl);
+    align-items: start;
+    margin-top: var(--spacing-lg);
+  }
+
+  @media (min-width: 1024px) {
+    .calc-dashboard {
+      grid-template-columns: 380px 1fr;
+    }
+  }
+
+  .calc-panel {
+    background-color: var(--color-canvas);
+    border: 1px solid var(--color-hairline);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+  }
+
+  .calc-panel-inputs {
+    position: sticky;
+    top: var(--spacing-md);
+  }
+
+  .panel-header {
+    padding: var(--spacing-md);
+    background-color: var(--color-canvas-soft);
+    border-bottom: 1px solid var(--color-hairline);
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+  }
+
+  .panel-label {
+    font-family: var(--font-family-mono);
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--color-muted);
+  }
+
+  .panel-section-header {
+    padding: var(--spacing-xs) var(--spacing-md);
+    background-color: var(--color-canvas-soft);
+    border-top: 1px solid var(--color-hairline);
+    border-bottom: 1px solid var(--color-hairline);
+  }
+
+  .panel-section-title {
+    font-family: var(--font-family-mono);
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--color-ink-faint);
+  }
+
+  .input {
+    width: 100%;
+    padding: var(--spacing-sm) var(--spacing-md);
+    background-color: var(--color-canvas);
+    border: 1px solid var(--color-hairline);
+    border-radius: var(--radius-md);
+    font-family: var(--font-family-mono);
+    font-size: var(--font-size-body-md);
+    color: var(--color-ink);
+    transition: border-color 0.15s ease;
+  }
+
+  .input:focus {
+    outline: none;
+    border-color: var(--color-link);
+  }
+
+  .input-select {
+    width: 100%;
+    padding: var(--spacing-sm) var(--spacing-md);
+    background-color: var(--color-canvas);
+    border: 1px solid var(--color-hairline);
+    border-radius: var(--radius-md);
+    font-size: var(--font-size-body-sm);
+    color: var(--color-ink);
+  }
+
+  /* Results Panel */
+  .empty-state {
+    padding: var(--spacing-3xl) var(--spacing-xl);
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .empty-icon-wrap {
+    color: var(--color-muted);
+    margin-bottom: var(--spacing-md);
+  }
+
+  .empty-title {
+    font-size: var(--font-size-h3);
+    font-weight: 600;
+    color: var(--color-ink);
+    margin: 0 0 var(--spacing-xs);
+  }
+
+  .empty-sub {
+    font-size: var(--font-size-body-sm);
+    color: var(--color-muted);
+    margin: 0;
+    max-width: 320px;
+  }
+
+  .svg-section {
+    border-bottom: 1px solid var(--color-hairline);
+    background-color: var(--color-canvas);
+  }
+
+  .svg-header {
+    padding: var(--spacing-sm) var(--spacing-md);
+    background-color: var(--color-canvas-soft);
+    border-bottom: 1px solid var(--color-hairline);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .svg-label {
+    font-family: var(--font-family-mono);
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--color-muted);
+  }
+
+  .svg-subtitle {
+    font-family: var(--font-family-mono);
+    font-size: 11px;
+    color: var(--color-ink-muted);
+  }
+
+  .svg-wrap {
+    padding: var(--spacing-md);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: var(--color-canvas);
+  }
+
+  .results-metric-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: var(--spacing-md);
+    padding: var(--spacing-lg);
+  }
+
+  .confidence-summary-card {
+    margin: 0 var(--spacing-lg) var(--spacing-lg);
+    padding: var(--spacing-md);
+    background-color: var(--color-canvas-soft);
+    border: 1px solid var(--color-hairline);
+    border-radius: var(--radius-md);
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+  }
+
+  .conf-card-header {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+  }
+
+  .conf-stars {
+    color: #f59e0b;
+    letter-spacing: 2px;
+  }
+
+  .conf-title {
+    font-weight: 600;
+    font-size: var(--font-size-body-sm);
+    color: var(--color-ink);
+  }
+
+  .conf-card-badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--spacing-xs);
+  }
+
+  .conf-badge {
+    font-family: var(--font-family-mono);
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--color-hairline);
+    background: var(--color-canvas);
+  }
+
+  .conf-badge-score {
+    color: var(--color-link);
+    font-weight: 600;
+  }
+
+  .rec-section {
+    border-top: 1px solid var(--color-hairline);
+  }
+
+  .rec-list {
+    padding: var(--spacing-lg);
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: var(--spacing-md);
+  }
+
+  .calc-extras {
+    border-top: 1px solid var(--color-hairline);
+    background-color: var(--color-canvas-soft);
+    padding: var(--spacing-lg);
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-lg);
+  }
+
+  @media (max-width: 640px) {
+    .results-metric-grid {
+      grid-template-columns: 1fr;
+      padding: var(--spacing-md);
+    }
+    .rec-list, .calc-extras, .svg-section {
+      padding: var(--spacing-md);
+    }
+    .confidence-summary-card {
+      margin: 0 var(--spacing-md) var(--spacing-md);
+      padding: var(--spacing-md);
+    }
+  }
+</style>
