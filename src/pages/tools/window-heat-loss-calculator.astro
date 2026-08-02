@@ -1,0 +1,939 @@
+---
+/**
+ * WindowMetrics — Window Heat Loss Calculator Page
+ *
+ * Fully reactive conduction heat loss calculator.
+ * Calculates heat loss rate in Watts & BTU/hr, temperature differential ΔT,
+ * daily/monthly/annual kWh energy loss, heating cost impact, and energy ratings.
+ */
+
+import ToolLayout from '@/layouts/ToolLayout.astro';
+import CalculatorHero from '@/components/calculator/CalculatorHero.astro';
+import InputCard from '@/components/calculator/InputCard.astro';
+import UnitSelector from '@/components/calculator/UnitSelector.astro';
+import ResultMetricCard from '@/components/calculator/ResultMetricCard.astro';
+import ShareExportBar from '@/components/calculator/ShareExportBar.astro';
+import HistoryPanel from '@/components/calculator/HistoryPanel.astro';
+import RelatedTools from '@/components/calculator/RelatedTools.astro';
+import FAQSection from '@/components/content/FAQSection.astro';
+import { getToolBySlug } from '@/data/tools.js';
+
+const tool = getToolBySlug('window-heat-loss-calculator');
+if (!tool) {
+  throw new Error('Tool data for "window-heat-loss-calculator" not found in tool registry.');
+}
+
+const breadcrumbs = [
+  { label: 'Home', href: '/' },
+  { label: 'Tools', href: '/tools' },
+  { label: 'Window Heat Loss Calculator', href: '/tools/window-heat-loss-calculator' },
+];
+
+const faqs = [
+  {
+    question: 'How do windows lose heat during winter?',
+    answer: 'Windows lose heat primarily through conduction (thermal transfer through glass and frame), thermal radiation, and air leakage around sashes and perimeter seals. Conduction accounts for 60% to 70% of total window thermal loss.',
+  },
+  {
+    question: 'What is the formula for calculating window heat loss?',
+    answer: 'The fundamental conduction heat loss formula is Q = U × A × ΔT, where Q is heat loss in BTU/hr, U is the window U-factor, A is window area in square feet, and ΔT is the temperature difference between indoors and outdoors in °F. To convert BTU/hr to Watts, divide Q by 3.412.',
+  },
+  {
+    question: 'Why do single-pane windows lose so much heat?',
+    answer: 'Single-pane glass has a high U-Factor of 1.10 (thermal resistance R-value of only 0.9). Heat rapidly conducts through the thin glass pane, causing interior glass surface temperatures to drop close to outdoor freezing levels.',
+  },
+  {
+    question: 'How much heat loss can double-pane Low-E windows prevent?',
+    answer: 'Double-pane windows with Low-E glass have a U-Factor of ~0.30 (R-value 3.3). They reduce conduction heat loss by approximately 65% compared to single-pane glass, keeping indoor glass surfaces warmer and eliminating cold room drafts.',
+  },
+  {
+    question: 'Does window directional exposure (North, South, East, West) matter?',
+    answer: 'Yes. North-facing windows experience cold prevailing winter winds with zero solar heat gain, increasing heat loss by 15%. South-facing windows benefit from winter solar heat gain that offsets daytime conduction loss by 10%.',
+  },
+  {
+    question: 'What role does frame material play in heat loss?',
+    answer: 'Frame material significantly affects thermal bridging. Multi-chamber vinyl and fiberglass frames insulate effectively. Un-broken aluminum frames conduct heat rapidly, increasing perimeter heat loss by up to 35%.',
+  },
+  {
+    question: 'How do I convert heat loss from BTU/hr to Watts or kWh?',
+    answer: '1 Watt equals 3.412 BTU/hr. To find daily energy loss in kWh: Daily kWh = (Heat Loss Watts × 24 hours) / 1,000. Annual kWh loss is calculated over your regional heating season days (typically 180 days).',
+  },
+  {
+    question: 'What is the fastest low-cost way to reduce window heat loss in winter?',
+    answer: 'Installing interior shrink-wrap thermal window film costs under $15 per window and creates a sealed dead-air space, reducing heat loss and air infiltration by up to 40% immediately.',
+  },
+];
+---
+
+<ToolLayout tool={tool} breadcrumbs={breadcrumbs} faqs={faqs}>
+  <CalculatorHero
+    tool={tool}
+    description="Calculate conduction heat loss rate in Watts and BTU/hr, daily/monthly/annual kWh thermal loss, temperature differential ΔT, and heating bill impact."
+    features={[
+      'Heat loss rate in Watts & BTU/hr',
+      'Temperature differential ΔT (°F & °C)',
+      'Daily, monthly & annual kWh energy loss',
+      'Energy efficiency rating (A+ to F)',
+    ]}
+    trustItems={[
+      { label: 'Standard Q = U·A·ΔT physics' },
+      { label: 'NFRC thermal U-factors' },
+      { label: 'No signup' },
+      { label: 'Instant calculation' },
+    ]}
+  />
+
+  <div class="calc-dashboard">
+    <!-- LEFT PANEL — Inputs -->
+    <div class="calc-panel calc-panel-inputs">
+      <div class="panel-header">
+        <span class="panel-label">Window Dimensions & Count</span>
+        <UnitSelector defaultUnit="in" />
+      </div>
+
+      <div class="panel-section-header">
+        <span class="panel-section-title">Measurements & Quantity</span>
+      </div>
+
+      <InputCard label="Window Width" inputId="input-width" hint="Frame width">
+        <input type="text" id="input-width" class="input" placeholder="e.g., 36" autocomplete="off" />
+      </InputCard>
+
+      <InputCard label="Window Height" inputId="input-height" hint="Frame height">
+        <input type="text" id="input-height" class="input" placeholder="e.g., 48" autocomplete="off" />
+      </InputCard>
+
+      <InputCard label="Number of Windows" inputId="input-windows-count" hint="Total windows in room/home">
+        <input type="number" id="input-windows-count" class="input" value="10" min="1" max="100" step="1" />
+      </InputCard>
+
+      <div class="panel-section-header">
+        <span class="panel-section-title">Temperatures & Climate</span>
+      </div>
+
+      <InputCard label="Indoor Thermostat (°F)" inputId="input-indoor-temp" hint="Target indoor temp">
+        <input type="number" id="input-indoor-temp" class="input" value="70" min="50" max="90" step="1" />
+      </InputCard>
+
+      <InputCard label="Outdoor Winter Temp (°F)" inputId="input-outdoor-temp" hint="Design winter temp">
+        <input type="number" id="input-outdoor-temp" class="input" value="20" min="-40" max="70" step="1" />
+      </InputCard>
+
+      <div class="panel-section-header">
+        <span class="panel-section-title">Window Construction</span>
+      </div>
+
+      <InputCard label="Window Glazing Type" inputId="input-window-type">
+        <select id="input-window-type" class="input-select" aria-label="Select Window Glazing Type">
+          <option value="single-pane" selected>Single Pane Clear Glass (U=1.10 - High Loss)</option>
+          <option value="double-pane">Double Pane Standard Insulated (U=0.48)</option>
+          <option value="low-e">Double Pane Low-E Solar Control (U=0.30)</option>
+          <option value="triple-pane">Triple Pane High Efficiency (U=0.22)</option>
+        </select>
+      </InputCard>
+
+      <InputCard label="Frame Material" inputId="input-frame-material">
+        <select id="input-frame-material" class="input-select" aria-label="Select Frame Material">
+          <option value="vinyl" selected>Insulated Vinyl (PVC Profile)</option>
+          <option value="fiberglass">Pultruded Fiberglass Composite</option>
+          <option value="wood">Solid Wood Timber Frame</option>
+          <option value="aluminum">Aluminum Profile (Un-broken)</option>
+        </select>
+      </InputCard>
+
+      <div class="panel-section-header">
+        <span class="panel-section-title">Climate & Exposure</span>
+      </div>
+
+      <div class="input-card">
+        <div class="input-card-header">
+          <span class="input-card-label">Regional Climate</span>
+        </div>
+        <div class="option-selector" id="climate-selector" role="group">
+          <button type="button" class="option-btn" data-value="cold" aria-pressed="true">Cold Winter</button>
+          <button type="button" class="option-btn" data-value="moderate" aria-pressed="false">Moderate</button>
+          <button type="button" class="option-btn" data-value="hot" aria-pressed="false">Mild Winter</button>
+        </div>
+      </div>
+
+      <div class="input-card">
+        <div class="input-card-header">
+          <span class="input-card-label">Directional Exposure</span>
+        </div>
+        <div class="option-selector" id="exposure-selector" role="group">
+          <button type="button" class="option-btn" data-value="north" aria-pressed="true">North (Max Wind)</button>
+          <button type="button" class="option-btn" data-value="west" aria-pressed="false">West</button>
+          <button type="button" class="option-btn" data-value="east" aria-pressed="false">East</button>
+          <button type="button" class="option-btn" data-value="south" aria-pressed="false">South (Solar Gain)</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT PANEL — Results -->
+    <div class="calc-panel calc-panel-results">
+      <div id="results-empty" class="empty-state">
+        <div class="empty-icon-wrap">
+          <svg width="48" height="48" viewBox="0 0 48 48" fill="none" class="empty-svg">
+            <rect x="8" y="12" width="32" height="24" rx="3" stroke="currentColor" stroke-width="2.5" fill="none"/>
+            <circle cx="24" cy="24" r="6" stroke="currentColor" stroke-width="1.5" stroke-dasharray="2 2"/>
+          </svg>
+        </div>
+        <h3 class="empty-title">Enter window dimensions</h3>
+        <p class="empty-sub">Fill in Width and Height to calculate heat loss rate (Watts & BTU/hr) and annual heating cost.</p>
+      </div>
+
+      <div id="results-grid" hidden>
+        <!-- SVG Heat Loss Diagram Illustration -->
+        <div class="svg-section">
+          <div class="svg-header">
+            <span class="svg-label">Conduction Heat Loss Vector Diagram</span>
+            <span class="svg-subtitle" id="svg-subtitle">Indoor Heat vs. Outdoor Temperature Flow</span>
+          </div>
+          <div class="svg-wrap">
+            <svg id="heat-loss-svg" viewBox="0 0 400 340" width="100%" aria-label="Window heat loss diagram"></svg>
+          </div>
+        </div>
+
+        <div class="results-metric-grid">
+          <ResultMetricCard id="card-heat-loss-watts" label="Total Heat Loss Rate" highlight={true} sublabel="Conduction loss across windows" animate={true} />
+          <ResultMetricCard id="card-annual-cost" label="Estimated Annual Heating Cost" highlight={true} sublabel="Cost of lost window heat" animate={true} />
+          <ResultMetricCard id="card-rating" label="Energy Efficiency Rating" highlight={true} sublabel="Thermal resistance grade" animate={true} />
+          <ResultMetricCard id="card-delta-t" label="Temperature Difference (ΔT)" highlight={true} sublabel="Indoor vs Outdoor ΔT" animate={true} />
+          <ResultMetricCard id="card-loss-btu" label="Heat Loss (BTU/hr)" sublabel="Thermal loss rate in BTU/hr" animate={true} />
+          <ResultMetricCard id="card-daily-loss" label="Daily Energy Loss" sublabel="kWh lost per 24 hours" animate={true} />
+          <ResultMetricCard id="card-monthly-loss" label="Monthly Energy Loss" sublabel="kWh lost per 30 days" animate={true} />
+          <ResultMetricCard id="card-improvement" label="Potential Improvement" sublabel="Loss reduction with Low-E" animate={true} />
+        </div>
+
+        <!-- Unified Confidence Summary Card -->
+        <div id="card-confidence" class="confidence-summary-card" hidden>
+          <div class="conf-card-header">
+            <span class="conf-stars" id="confidence-stars">★★★★★</span>
+            <span class="conf-title" id="confidence-label">High Heat Loss Warning</span>
+          </div>
+          <div class="conf-card-badges">
+            <span class="conf-badge conf-badge-score" id="score-badge">GRADE: F</span>
+            <span class="conf-badge conf-badge-order" id="confidence-ordering-badge">✓ ΔT: 50°F Differential</span>
+            <span class="conf-badge conf-badge-cost" id="cost-badge">Category: SEVERE</span>
+          </div>
+        </div>
+
+        <!-- Recommendations Grid -->
+        <div id="rec-section" class="rec-section" hidden>
+          <div class="panel-header"><span class="panel-label">Smart Recommendations & Heat Loss Prevention</span></div>
+          <div id="rec-list" class="rec-list"></div>
+        </div>
+
+        <!-- Share & Export + History Bar -->
+        <div class="calc-extras" id="calc-extras" hidden>
+          <ShareExportBar calculatorTitle="Window Heat Loss Calculator" />
+          <HistoryPanel slug="window-heat-loss-calculator" />
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <Fragment slot="sidebar">
+    <RelatedTools
+      links={[
+        {
+          title: 'Window Energy Savings Calculator',
+          description: 'Calculate annual utility bill savings, CO2 carbon reduction, and payback period.',
+          href: '/tools/window-energy-savings-calculator',
+          icon: 'Zap',
+        },
+        {
+          title: 'Window Cost Calculator',
+          description: 'Calculate total window replacement cost, material costs, labor, and budget tiers.',
+          href: '/tools/window-cost-calculator',
+          icon: 'DollarSign',
+        },
+        {
+          title: 'Window Glass Calculator',
+          description: 'Calculate glass area, pane thickness, and weight for any shape.',
+          href: '/tools/window-glass-calculator',
+          icon: 'PanelTop',
+        },
+      ]}
+      tip={{
+        label: 'Winterization Tip',
+        text: 'Adding Low-E glass or applying shrink-wrap interior window film creates an insulating air buffer, cutting conduction heat loss by up to 60% during freezing winter months.',
+      }}
+    />
+    <FAQSection faqs={faqs} />
+  </Fragment>
+</ToolLayout>
+
+<script>
+  import {
+    calculateWindowHeatLoss,
+    type WindowHeatLossInput,
+    type WindowHeatLossType,
+    type WindowHeatLossFrameMaterial,
+    type WindowHeatLossClimate,
+    type WindowHeatLossExposure,
+  } from '@/engine/window-heat-loss.js';
+  import { buildWindowHeatLossRecommendations } from '@/engine/window-heat-loss-recommendations.js';
+  import { toMm, fromMm, formatDimension, normalizeInput } from '@/engine/units.js';
+  import { readUrlState, pushUrlState } from '@/lib/url-state.js';
+  import { buildExportPayload } from '@/lib/export.js';
+  import { buildSummary } from '@/lib/share.js';
+  import { track } from '@/lib/analytics.js';
+  import type { MeasurementUnit } from '@/types/calculator.js';
+
+  let currentResult: ReturnType<typeof calculateWindowHeatLoss> | null = null;
+  let currentUnit: MeasurementUnit = 'in';
+  let currentType: WindowHeatLossType = 'single-pane';
+  let currentMaterial: WindowHeatLossFrameMaterial = 'vinyl';
+  let currentClimate: WindowHeatLossClimate = 'cold';
+  let currentExposure: WindowHeatLossExposure = 'north';
+
+  // ── DOM references ────────────────────────────────────────────────────────
+  const widthInput   = document.getElementById('input-width')          as HTMLInputElement | null;
+  const heightInput  = document.getElementById('input-height')         as HTMLInputElement | null;
+  const countInput   = document.getElementById('input-windows-count')  as HTMLInputElement | null;
+  const indoorInput  = document.getElementById('input-indoor-temp')     as HTMLInputElement | null;
+  const outdoorInput = document.getElementById('input-outdoor-temp')    as HTMLInputElement | null;
+
+  const resultsEmpty = document.getElementById('results-empty') as HTMLElement | null;
+  const resultsGrid  = document.getElementById('results-grid')  as HTMLElement | null;
+  const recSection   = document.getElementById('rec-section')   as HTMLElement | null;
+  const calcExtras   = document.getElementById('calc-extras')   as HTMLElement | null;
+  const cardConf     = document.getElementById('card-confidence') as HTMLElement | null;
+
+  function updateMetric(cardId: string, value: string, unitStr: string = '') {
+    const valEl = document.querySelector(`#${cardId} .result-value-text`);
+    const unitEl = document.querySelector(`#${cardId} .result-unit`);
+    if (valEl) valEl.textContent = value;
+    if (unitEl) unitEl.textContent = unitStr;
+  }
+
+  function initOptionSelector(containerId: string, onChange: (val: string) => void) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+    container.addEventListener('click', (e) => {
+      const btn = (e.target as HTMLElement).closest('.option-btn') as HTMLElement | null;
+      if (btn?.dataset.value) {
+        container.querySelectorAll('.option-btn').forEach(b => b.setAttribute('aria-pressed', 'false'));
+        btn.setAttribute('aria-pressed', 'true');
+        onChange(btn.dataset.value);
+      }
+    });
+  }
+
+  // ── Vector SVG Heat Loss Diagram Renderer ─────────────────────────────────────
+  function renderHeatLossSvg(result: ReturnType<typeof calculateWindowHeatLoss>, wMm: number, hMm: number) {
+    const svg = document.getElementById('heat-loss-svg');
+    if (!svg) return;
+
+    const cx = 150, cy = 160;
+    const maxW = 180, maxH = 180;
+    const scale = Math.min(maxW / wMm, maxH / hMm);
+
+    const fw = wMm * scale;
+    const fh = hMm * scale;
+
+    svg.innerHTML = `
+      <defs>
+        <pattern id="grid-heat" width="20" height="20" patternUnits="userSpaceOnUse">
+          <path d="M 20 0 L 0 0 0 20" fill="none" stroke="rgba(0,0,0,0.03)" stroke-width="1"/>
+        </pattern>
+      </defs>
+      <rect width="400" height="340" fill="url(#grid-heat)" rx="6"/>
+
+      <!-- Indoor House Envelope -->
+      <rect x="20" y="40" width="210" height="260" rx="8" fill="#fef2f2" stroke="#fca5a5" stroke-width="2"/>
+      <text x="35" y="65" font-family="sans-serif" font-size="10" font-weight="700" fill="#991b1b">INDOOR (${result.tempDifferenceF + (outdoorInput ? parseFloat(outdoorInput.value || '20') : 20)}°F)</text>
+
+      <!-- Window Glass Frame -->
+      <rect x="${cx - fw/2}" y="${cy - fh/2}" width="${fw}" height="${fh}" fill="#ffffff" stroke="#0f172a" stroke-width="5" rx="3"/>
+      <rect x="${cx - fw/2 + 8}" y="${cy - fh/2 + 8}" width="${fw - 16}" height="${fh - 16}" fill="#e0f2fe" stroke="#0284c7" stroke-width="2" fill-opacity="0.6"/>
+
+      <!-- Heat Conduction Flow Arrows (Indoor Warm -> Outdoor Cold) -->
+      <path d="M 60 160 L 220 160" stroke="#ef4444" stroke-width="4" stroke-linecap="round"/>
+      <polygon points="225,160 215,154 215,166" fill="#ef4444"/>
+      <text x="135" y="150" font-family="sans-serif" font-size="10" font-weight="700" text-anchor="middle" fill="#dc2626">HEAT ESCAPING</text>
+
+      <!-- Outdoor Environment Box -->
+      <rect x="250" y="40" width="135" height="60" rx="6" fill="#0f172a"/>
+      <text x="317" y="62" font-family="sans-serif" font-size="10" font-weight="700" text-anchor="middle" fill="#94a3b8">OUTDOOR TEMP</text>
+      <text x="317" y="85" font-family="monospace" font-size="16" font-weight="700" text-anchor="middle" fill="#38bdf8">${outdoorInput ? outdoorInput.value : 20}°F</text>
+
+      <!-- Heat Loss Rate Summary Box -->
+      <rect x="250" y="115" width="135" height="170" rx="6" fill="#ffffff" stroke="#cbd5e1" stroke-width="1"/>
+      <text x="317" y="135" font-family="sans-serif" font-size="10" font-weight="700" text-anchor="middle" fill="#0f172a">HEAT LOSS RATE</text>
+
+      <rect x="260" y="150" width="115" height="32" rx="4" fill="#fee2e2"/>
+      <text x="268" y="166" font-family="sans-serif" font-size="9" font-weight="600" fill="#991b1b">Watts Lost</text>
+      <text x="367" y="170" font-family="monospace" font-size="11" font-weight="700" text-anchor="end" fill="#991b1b">${result.heatLossWatts.toLocaleString()} W</text>
+
+      <rect x="260" y="190" width="115" height="32" rx="4" fill="#f1f5f9"/>
+      <text x="268" y="206" font-family="sans-serif" font-size="9" font-weight="600" fill="#334155">BTU / hr</text>
+      <text x="367" y="210" font-family="monospace" font-size="10" font-weight="700" text-anchor="end" fill="#0f172a">${result.heatLossBtuHr.toLocaleString()}</text>
+
+      <rect x="260" y="230" width="115" height="32" rx="4" fill="#f1f5f9"/>
+      <text x="268" y="246" font-family="sans-serif" font-size="9" font-weight="600" fill="#334155">U-Factor</text>
+      <text x="367" y="250" font-family="monospace" font-size="10" font-weight="700" text-anchor="end" fill="#0f172a">${result.uFactorBtu.toFixed(2)}</text>
+
+      <!-- Dimension Annotations -->
+      <text x="${cx}" y="${cy + fh/2 + 20}" font-family="monospace" font-size="10" font-weight="700" text-anchor="middle" fill="#0f172a">${Math.round(fromMm(wMm, currentUnit))} ${currentUnit} W</text>
+      <text x="${cx + fw/2 + 15}" y="${cy}" font-family="monospace" font-size="10" font-weight="700" text-anchor="start" fill="#0f172a">${Math.round(fromMm(hMm, currentUnit))} ${currentUnit} H</text>
+    `;
+
+    const sub = document.getElementById('svg-subtitle');
+    if (sub) {
+      sub.textContent = `ΔT: ${result.tempDifferenceF}°F (${result.tempDifferenceC}°C) · Heat Loss Rate: ${result.heatLossWatts.toLocaleString()} W`;
+    }
+  }
+
+  function calculate() {
+    const wInput = widthInput?.value.trim() ?? '';
+    const hInput = heightInput?.value.trim() ?? '';
+    const numWindows = parseInt(countInput?.value || '10', 10);
+    const indoorF = parseFloat(indoorInput?.value || '70');
+    const outdoorF = parseFloat(outdoorInput?.value || '20');
+
+    if (!wInput || !hInput) {
+      if (resultsEmpty) resultsEmpty.hidden = false;
+      if (resultsGrid)  resultsGrid.hidden  = true;
+      if (recSection)   recSection.hidden   = true;
+      if (calcExtras)   calcExtras.hidden   = true;
+      if (cardConf)     cardConf.hidden     = true;
+      return;
+    }
+
+    const w = normalizeInput(wInput, currentUnit);
+    const h = normalizeInput(hInput, currentUnit);
+
+    if (!w || !h || w <= 0 || h <= 0) {
+      if (resultsEmpty) resultsEmpty.hidden = false;
+      if (resultsGrid)  resultsGrid.hidden  = true;
+      if (recSection)   recSection.hidden   = true;
+      if (calcExtras)   calcExtras.hidden   = true;
+      if (cardConf)     cardConf.hidden     = true;
+      return;
+    }
+
+    const wMm = toMm(w, currentUnit);
+    const hMm = toMm(h, currentUnit);
+
+    const input: WindowHeatLossInput = {
+      windowWidthMm: wMm,
+      windowHeightMm: hMm,
+      numberOfWindows: Math.max(1, numWindows),
+      indoorTempF: indoorF,
+      outdoorTempF: outdoorF,
+      windowType: currentType,
+      frameMaterial: currentMaterial,
+      climate: currentClimate,
+      exposure: currentExposure,
+    };
+
+    const result = calculateWindowHeatLoss(input);
+    currentResult = result;
+    const recs = buildWindowHeatLossRecommendations(input, result);
+
+    // ── Metrics ──────────────────────────────────────────────────────────────
+    updateMetric('card-heat-loss-watts', `${result.heatLossWatts.toLocaleString()} W`, `(${result.heatLossBtuHr.toLocaleString()} BTU/hr)`);
+    updateMetric('card-annual-cost', `$${result.estimatedHeatingCostAnnual.toLocaleString()}`, '/ year heating cost');
+    updateMetric('card-rating', result.energyEfficiencyRating ?? result.energyRating, `Grade (${result.heatLossCategory.toUpperCase()})`);
+    updateMetric('card-delta-t', `${result.tempDifferenceF}°F`, `(${result.tempDifferenceC}°C differential)`);
+    updateMetric('card-loss-btu', `${result.heatLossBtuHr.toLocaleString()}`, 'BTU/hr loss rate');
+    updateMetric('card-daily-loss', `${result.dailyHeatLossKwh.toFixed(1)} kWh`, '/ 24 hours');
+    updateMetric('card-monthly-loss', `${result.monthlyHeatLossKwh.toLocaleString()} kWh`, '/ 30 days');
+    updateMetric('card-improvement', currentType === 'single-pane' ? '-65% Loss' : '-40% Loss', 'With Low-E upgrade');
+
+    // ── Confidence summary card ───────────────────────────────────────────────
+    const starsEl = document.getElementById('confidence-stars');
+    const labelEl = document.getElementById('confidence-label');
+    const orderBadge = document.getElementById('confidence-ordering-badge');
+    const costBadge = document.getElementById('cost-badge');
+    const scoreBadge = document.getElementById('score-badge');
+
+    if (starsEl) starsEl.textContent = result.energyRating === 'A+' || result.energyRating === 'A' ? '★★★★★' : (result.energyRating === 'B' ? '★★★★☆' : '★★★☆☆');
+    if (labelEl) labelEl.textContent = result.heatLossCategory === 'severe' ? 'Severe Heat Loss Warning' : 'Conduction Loss Analysis';
+    if (scoreBadge) scoreBadge.textContent = `GRADE: ${result.energyRating}`;
+    if (orderBadge) orderBadge.textContent = `✓ ΔT: ${result.tempDifferenceF}°F Differential`;
+    if (costBadge) costBadge.textContent = `Loss: ${result.heatLossCategory.toUpperCase()}`;
+
+    // ── Recommendation cards ─────────────────────────────────────────────────
+    const recList = document.getElementById('rec-list');
+    if (recList) {
+      const iconMap: Record<string, string> = {
+        'upgrade': `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>`,
+        'replacement': `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg>`,
+        'frame': `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/></svg>`,
+        'weatherstripping': `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 4v10.54a4 4 0 1 1-4 0V4a2 2 0 0 1 4 0z"/></svg>`,
+        'film': `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18"/><line x1="7" y1="2" x2="7" y2="22"/></svg>`,
+        'priority': `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>`,
+      };
+      recList.innerHTML = recs.items.map((item: any) =>
+        `<div class="rec-card">
+          <div class="rec-card-header">
+            <span class="rec-card-icon" aria-hidden="true">${iconMap[item.type] || iconMap['upgrade']}</span>
+            <span class="rec-card-title">${item.title}</span>
+          </div>
+          <div class="rec-card-body">${item.body}</div>
+          ${item.tip ? `<div class="rec-card-tip">${item.tip}</div>` : ''}
+        </div>`
+      ).join('');
+    }
+
+    try {
+      renderHeatLossSvg(result, wMm, hMm);
+    } catch (e) {
+      console.error('SVG rendering error:', e);
+    }
+
+    if (resultsEmpty) resultsEmpty.hidden = true;
+    if (resultsGrid)  resultsGrid.hidden  = false;
+    if (recSection)   recSection.hidden   = false;
+    if (calcExtras)   calcExtras.hidden   = false;
+    if (cardConf)     cardConf.hidden     = false;
+
+    const summaryText = `${w} × ${h} ${currentUnit} (${input.numberOfWindows}x)`;
+    const stateParams = {
+      width: String(w),
+      height: String(h),
+      unit: currentUnit,
+      count: String(input.numberOfWindows),
+      indoor: String(indoorF),
+      outdoor: String(outdoorF),
+      type: currentType,
+      material: currentMaterial,
+      climate: currentClimate,
+      exposure: currentExposure,
+      subtitle: `Heat Loss: ${result.heatLossWatts} W (${result.heatLossBtuHr} BTU/hr) · Grade ${result.energyRating}`,
+      summary: summaryText,
+      _display: summaryText,
+    };
+
+    (window as any).wmCurrentState = stateParams;
+    pushUrlState(stateParams);
+    (window as any).wmHistoryPanel?.add(`Window Heat Loss`, stateParams);
+
+    (window as any).wmBuildSummary = () => buildSummary(
+      'Window Heat Loss Calculator',
+      [
+        ['Window Dimensions', `${w} × ${h} ${currentUnit}`],
+        ['Number of Windows', String(input.numberOfWindows)],
+        ['Indoor / Outdoor Temp', `${indoorF}°F / ${outdoorF}°F (ΔT: ${result.tempDifferenceF}°F)`],
+        ['Window Glazing Type', currentType],
+        ['Frame Material', currentMaterial],
+        ['Directional Exposure', currentExposure],
+        ['Heat Loss Rate (Watts)', `${result.heatLossWatts.toLocaleString()} W`],
+        ['Heat Loss Rate (BTU/hr)', `${result.heatLossBtuHr.toLocaleString()} BTU/hr`],
+        ['Daily Energy Loss', `${result.dailyHeatLossKwh} kWh`],
+        ['Annual Heating Cost Impact', `$${result.estimatedHeatingCostAnnual.toLocaleString()}`],
+        ['Energy Efficiency Rating', result.energyRating],
+        ['Heat Loss Category', result.heatLossCategory.toUpperCase()],
+      ],
+      typeof window !== 'undefined' ? window.location.href : undefined,
+    );
+
+    (window as any).wmBuildExport = () => buildExportPayload(
+      'window-heat-loss-calculator',
+      stateParams,
+      {
+        windowWidth: `${w} ${currentUnit}`,
+        windowHeight: `${h} ${currentUnit}`,
+        unit: currentUnit,
+        numberOfWindows: input.numberOfWindows,
+        indoorTempF: `${indoorF}°F`,
+        outdoorTempF: `${outdoorF}°F`,
+        tempDifferenceF: `${result.tempDifferenceF}°F`,
+        tempDifferenceC: `${result.tempDifferenceC}°C`,
+        windowType: currentType,
+        frameMaterial: currentMaterial,
+        exposure: currentExposure,
+        totalWindowAreaSqFt: `${result.totalAreaSqFt} sq ft`,
+        uFactorBtu: result.uFactorBtu,
+        uFactorW: result.uFactorW,
+        heatLossBtuHr: `${result.heatLossBtuHr} BTU/hr`,
+        heatLossWatts: `${result.heatLossWatts} W`,
+        dailyHeatLossKwh: `${result.dailyHeatLossKwh} kWh`,
+        monthlyHeatLossKwh: `${result.monthlyHeatLossKwh} kWh`,
+        annualHeatLossKwh: `${result.annualHeatLossKwh} kWh`,
+        estimatedHeatingCostAnnual: `$${result.estimatedHeatingCostAnnual}`,
+        energyRating: result.energyRating,
+        heatLossCategory: result.heatLossCategory,
+        confidence: result.confidence,
+        recommendations: recs.items.map((i: any) => `${i.title}: ${i.body}`).join(' | '),
+        warnings: result.warnings.map((w: any) => w.message).join(' | '),
+      },
+    );
+
+    (window as any).wmShareExportBar?.show();
+
+    track({
+      type: 'calculation_completed',
+      properties: { slug: 'window-heat-loss-calculator', unit: currentUnit, inputs: stateParams },
+    });
+  }
+
+  // ── Event listeners ───────────────────────────────────────────────────────
+  widthInput?.addEventListener('input', calculate);
+  heightInput?.addEventListener('input', calculate);
+  countInput?.addEventListener('input', calculate);
+  countInput?.addEventListener('change', calculate);
+  indoorInput?.addEventListener('input', calculate);
+  outdoorInput?.addEventListener('input', calculate);
+
+  document.getElementById('input-window-type')?.addEventListener('change', () => {
+    currentType = (document.getElementById('input-window-type') as HTMLSelectElement).value as WindowHeatLossType;
+    calculate();
+  });
+
+  document.getElementById('input-frame-material')?.addEventListener('change', () => {
+    currentMaterial = (document.getElementById('input-frame-material') as HTMLSelectElement).value as WindowHeatLossFrameMaterial;
+    calculate();
+  });
+
+  initOptionSelector('climate-selector', (val) => {
+    currentClimate = val as WindowHeatLossClimate;
+    calculate();
+  });
+
+  initOptionSelector('exposure-selector', (val) => {
+    currentExposure = val as WindowHeatLossExposure;
+    calculate();
+  });
+
+  document.getElementById('unit-selector')?.addEventListener('unitchange', (e) => {
+    const newUnit = (e as CustomEvent).detail?.unit as MeasurementUnit | undefined;
+    if (!newUnit) return;
+    if (widthInput?.value) {
+      const parsed = normalizeInput(widthInput.value, currentUnit);
+      if (parsed) widthInput.value = String(fromMm(toMm(parsed, currentUnit), newUnit));
+    }
+    if (heightInput?.value) {
+      const parsed = normalizeInput(heightInput.value, currentUnit);
+      if (parsed) heightInput.value = String(fromMm(toMm(parsed, currentUnit), newUnit));
+    }
+    const oldUnit = currentUnit;
+    currentUnit = newUnit;
+    track({ type: 'unit_changed', properties: { slug: 'window-heat-loss-calculator', from: oldUnit, to: newUnit } });
+    calculate();
+  });
+
+  // Restore URL state
+  const urlState = readUrlState();
+  if (urlState.width && widthInput)   widthInput.value  = urlState.width;
+  if (urlState.height && heightInput) heightInput.value = urlState.height;
+  if (urlState.count && countInput)   countInput.value  = urlState.count;
+  if (urlState.indoor && indoorInput)   indoorInput.value   = urlState.indoor;
+  if (urlState.outdoor && outdoorInput) outdoorInput.value = urlState.outdoor;
+  if (urlState.unit && ['mm','cm','m','in','ft'].includes(urlState.unit)) {
+    currentUnit = urlState.unit as MeasurementUnit;
+    document.querySelectorAll('.unit-btn').forEach(b => (b as HTMLElement).setAttribute('aria-pressed', (b as HTMLElement).dataset.unit === currentUnit ? 'true' : 'false'));
+  }
+  if (urlState.type) {
+    currentType = urlState.type as WindowHeatLossType;
+    const sel = document.getElementById('input-window-type') as HTMLSelectElement;
+    if (sel) sel.value = currentType;
+  }
+  if (urlState.material) {
+    currentMaterial = urlState.material as WindowHeatLossFrameMaterial;
+    const sel = document.getElementById('input-frame-material') as HTMLSelectElement;
+    if (sel) sel.value = currentMaterial;
+  }
+  if (urlState.climate) {
+    currentClimate = urlState.climate as WindowHeatLossClimate;
+    document.querySelectorAll('#climate-selector .option-btn').forEach(b =>
+      (b as HTMLElement).setAttribute('aria-pressed', (b as HTMLElement).dataset.value === currentClimate ? 'true' : 'false'));
+  }
+  if (urlState.exposure) {
+    currentExposure = urlState.exposure as WindowHeatLossExposure;
+    document.querySelectorAll('#exposure-selector .option-btn').forEach(b =>
+      (b as HTMLElement).setAttribute('aria-pressed', (b as HTMLElement).dataset.value === currentExposure ? 'true' : 'false'));
+  }
+
+  // Initial calculation on page load
+  calculate();
+
+  // ── History restore ──────────────────────────────────────────────────────
+  document.addEventListener('wm:history-restore', (e: Event) => {
+    const { inputs } = (e as CustomEvent).detail;
+    if (inputs.width && widthInput)   widthInput.value  = inputs.width;
+    if (inputs.height && heightInput) heightInput.value = inputs.height;
+    if (inputs.count && countInput)   countInput.value  = inputs.count;
+    if (inputs.unit && ['mm','cm','m','in','ft'].includes(inputs.unit)) {
+      currentUnit = inputs.unit as MeasurementUnit;
+      document.querySelectorAll('.unit-btn').forEach(b => (b as HTMLElement).setAttribute('aria-pressed', (b as HTMLElement).dataset.unit === currentUnit ? 'true' : 'false'));
+    }
+    calculate();
+    track({ type: 'history_restored', properties: { slug: 'window-heat-loss-calculator', entryId: (e as CustomEvent).detail.entryId ?? '' } });
+  });
+</script>
+
+<style>
+  .calc-dashboard {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--spacing-xl);
+    align-items: start;
+    margin-top: var(--spacing-lg);
+  }
+
+  @media (min-width: 1024px) {
+    .calc-dashboard {
+      grid-template-columns: 380px 1fr;
+    }
+  }
+
+  .calc-panel {
+    background-color: var(--color-canvas);
+    border: 1px solid var(--color-hairline);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+  }
+
+  .calc-panel-inputs {
+    position: sticky;
+    top: var(--spacing-md);
+  }
+
+  .panel-header {
+    padding: var(--spacing-md);
+    background-color: var(--color-canvas-soft);
+    border-bottom: 1px solid var(--color-hairline);
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+  }
+
+  .panel-label {
+    font-family: var(--font-family-mono);
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--color-muted);
+  }
+
+  .panel-section-header {
+    padding: var(--spacing-xs) var(--spacing-md);
+    background-color: var(--color-canvas-soft);
+    border-top: 1px solid var(--color-hairline);
+    border-bottom: 1px solid var(--color-hairline);
+  }
+
+  .panel-section-title {
+    font-family: var(--font-family-mono);
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--color-ink-faint);
+  }
+
+  .input {
+    width: 100%;
+    padding: var(--spacing-sm) var(--spacing-md);
+    background-color: var(--color-canvas);
+    border: 1px solid var(--color-hairline);
+    border-radius: var(--radius-md);
+    font-family: var(--font-family-mono);
+    font-size: var(--font-size-body-md);
+    color: var(--color-ink);
+    transition: border-color 0.15s ease;
+  }
+
+  .input:focus {
+    outline: none;
+    border-color: var(--color-link);
+  }
+
+  .input-select {
+    width: 100%;
+    padding: var(--spacing-sm) var(--spacing-md);
+    background-color: var(--color-canvas);
+    border: 1px solid var(--color-hairline);
+    border-radius: var(--radius-md);
+    font-size: var(--font-size-body-sm);
+    color: var(--color-ink);
+  }
+
+  .option-selector {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--spacing-xs);
+    width: 100%;
+  }
+
+  .option-btn {
+    flex: 1 1 auto;
+    padding: 6px 10px;
+    font-size: 11px;
+    font-family: var(--font-family-mono);
+    border: 1px solid var(--color-hairline);
+    background: var(--color-canvas);
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    color: var(--color-ink-muted);
+    text-align: center;
+    transition: all 0.15s ease;
+  }
+
+  .option-btn[aria-pressed="true"] {
+    background: var(--color-ink);
+    color: var(--color-canvas);
+    border-color: var(--color-ink);
+    font-weight: 600;
+  }
+
+  /* Results Panel */
+  .empty-state {
+    padding: var(--spacing-3xl) var(--spacing-xl);
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .empty-icon-wrap {
+    color: var(--color-muted);
+    margin-bottom: var(--spacing-md);
+  }
+
+  .empty-title {
+    font-size: var(--font-size-h3);
+    font-weight: 600;
+    color: var(--color-ink);
+    margin: 0 0 var(--spacing-xs);
+  }
+
+  .empty-sub {
+    font-size: var(--font-size-body-sm);
+    color: var(--color-muted);
+    margin: 0;
+    max-width: 320px;
+  }
+
+  .svg-section {
+    border-bottom: 1px solid var(--color-hairline);
+    background-color: var(--color-canvas);
+  }
+
+  .svg-header {
+    padding: var(--spacing-sm) var(--spacing-md);
+    background-color: var(--color-canvas-soft);
+    border-bottom: 1px solid var(--color-hairline);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .svg-label {
+    font-family: var(--font-family-mono);
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--color-muted);
+  }
+
+  .svg-subtitle {
+    font-family: var(--font-family-mono);
+    font-size: 11px;
+    color: var(--color-ink-muted);
+  }
+
+  .svg-wrap {
+    padding: var(--spacing-md);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: var(--color-canvas);
+  }
+
+  .results-metric-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: var(--spacing-md);
+    padding: var(--spacing-lg);
+  }
+
+  .confidence-summary-card {
+    margin: 0 var(--spacing-lg) var(--spacing-lg);
+    padding: var(--spacing-md);
+    background-color: var(--color-canvas-soft);
+    border: 1px solid var(--color-hairline);
+    border-radius: var(--radius-md);
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+  }
+
+  .conf-card-header {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+  }
+
+  .conf-stars {
+    color: #f59e0b;
+    letter-spacing: 2px;
+  }
+
+  .conf-title {
+    font-weight: 600;
+    font-size: var(--font-size-body-sm);
+    color: var(--color-ink);
+  }
+
+  .conf-card-badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--spacing-xs);
+  }
+
+  .conf-badge {
+    font-family: var(--font-family-mono);
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--color-hairline);
+    background: var(--color-canvas);
+  }
+
+  .conf-badge-score {
+    color: var(--color-link);
+    font-weight: 600;
+  }
+
+  .rec-section {
+    border-top: 1px solid var(--color-hairline);
+  }
+
+  .rec-list {
+    padding: var(--spacing-lg);
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: var(--spacing-md);
+  }
+
+  .calc-extras {
+    border-top: 1px solid var(--color-hairline);
+    background-color: var(--color-canvas-soft);
+    padding: var(--spacing-lg);
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-lg);
+  }
+
+  @media (max-width: 640px) {
+    .results-metric-grid {
+      grid-template-columns: 1fr;
+      padding: var(--spacing-md);
+    }
+    .rec-list, .calc-extras, .svg-section {
+      padding: var(--spacing-md);
+    }
+    .confidence-summary-card {
+      margin: 0 var(--spacing-md) var(--spacing-md);
+      padding: var(--spacing-md);
+    }
+  }
+</style>
