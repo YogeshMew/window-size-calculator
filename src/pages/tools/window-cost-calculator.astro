@@ -1,0 +1,1059 @@
+---
+/**
+ * WindowMetrics — Window Cost & Replacement Estimator Page
+ *
+ * Fully reactive cost calculator for replacement and new window installations.
+ * Calculates material costs, glass costs, professional labor, regional adjustments,
+ * DIY savings, price per square foot, and budget tiers.
+ */
+
+import ToolLayout from '@/layouts/ToolLayout.astro';
+import CalculatorHero from '@/components/calculator/CalculatorHero.astro';
+import InputCard from '@/components/calculator/InputCard.astro';
+import UnitSelector from '@/components/calculator/UnitSelector.astro';
+import ResultMetricCard from '@/components/calculator/ResultMetricCard.astro';
+import ShareExportBar from '@/components/calculator/ShareExportBar.astro';
+import HistoryPanel from '@/components/calculator/HistoryPanel.astro';
+import RelatedTools from '@/components/calculator/RelatedTools.astro';
+import FAQSection from '@/components/content/FAQSection.astro';
+import { getToolBySlug } from '@/data/tools.js';
+
+const tool = getToolBySlug('window-cost-calculator');
+if (!tool) {
+  throw new Error('Tool data for "window-cost-calculator" not found in tool registry.');
+}
+
+const breadcrumbs = [
+  { label: 'Home', href: '/' },
+  { label: 'Tools', href: '/tools' },
+  { label: 'Window Cost Calculator', href: '/tools/window-cost-calculator' },
+];
+
+const faqs = [
+  {
+    question: 'How much does it cost to replace a window on average?',
+    answer: 'The average cost to replace a standard double-hung window ranges from $450 to $1,000 per unit, including professional labor. Vinyl replacement windows cost between $400 and $800, while wood or fiberglass frames with high-efficiency triple-pane glass can range from $900 to $1,800+ per window.',
+  },
+  {
+    question: 'What is the difference between Insert and Full-Frame replacement?',
+    answer: 'Insert replacement (pocket replacement) keeps the existing exterior window trim and frame intact, fitting the new window unit directly inside. It is faster and costs 30-40% less in labor. Full-frame replacement removes the entire existing frame down to the rough stud opening, ideal if the original frame has wood rot or water damage.',
+  },
+  {
+    question: 'How much can I save by installing windows myself (DIY)?',
+    answer: 'DIY installation saves $150 to $350 per window in contractor labor fees. However, DIY installation is only recommended for insert replacement of standard single/double-hung or sliding windows. Bay, bow, and full-frame replacements require advanced structural support and exterior flashing.',
+  },
+  {
+    question: 'Does frame material significantly affect replacement cost?',
+    answer: 'Yes. Vinyl is the most economical and popular material ($300-$700/unit). Extruded aluminum adds 15%, composite adds 35%, fiberglass adds 45%, and real solid wood adds 60%+ ($800-$1,600/unit) due to timber material costs and artisan craftsmanship.',
+  },
+  {
+    question: 'Are optional glass upgrades like Low-E and Argon Gas worth the cost?',
+    answer: 'Low-E coating ($40-$70/window) and Argon gas fill ($30-$50/window) reduce heat transfer and block up to 90% of UV rays. They reduce heating and cooling bills by 12-18% annually, typically paying for themselves within 3 to 5 years while protecting indoor furniture from sun fading.',
+  },
+  {
+    question: 'How do regional location costs impact window replacement estimates?',
+    answer: 'Contractor labor rates and local permit fees vary significantly by region. High-cost metropolitan areas (e.g. NYC, San Francisco, Boston) have 25-35% higher labor rates than average, while low-cost rural regions are 15% lower than national benchmarks.',
+  },
+  {
+    question: 'What is the Return on Investment (ROI) of replacing old windows?',
+    answer: 'Replacing old windows with ENERGY STAR certified models recovers an average of 68% to 72% of the project cost in increased home resale equity, according to national Remodeling Cost vs. Value reports.',
+  },
+  {
+    question: 'How long does a typical window replacement project take?',
+    answer: 'A professional installation crew installs 5 to 8 insert replacement windows per day (1 to 1.5 hours per window). Full-frame replacements take 2 to 3 hours per window. Most residential projects (8-12 windows) are completed in 1 to 2 days.',
+  },
+];
+---
+
+<ToolLayout tool={tool} breadcrumbs={breadcrumbs} faqs={faqs}>
+  <CalculatorHero
+    tool={tool}
+    description="Calculate exact window replacement costs, material & glass breakdowns, DIY vs. professional labor, regional pricing, ROI, and energy bill savings."
+    features={[
+      'Full material, glass & labor breakdown',
+      'DIY labor savings calculator',
+      'Regional labor cost adjustment',
+      'Home resale ROI & energy bill savings',
+    ]}
+    trustItems={[
+      { label: 'Industry pricing benchmarks' },
+      { label: 'Regional adjustments' },
+      { label: 'No signup' },
+      { label: 'ENERGY STAR ratings' },
+    ]}
+  />
+
+  <div class="calc-dashboard">
+    <!-- LEFT PANEL — Inputs -->
+    <div class="calc-panel calc-panel-inputs">
+      <div class="panel-header">
+        <span class="panel-label">Window Dimensions & Quantity</span>
+        <UnitSelector defaultUnit="in" />
+      </div>
+
+      <div class="panel-section-header">
+        <span class="panel-section-title">Measurements & Count</span>
+      </div>
+
+      <InputCard label="Window Width" inputId="input-width" hint="Frame width">
+        <input type="text" id="input-width" class="input" placeholder="e.g., 36" autocomplete="off" />
+      </InputCard>
+
+      <InputCard label="Window Height" inputId="input-height" hint="Frame height">
+        <input type="text" id="input-height" class="input" placeholder="e.g., 48" autocomplete="off" />
+      </InputCard>
+
+      <InputCard label="Quantity" inputId="input-quantity" hint="Number of identical windows">
+        <input type="number" id="input-quantity" class="input" value="1" min="1" max="100" step="1" />
+      </InputCard>
+
+      <div class="panel-section-header">
+        <span class="panel-section-title">Window Style & Materials</span>
+      </div>
+
+      <InputCard label="Window Style" inputId="input-style">
+        <select id="input-style" class="input-select" aria-label="Select Window Style">
+          <option value="single-hung">Single-Hung (Standard lower sash opens)</option>
+          <option value="double-hung" selected>Double-Hung (Top & bottom sashes open)</option>
+          <option value="casement">Casement (Side crank outward)</option>
+          <option value="sliding">Sliding / Glider (Horizontal slider)</option>
+          <option value="awning">Awning (Top hinge outward)</option>
+          <option value="picture">Picture / Fixed (Non-opening, high efficiency)</option>
+          <option value="bay">Bay Window (3-Panel architectural projection)</option>
+          <option value="bow">Bow Window (4 to 5-Panel curved projection)</option>
+          <option value="garden">Garden Window (Plant shelf projection)</option>
+          <option value="custom">Custom Architectural Shape</option>
+        </select>
+      </InputCard>
+
+      <InputCard label="Frame Material" inputId="input-frame-material">
+        <select id="input-frame-material" class="input-select" aria-label="Select Frame Material">
+          <option value="vinyl" selected>Low-Maintenance Vinyl (PVC Profile - $)</option>
+          <option value="aluminum">Extruded Aluminum (Sleek Modern - $$)</option>
+          <option value="wood">Solid Timber Wood (Classic Architectural - $$$$)</option>
+          <option value="fiberglass">Pultruded Fiberglass (High Strength - $$$)</option>
+          <option value="composite">Fibrex / Wood-Polymer Composite ($$$)</option>
+        </select>
+      </InputCard>
+
+      <InputCard label="Glass Type" inputId="input-glass-type">
+        <select id="input-glass-type" class="input-select" aria-label="Select Glass Type">
+          <option value="single-pane">Single Pane (Basic / Mild Climates)</option>
+          <option value="double-pane" selected>Double Pane Insulated Unit (Standard)</option>
+          <option value="triple-pane">Triple Pane High Efficiency (Extreme Cold/Noise)</option>
+          <option value="low-e">Low-E Solar Control Insulated Glass</option>
+          <option value="laminated">Laminated Security & Soundproof Glass</option>
+          <option value="tempered">Tempered Safety Glass (Code Required Near Doors)</option>
+        </select>
+      </InputCard>
+
+      <div class="panel-section-header">
+        <span class="panel-section-title">Installation & Region</span>
+      </div>
+
+      <div class="input-card">
+        <div class="input-card-header">
+          <span class="input-card-label">Installation Method</span>
+        </div>
+        <div class="option-selector" id="install-selector" role="group">
+          <button type="button" class="option-btn" data-value="professional" aria-pressed="true">Professional Contractor</button>
+          <button type="button" class="option-btn" data-value="diy" aria-pressed="false">DIY Self-Install</button>
+        </div>
+      </div>
+
+      <div class="input-card">
+        <div class="input-card-header">
+          <span class="input-card-label">Replacement Type</span>
+        </div>
+        <div class="option-selector" id="replacement-selector" role="group">
+          <button type="button" class="option-btn" data-value="insert" aria-pressed="true">Insert (Pocket)</button>
+          <button type="button" class="option-btn" data-value="full-frame" aria-pressed="false">Full Frame</button>
+          <button type="button" class="option-btn" data-value="new-construction" aria-pressed="false">New Framing</button>
+        </div>
+      </div>
+
+      <div class="input-card">
+        <div class="input-card-header">
+          <span class="input-card-label">Regional Cost Area</span>
+        </div>
+        <div class="option-selector" id="region-selector" role="group">
+          <button type="button" class="option-btn" data-value="low-cost" aria-pressed="false">Low (-15%)</button>
+          <button type="button" class="option-btn" data-value="average" aria-pressed="true">Average</button>
+          <button type="button" class="option-btn" data-value="high-cost" aria-pressed="false">High (+30%)</button>
+        </div>
+      </div>
+
+      <div class="panel-section-header">
+        <span class="panel-section-title">Optional Feature Add-ons</span>
+      </div>
+
+      <div class="input-card">
+        <div class="features-checklist" id="features-checklist">
+          <label class="feature-checkbox">
+            <input type="checkbox" value="grids" class="feature-input" />
+            <span class="feature-label">Decorative Grids / Colonial Muntins (+$35/window)</span>
+          </label>
+          <label class="feature-checkbox">
+            <input type="checkbox" value="argon-gas" class="feature-input" />
+            <span class="feature-label">Argon Gas Thermal Fill (+$45/window)</span>
+          </label>
+          <label class="feature-checkbox">
+            <input type="checkbox" value="uv-coating" class="feature-input" />
+            <span class="feature-label">UV Fade Protection Film (+$50/window)</span>
+          </label>
+          <label class="feature-checkbox">
+            <input type="checkbox" value="noise-reduction" class="feature-input" />
+            <span class="feature-label">Acoustic Soundproofing Glass (+$85/window)</span>
+          </label>
+          <label class="feature-checkbox">
+            <input type="checkbox" value="security-glass" class="feature-input" />
+            <span class="feature-label">Impact Security Glass (+$120/window)</span>
+          </label>
+          <label class="feature-checkbox">
+            <input type="checkbox" value="smart-glass" class="feature-input" />
+            <span class="feature-label">Electrochromic Smart Tinting (+$350/window)</span>
+          </label>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- RIGHT PANEL — Results -->
+    <div class="calc-panel calc-panel-results">
+      <div id="results-empty" class="empty-state">
+        <div class="empty-icon-wrap">
+          <svg width="48" height="48" viewBox="0 0 48 48" fill="none" class="empty-svg">
+            <rect x="8" y="12" width="32" height="24" rx="3" stroke="currentColor" stroke-width="2.5" fill="none"/>
+            <circle cx="24" cy="24" r="6" stroke="currentColor" stroke-width="1.5" stroke-dasharray="2 2"/>
+          </svg>
+        </div>
+        <h3 class="empty-title">Enter window dimensions</h3>
+        <p class="empty-sub">Fill in Width and Height to calculate grand total, material costs, labor & energy savings.</p>
+      </div>
+
+      <div id="results-grid" hidden>
+        <!-- SVG Price Breakdown Illustration -->
+        <div class="svg-section">
+          <div class="svg-header">
+            <span class="svg-label">Cost Breakdown & Elevation Diagram</span>
+            <span class="svg-subtitle" id="svg-subtitle">Per Window Breakdown & Labor Allocation</span>
+          </div>
+          <div class="svg-wrap">
+            <svg id="cost-svg" viewBox="0 0 400 340" width="100%" aria-label="Window cost breakdown diagram"></svg>
+          </div>
+        </div>
+
+        <div class="results-metric-grid">
+          <ResultMetricCard id="card-grand-total" label="Grand Total Project Cost" highlight={true} sublabel="All windows + labor + materials" animate={true} />
+          <ResultMetricCard id="card-cost-per-unit" label="Cost Per Window" highlight={true} sublabel="Average installed price" animate={true} />
+          <ResultMetricCard id="card-cost-sqft" label="Cost per Sq Ft" highlight={true} sublabel="Total cost / total glass area" animate={true} />
+          <ResultMetricCard id="card-savings-diy" label="Estimated DIY Savings" highlight={true} sublabel="Labor saved if self-installed" animate={true} />
+          <ResultMetricCard id="card-duration" label="Project Duration" sublabel="Estimated install time" animate={true} />
+          <ResultMetricCard id="card-budget" label="Budget Tier" sublabel="Cost tier category" animate={true} />
+          <ResultMetricCard id="card-labor" label="Total Labor Cost" sublabel="Installation labor & prep" animate={true} />
+          <ResultMetricCard id="card-materials-glass" label="Total Materials & Glass" sublabel="Frames, panes & add-ons" animate={true} />
+        </div>
+
+        <!-- Unified Confidence Summary Card -->
+        <div id="card-confidence" class="confidence-summary-card" hidden>
+          <div class="conf-card-header">
+            <span class="conf-stars" id="confidence-stars">★★★★★</span>
+            <span class="conf-title" id="confidence-label">Accurate Industry Estimate</span>
+          </div>
+          <div class="conf-card-badges">
+            <span class="conf-badge conf-badge-score" id="score-badge">Standard Size Match</span>
+            <span class="conf-badge conf-badge-order" id="confidence-ordering-badge">✓ Professional Contractor</span>
+            <span class="conf-badge conf-badge-cost" id="cost-badge">Tier: Mid-Range</span>
+          </div>
+        </div>
+
+        <!-- Recommendations Grid -->
+        <div id="rec-section" class="rec-section" hidden>
+          <div class="panel-header"><span class="panel-label">Smart Recommendations & Advice</span></div>
+          <div id="rec-list" class="rec-list"></div>
+        </div>
+
+        <!-- Share & Export + History Bar -->
+        <div class="calc-extras" id="calc-extras" hidden>
+          <ShareExportBar calculatorTitle="Window Cost Calculator" />
+          <HistoryPanel slug="window-cost-calculator" />
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <Fragment slot="sidebar">
+    <RelatedTools
+      links={[
+        {
+          title: 'Replacement Window Calculator',
+          description: 'Standard replacement window sizes, rough openings, and shim allowances.',
+          href: '/tools/replacement-window-calculator',
+          icon: 'RefreshCw',
+        },
+        {
+          title: 'Window Size Calculator',
+          description: 'Window opening area, perimeter, and sizing recommendations.',
+          href: '/tools/window-size-calculator',
+          icon: 'Ruler',
+        },
+        {
+          title: 'Window Glass Calculator',
+          description: 'Calculate glass area, pane thickness, and weight for any shape.',
+          href: '/tools/window-glass-calculator',
+          icon: 'PanelTop',
+        },
+      ]}
+      tip={{
+        label: 'Cost Tip',
+        text: 'Replacing multiple windows at once significantly reduces labor setup fees per window. Replacing 5+ windows in a single contract can lower installation costs by up to 15-20% per unit.',
+      }}
+    />
+    <FAQSection faqs={faqs} />
+  </Fragment>
+</ToolLayout>
+
+<script>
+  import {
+    calculateWindowCost,
+    type WindowCostInput,
+    type WindowCostStyle,
+    type WindowCostMaterial,
+    type WindowCostGlassType,
+    type WindowCostInstallation,
+    type WindowCostReplacementType,
+    type WindowCostRegion,
+    type WindowCostFeature,
+  } from '@/engine/window-cost.js';
+  import { buildWindowCostRecommendations } from '@/engine/window-cost-recommendations.js';
+  import { toMm, fromMm, formatDimension, normalizeInput } from '@/engine/units.js';
+  import { readUrlState, pushUrlState } from '@/lib/url-state.js';
+  import { buildExportPayload } from '@/lib/export.js';
+  import { buildSummary } from '@/lib/share.js';
+  import { track } from '@/lib/analytics.js';
+  import type { MeasurementUnit } from '@/types/calculator.js';
+
+  let currentResult: ReturnType<typeof calculateWindowCost> | null = null;
+  let currentUnit: MeasurementUnit = 'in';
+  let currentStyle: WindowCostStyle = 'double-hung';
+  let currentMaterial: WindowCostMaterial = 'vinyl';
+  let currentGlassType: WindowCostGlassType = 'double-pane';
+  let currentInstallation: WindowCostInstallation = 'professional';
+  let currentReplacementType: WindowCostReplacementType = 'insert';
+  let currentRegion: WindowCostRegion = 'average';
+  let currentFeatures: WindowCostFeature[] = [];
+
+  // ── DOM references ────────────────────────────────────────────────────────
+  const widthInput   = document.getElementById('input-width')   as HTMLInputElement | null;
+  const heightInput  = document.getElementById('input-height')  as HTMLInputElement | null;
+  const qtyInput     = document.getElementById('input-quantity') as HTMLInputElement | null;
+
+  const resultsEmpty = document.getElementById('results-empty') as HTMLElement | null;
+  const resultsGrid  = document.getElementById('results-grid')  as HTMLElement | null;
+  const recSection   = document.getElementById('rec-section')   as HTMLElement | null;
+  const calcExtras   = document.getElementById('calc-extras')   as HTMLElement | null;
+  const cardConf     = document.getElementById('card-confidence') as HTMLElement | null;
+
+  function updateMetric(cardId: string, value: string, unitStr: string = '') {
+    const valEl = document.querySelector(`#${cardId} .result-value-text`);
+    const unitEl = document.querySelector(`#${cardId} .result-unit`);
+    if (valEl) valEl.textContent = value;
+    if (unitEl) unitEl.textContent = unitStr;
+  }
+
+  function initOptionSelector(containerId: string, onChange: (val: string) => void) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+    container.addEventListener('click', (e) => {
+      const btn = (e.target as HTMLElement).closest('.option-btn') as HTMLElement | null;
+      if (btn?.dataset.value) {
+        container.querySelectorAll('.option-btn').forEach(b => b.setAttribute('aria-pressed', 'false'));
+        btn.setAttribute('aria-pressed', 'true');
+        onChange(btn.dataset.value);
+      }
+    });
+  }
+
+  // ── Vector SVG Price Breakdown Diagram Renderer ──────────────────────────────
+  function renderCostSvg(result: ReturnType<typeof calculateWindowCost>, wMm: number, hMm: number) {
+    const svg = document.getElementById('cost-svg');
+    if (!svg) return;
+
+    const cx = 150, cy = 160;
+    const maxW = 180, maxH = 180;
+    const scale = Math.min(maxW / wMm, maxH / hMm);
+
+    const fw = wMm * scale;
+    const fh = hMm * scale;
+
+    const matPct = Math.round(((result.totalMaterialCost + result.totalGlassCost) / Math.max(1, result.grandTotal)) * 100);
+    const laborPct = Math.round((result.totalLaborCost / Math.max(1, result.grandTotal)) * 100);
+    const featPct = Math.min(100 - matPct - laborPct, Math.round((result.totalFeaturesCost / Math.max(1, result.grandTotal)) * 100));
+
+    svg.innerHTML = `
+      <defs>
+        <pattern id="grid-cost" width="20" height="20" patternUnits="userSpaceOnUse">
+          <path d="M 20 0 L 0 0 0 20" fill="none" stroke="rgba(0,0,0,0.03)" stroke-width="1"/>
+        </pattern>
+      </defs>
+      <rect width="400" height="340" fill="url(#grid-cost)" rx="6"/>
+
+      <!-- Window Outer Frame -->
+      <rect x="${cx - fw/2}" y="${cy - fh/2}" width="${fw}" height="${fh}" fill="#f8fafc" stroke="#0f172a" stroke-width="6" rx="3"/>
+      <!-- Inner Glass Pane -->
+      <rect x="${cx - fw/2 + 10}" y="${cy - fh/2 + 10}" width="${fw - 20}" height="${fh - 20}" fill="#e0f2fe" stroke="#0284c7" stroke-width="2" fill-opacity="0.6"/>
+      <!-- Sash Divider Line (Double Hung) -->
+      <line x1="${cx - fw/2 + 8}" y1="${cy}" x2="${cx + fw/2 - 8}" y2="${cy}" stroke="#0f172a" stroke-width="3"/>
+
+      <!-- Price Badge Callout -->
+      <rect x="250" y="40" width="135" height="50" rx="6" fill="#0f172a"/>
+      <text x="317" y="60" font-family="sans-serif" font-size="10" font-weight="700" text-anchor="middle" fill="#94a3b8">GRAND TOTAL</text>
+      <text x="317" y="80" font-family="monospace" font-size="14" font-weight="700" text-anchor="middle" fill="#38bdf8">$${result.grandTotal.toLocaleString()}</text>
+
+      <!-- Cost Breakdown Callouts -->
+      <rect x="250" y="105" width="135" height="180" rx="6" fill="#ffffff" stroke="#cbd5e1" stroke-width="1"/>
+      <text x="317" y="125" font-family="sans-serif" font-size="10" font-weight="700" text-anchor="middle" fill="#0f172a">COST BREAKDOWN</text>
+
+      <rect x="260" y="140" width="115" height="28" rx="4" fill="#f1f5f9"/>
+      <text x="268" y="157" font-family="sans-serif" font-size="10" font-weight="600" fill="#334155">Materials & Glass</text>
+      <text x="367" y="157" font-family="monospace" font-size="10" font-weight="700" text-anchor="end" fill="#0f172a">$${(result.totalMaterialCost + result.totalGlassCost).toLocaleString()}</text>
+
+      <rect x="260" y="176" width="115" height="28" rx="4" fill="#f1f5f9"/>
+      <text x="268" y="193" font-family="sans-serif" font-size="10" font-weight="600" fill="#334155">Labor & Install</text>
+      <text x="367" y="193" font-family="monospace" font-size="10" font-weight="700" text-anchor="end" fill="#0f172a">$${result.totalLaborCost.toLocaleString()}</text>
+
+      <rect x="260" y="212" width="115" height="28" rx="4" fill="#f1f5f9"/>
+      <text x="268" y="229" font-family="sans-serif" font-size="10" font-weight="600" fill="#334155">Add-on Features</text>
+      <text x="367" y="229" font-family="monospace" font-size="10" font-weight="700" text-anchor="end" fill="#0f172a">$${result.totalFeaturesCost.toLocaleString()}</text>
+
+      <text x="317" y="265" font-family="monospace" font-size="10" font-weight="700" text-anchor="middle" fill="#16a34a">${result.costPerSqFt > 0 ? `$${result.costPerSqFt}/sq ft` : ''}</text>
+
+      <!-- Dimension Labels -->
+      <text x="${cx}" y="${cy + fh/2 + 20}" font-family="monospace" font-size="10" font-weight="700" text-anchor="middle" fill="#0f172a">${Math.round(fromMm(wMm, currentUnit))} ${currentUnit} W</text>
+      <text x="${cx + fw/2 + 15}" y="${cy}" font-family="monospace" font-size="10" font-weight="700" text-anchor="start" fill="#0f172a">${Math.round(fromMm(hMm, currentUnit))} ${currentUnit} H</text>
+    `;
+
+    const sub = document.getElementById('svg-subtitle');
+    if (sub) {
+      sub.textContent = `Materials: ${matPct}% · Labor: ${laborPct}% · Features: ${Math.max(0, featPct)}%`;
+    }
+  }
+
+  function calculate() {
+    const wInput = widthInput?.value.trim() ?? '';
+    const hInput = heightInput?.value.trim() ?? '';
+    const qInput = parseInt(qtyInput?.value || '1', 10);
+
+    if (!wInput || !hInput) {
+      if (resultsEmpty) resultsEmpty.hidden = false;
+      if (resultsGrid)  resultsGrid.hidden  = true;
+      if (recSection)   recSection.hidden   = true;
+      if (calcExtras)   calcExtras.hidden   = true;
+      if (cardConf)     cardConf.hidden     = true;
+      return;
+    }
+
+    const w = normalizeInput(wInput, currentUnit);
+    const h = normalizeInput(hInput, currentUnit);
+
+    if (!w || !h || w <= 0 || h <= 0) {
+      if (resultsEmpty) resultsEmpty.hidden = false;
+      if (resultsGrid)  resultsGrid.hidden  = true;
+      if (recSection)   recSection.hidden   = true;
+      if (calcExtras)   calcExtras.hidden   = true;
+      if (cardConf)     cardConf.hidden     = true;
+      return;
+    }
+
+    const wMm = toMm(w, currentUnit);
+    const hMm = toMm(h, currentUnit);
+
+    // Read active features from checkboxes
+    const featureCheckboxes = document.querySelectorAll<HTMLInputElement>('.feature-input:checked');
+    const selectedFeatures: WindowCostFeature[] = Array.from(featureCheckboxes).map(c => c.value as WindowCostFeature);
+    currentFeatures = selectedFeatures;
+
+    const input: WindowCostInput = {
+      windowWidthMm: wMm,
+      windowHeightMm: hMm,
+      quantity: Math.max(1, qInput),
+      windowStyle: currentStyle,
+      frameMaterial: currentMaterial,
+      glassType: currentGlassType,
+      installation: currentInstallation,
+      replacementType: currentReplacementType,
+      region: currentRegion,
+      features: currentFeatures,
+    };
+
+    const result = calculateWindowCost(input);
+    currentResult = result;
+    const recs = buildWindowCostRecommendations(input, result);
+
+    // ── Primary metrics ──────────────────────────────────────────────────────
+    updateMetric('card-grand-total', `$${result.grandTotal.toLocaleString()}`, `(${input.quantity} Window${input.quantity > 1 ? 's' : ''})`);
+    updateMetric('card-cost-per-unit', `$${result.totalCostPerUnit.toLocaleString()}`, '/ window installed');
+    updateMetric('card-cost-sqft', `$${result.costPerSqFt.toFixed(2)}`, '/ sq ft glass area');
+    updateMetric('card-savings-diy', result.estimatedSavingsDiy > 0 ? `$${result.estimatedSavingsDiy.toLocaleString()}` : 'N/A (Pro)', result.estimatedSavingsDiy > 0 ? 'DIY Labor Savings' : 'Pro Install');
+    updateMetric('card-duration', `${result.estimatedProjectDurationDays} Day${result.estimatedProjectDurationDays > 1 ? 's' : ''}`, `(${result.estimatedProjectDurationHours} total hrs)`);
+    updateMetric('card-budget', result.budgetCategory.toUpperCase(), 'Cost Tier');
+    updateMetric('card-labor', `$${result.totalLaborCost.toLocaleString()}`, `(${result.installation === 'professional' ? 'Pro Contractor' : 'Self-Install'})`);
+    updateMetric('card-materials-glass', `$${(result.totalMaterialCost + result.totalGlassCost + result.totalFeaturesCost).toLocaleString()}`, 'Frames, Glass & Features');
+
+    // ── Confidence summary card ───────────────────────────────────────────────
+    const starsEl = document.getElementById('confidence-stars');
+    const labelEl = document.getElementById('confidence-label');
+    const orderBadge = document.getElementById('confidence-ordering-badge');
+    const costBadge = document.getElementById('cost-badge');
+    const scoreBadge = document.getElementById('score-badge');
+
+    if (starsEl) starsEl.textContent = result.confidence === 'excellent' ? '★★★★★' : (result.confidence === 'good' ? '★★★★☆' : '★★★☆☆');
+    if (labelEl) labelEl.textContent = result.confidence === 'excellent' ? 'High Precision Estimate' : 'Standard Industry Estimate';
+    if (scoreBadge) scoreBadge.textContent = `${result.budgetCategory.toUpperCase()} TIER`;
+    if (orderBadge) orderBadge.textContent = `✓ ${currentInstallation === 'professional' ? 'Pro Installation' : 'DIY Installation'}`;
+    if (costBadge) costBadge.textContent = `$${result.totalCostPerUnit.toLocaleString()} / Unit`;
+
+    // ── Recommendation cards ─────────────────────────────────────────────────
+    const recList = document.getElementById('rec-list');
+    if (recList) {
+      const iconMap: Record<string, string> = {
+        'budget': `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>`,
+        'alternative': `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 3 21 3 21 8"/><line x1="4" y1="20" x2="21" y2="3"/><polyline points="21 16 21 21 16 21"/><line x1="15" y1="15" x2="21" y2="21"/></svg>`,
+        'upgrade': `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>`,
+        'roi': `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>`,
+        'energy': `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>`,
+        'installation': `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>`,
+        'buying': `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>`,
+      };
+      recList.innerHTML = recs.items.map((item: any) =>
+        `<div class="rec-card">
+          <div class="rec-card-header">
+            <span class="rec-card-icon" aria-hidden="true">${iconMap[item.type] || iconMap['budget']}</span>
+            <span class="rec-card-title">${item.title}</span>
+          </div>
+          <div class="rec-card-body">${item.body}</div>
+          ${item.tip ? `<div class="rec-card-tip">${item.tip}</div>` : ''}
+        </div>`
+      ).join('');
+    }
+
+    try {
+      renderCostSvg(result, wMm, hMm);
+    } catch (e) {
+      console.error('SVG rendering error:', e);
+    }
+
+    if (resultsEmpty) resultsEmpty.hidden = true;
+    if (resultsGrid)  resultsGrid.hidden  = false;
+    if (recSection)   recSection.hidden   = false;
+    if (calcExtras)   calcExtras.hidden   = false;
+    if (cardConf)     cardConf.hidden     = false;
+
+    const styleLabel = currentStyle.split('-').map(s => s.charAt(0).toUpperCase() + s.slice(1)).join(' ');
+    const matLabel = currentMaterial.charAt(0).toUpperCase() + currentMaterial.slice(1);
+    const summaryText = `${w} × ${h} ${currentUnit} (${input.quantity}x)`;
+    const stateParams = {
+      width: String(w),
+      height: String(h),
+      unit: currentUnit,
+      qty: String(input.quantity),
+      style: currentStyle,
+      material: currentMaterial,
+      glass: currentGlassType,
+      install: currentInstallation,
+      replacement: currentReplacementType,
+      region: currentRegion,
+      features: currentFeatures.join(','),
+      subtitle: `${styleLabel} · ${matLabel} ($${result.grandTotal.toLocaleString()})`,
+      summary: summaryText,
+      _display: summaryText,
+    };
+
+    (window as any).wmCurrentState = stateParams;
+    pushUrlState(stateParams);
+    (window as any).wmHistoryPanel?.add(`Window Cost`, stateParams);
+
+    (window as any).wmBuildSummary = () => buildSummary(
+      'Window Cost Calculator',
+      [
+        ['Window Dimensions', `${w} × ${h} ${currentUnit}`],
+        ['Quantity', String(input.quantity)],
+        ['Window Style', styleLabel],
+        ['Frame Material', matLabel],
+        ['Glass Type', currentGlassType],
+        ['Installation Method', currentInstallation === 'professional' ? 'Professional' : 'DIY'],
+        ['Replacement Type', currentReplacementType],
+        ['Regional Area', currentRegion],
+        ['Cost Per Window', `$${result.totalCostPerUnit.toLocaleString()}`],
+        ['Grand Total Cost', `$${result.grandTotal.toLocaleString()}`],
+        ['Estimated Labor', `$${result.totalLaborCost.toLocaleString()}`],
+        ['DIY Savings', result.estimatedSavingsDiy > 0 ? `$${result.estimatedSavingsDiy.toLocaleString()}` : 'N/A'],
+        ['Budget Category', result.budgetCategory.toUpperCase()],
+      ],
+      typeof window !== 'undefined' ? window.location.href : undefined,
+    );
+
+    (window as any).wmBuildExport = () => buildExportPayload(
+      'window-cost-calculator',
+      stateParams,
+      {
+        windowWidth: `${w} ${currentUnit}`,
+        windowHeight: `${h} ${currentUnit}`,
+        unit: currentUnit,
+        quantity: input.quantity,
+        style: styleLabel,
+        material: matLabel,
+        glassType: currentGlassType,
+        installation: currentInstallation,
+        replacementType: currentReplacementType,
+        region: currentRegion,
+        features: currentFeatures.join(', '),
+        glassAreaSqFt: `${result.glassAreaSqFt.toFixed(1)} sq ft`,
+        costPerWindow: `$${result.totalCostPerUnit.toLocaleString()}`,
+        grandTotal: `$${result.grandTotal.toLocaleString()}`,
+        totalLaborCost: `$${result.totalLaborCost.toLocaleString()}`,
+        totalMaterialCost: `$${result.totalMaterialCost.toLocaleString()}`,
+        totalGlassCost: `$${result.totalGlassCost.toLocaleString()}`,
+        totalFeaturesCost: `$${result.totalFeaturesCost.toLocaleString()}`,
+        costPerSqFt: `$${result.costPerSqFt.toFixed(2)}`,
+        estimatedSavingsDiy: `$${result.estimatedSavingsDiy.toLocaleString()}`,
+        estimatedDurationDays: `${result.estimatedProjectDurationDays} Days`,
+        budgetCategory: result.budgetCategory,
+        confidence: result.confidence,
+        recommendations: recs.items.map((i: any) => `${i.title}: ${i.body}`).join(' | '),
+        warnings: result.warnings.map((w: any) => w.message).join(' | '),
+      },
+    );
+
+    (window as any).wmShareExportBar?.show();
+
+    track({
+      type: 'calculation_completed',
+      properties: { slug: 'window-cost-calculator', unit: currentUnit, inputs: stateParams },
+    });
+  }
+
+  // ── Event listeners ───────────────────────────────────────────────────────
+  widthInput?.addEventListener('input', calculate);
+  heightInput?.addEventListener('input', calculate);
+  qtyInput?.addEventListener('input', calculate);
+  qtyInput?.addEventListener('change', calculate);
+
+  document.getElementById('input-style')?.addEventListener('change', () => {
+    currentStyle = (document.getElementById('input-style') as HTMLSelectElement).value as WindowCostStyle;
+    calculate();
+  });
+
+  document.getElementById('input-frame-material')?.addEventListener('change', () => {
+    currentMaterial = (document.getElementById('input-frame-material') as HTMLSelectElement).value as WindowCostMaterial;
+    calculate();
+  });
+
+  document.getElementById('input-glass-type')?.addEventListener('change', () => {
+    currentGlassType = (document.getElementById('input-glass-type') as HTMLSelectElement).value as WindowCostGlassType;
+    calculate();
+  });
+
+  initOptionSelector('install-selector', (val) => {
+    currentInstallation = val as WindowCostInstallation;
+    calculate();
+  });
+
+  initOptionSelector('replacement-selector', (val) => {
+    currentReplacementType = val as WindowCostReplacementType;
+    calculate();
+  });
+
+  initOptionSelector('region-selector', (val) => {
+    currentRegion = val as WindowCostRegion;
+    calculate();
+  });
+
+  // Feature checkboxes
+  document.getElementById('features-checklist')?.addEventListener('change', () => {
+    calculate();
+  });
+
+  document.getElementById('unit-selector')?.addEventListener('unitchange', (e) => {
+    const newUnit = (e as CustomEvent).detail?.unit as MeasurementUnit | undefined;
+    if (!newUnit) return;
+    if (widthInput?.value) {
+      const parsed = normalizeInput(widthInput.value, currentUnit);
+      if (parsed) widthInput.value = String(fromMm(toMm(parsed, currentUnit), newUnit));
+    }
+    if (heightInput?.value) {
+      const parsed = normalizeInput(heightInput.value, currentUnit);
+      if (parsed) heightInput.value = String(fromMm(toMm(parsed, currentUnit), newUnit));
+    }
+    const oldUnit = currentUnit;
+    currentUnit = newUnit;
+    track({ type: 'unit_changed', properties: { slug: 'window-cost-calculator', from: oldUnit, to: newUnit } });
+    calculate();
+  });
+
+  // Restore URL state
+  const urlState = readUrlState();
+  if (urlState.width && widthInput)   widthInput.value  = urlState.width;
+  if (urlState.height && heightInput) heightInput.value = urlState.height;
+  if (urlState.qty && qtyInput)       qtyInput.value    = urlState.qty;
+  if (urlState.unit && ['mm','cm','m','in','ft'].includes(urlState.unit)) {
+    currentUnit = urlState.unit as MeasurementUnit;
+    document.querySelectorAll('.unit-btn').forEach(b => (b as HTMLElement).setAttribute('aria-pressed', (b as HTMLElement).dataset.unit === currentUnit ? 'true' : 'false'));
+  }
+  if (urlState.style) {
+    currentStyle = urlState.style as WindowCostStyle;
+    const sel = document.getElementById('input-style') as HTMLSelectElement;
+    if (sel) sel.value = currentStyle;
+  }
+  if (urlState.material) {
+    currentMaterial = urlState.material as WindowCostMaterial;
+    const sel = document.getElementById('input-frame-material') as HTMLSelectElement;
+    if (sel) sel.value = currentMaterial;
+  }
+  if (urlState.glass) {
+    currentGlassType = urlState.glass as WindowCostGlassType;
+    const sel = document.getElementById('input-glass-type') as HTMLSelectElement;
+    if (sel) sel.value = currentGlassType;
+  }
+  if (urlState.install) {
+    currentInstallation = urlState.install as WindowCostInstallation;
+    document.querySelectorAll('#install-selector .option-btn').forEach(b =>
+      (b as HTMLElement).setAttribute('aria-pressed', (b as HTMLElement).dataset.value === currentInstallation ? 'true' : 'false'));
+  }
+  if (urlState.replacement) {
+    currentReplacementType = urlState.replacement as WindowCostReplacementType;
+    document.querySelectorAll('#replacement-selector .option-btn').forEach(b =>
+      (b as HTMLElement).setAttribute('aria-pressed', (b as HTMLElement).dataset.value === currentReplacementType ? 'true' : 'false'));
+  }
+  if (urlState.region) {
+    currentRegion = urlState.region as WindowCostRegion;
+    document.querySelectorAll('#region-selector .option-btn').forEach(b =>
+      (b as HTMLElement).setAttribute('aria-pressed', (b as HTMLElement).dataset.value === currentRegion ? 'true' : 'false'));
+  }
+
+  if (urlState.features) {
+    const featArr = urlState.features.split(',');
+    document.querySelectorAll<HTMLInputElement>('.feature-input').forEach(cb => {
+      cb.checked = featArr.includes(cb.value);
+    });
+  }
+
+  // Initial calculation on page load
+  calculate();
+
+  // ── History restore ──────────────────────────────────────────────────────
+  document.addEventListener('wm:history-restore', (e: Event) => {
+    const { inputs } = (e as CustomEvent).detail;
+    if (inputs.width && widthInput)   widthInput.value  = inputs.width;
+    if (inputs.height && heightInput) heightInput.value = inputs.height;
+    if (inputs.qty && qtyInput)       qtyInput.value    = inputs.qty;
+    if (inputs.unit && ['mm','cm','m','in','ft'].includes(inputs.unit)) {
+      currentUnit = inputs.unit as MeasurementUnit;
+      document.querySelectorAll('.unit-btn').forEach(b => (b as HTMLElement).setAttribute('aria-pressed', (b as HTMLElement).dataset.unit === currentUnit ? 'true' : 'false'));
+    }
+    if (inputs.style) {
+      currentStyle = inputs.style as WindowCostStyle;
+      const sel = document.getElementById('input-style') as HTMLSelectElement;
+      if (sel) sel.value = currentStyle;
+    }
+    if (inputs.material) {
+      currentMaterial = inputs.material as WindowCostMaterial;
+      const sel = document.getElementById('input-frame-material') as HTMLSelectElement;
+      if (sel) sel.value = currentMaterial;
+    }
+    calculate();
+    track({ type: 'history_restored', properties: { slug: 'window-cost-calculator', entryId: (e as CustomEvent).detail.entryId ?? '' } });
+  });
+</script>
+
+<style>
+  .calc-dashboard {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--spacing-xl);
+    align-items: start;
+    margin-top: var(--spacing-lg);
+  }
+
+  @media (min-width: 1024px) {
+    .calc-dashboard {
+      grid-template-columns: 380px 1fr;
+    }
+  }
+
+  .calc-panel {
+    background-color: var(--color-canvas);
+    border: 1px solid var(--color-hairline);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+  }
+
+  .calc-panel-inputs {
+    position: sticky;
+    top: var(--spacing-md);
+  }
+
+  .panel-header {
+    padding: var(--spacing-md);
+    background-color: var(--color-canvas-soft);
+    border-bottom: 1px solid var(--color-hairline);
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+  }
+
+  .panel-label {
+    font-family: var(--font-family-mono);
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--color-muted);
+  }
+
+  .panel-section-header {
+    padding: var(--spacing-xs) var(--spacing-md);
+    background-color: var(--color-canvas-soft);
+    border-top: 1px solid var(--color-hairline);
+    border-bottom: 1px solid var(--color-hairline);
+  }
+
+  .panel-section-title {
+    font-family: var(--font-family-mono);
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--color-ink-faint);
+  }
+
+  .input {
+    width: 100%;
+    padding: var(--spacing-sm) var(--spacing-md);
+    background-color: var(--color-canvas);
+    border: 1px solid var(--color-hairline);
+    border-radius: var(--radius-md);
+    font-family: var(--font-family-mono);
+    font-size: var(--font-size-body-md);
+    color: var(--color-ink);
+    transition: border-color 0.15s ease;
+  }
+
+  .input:focus {
+    outline: none;
+    border-color: var(--color-link);
+  }
+
+  .input-select {
+    width: 100%;
+    padding: var(--spacing-sm) var(--spacing-md);
+    background-color: var(--color-canvas);
+    border: 1px solid var(--color-hairline);
+    border-radius: var(--radius-md);
+    font-size: var(--font-size-body-sm);
+    color: var(--color-ink);
+  }
+
+  .option-selector {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--spacing-xs);
+    width: 100%;
+  }
+
+  .option-btn {
+    flex: 1 1 auto;
+    padding: 6px 10px;
+    font-size: 11px;
+    font-family: var(--font-family-mono);
+    border: 1px solid var(--color-hairline);
+    background: var(--color-canvas);
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    color: var(--color-ink-muted);
+    text-align: center;
+    transition: all 0.15s ease;
+  }
+
+  .option-btn[aria-pressed="true"] {
+    background: var(--color-ink);
+    color: var(--color-canvas);
+    border-color: var(--color-ink);
+    font-weight: 600;
+  }
+
+  .features-checklist {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-xs);
+  }
+
+  .feature-checkbox {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    font-size: 12px;
+    color: var(--color-ink-muted);
+    cursor: pointer;
+  }
+
+  .feature-input {
+    accent-color: var(--color-ink);
+    cursor: pointer;
+  }
+
+  /* Results Panel */
+  .empty-state {
+    padding: var(--spacing-3xl) var(--spacing-xl);
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .empty-icon-wrap {
+    color: var(--color-muted);
+    margin-bottom: var(--spacing-md);
+  }
+
+  .empty-title {
+    font-size: var(--font-size-h3);
+    font-weight: 600;
+    color: var(--color-ink);
+    margin: 0 0 var(--spacing-xs);
+  }
+
+  .empty-sub {
+    font-size: var(--font-size-body-sm);
+    color: var(--color-muted);
+    margin: 0;
+    max-width: 320px;
+  }
+
+  .svg-section {
+    border-bottom: 1px solid var(--color-hairline);
+    background-color: var(--color-canvas);
+  }
+
+  .svg-header {
+    padding: var(--spacing-sm) var(--spacing-md);
+    background-color: var(--color-canvas-soft);
+    border-bottom: 1px solid var(--color-hairline);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .svg-label {
+    font-family: var(--font-family-mono);
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--color-muted);
+  }
+
+  .svg-subtitle {
+    font-family: var(--font-family-mono);
+    font-size: 11px;
+    color: var(--color-ink-muted);
+  }
+
+  .svg-wrap {
+    padding: var(--spacing-md);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: var(--color-canvas);
+  }
+
+  .results-metric-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: var(--spacing-md);
+    padding: var(--spacing-lg);
+  }
+
+  .confidence-summary-card {
+    margin: 0 var(--spacing-lg) var(--spacing-lg);
+    padding: var(--spacing-md);
+    background-color: var(--color-canvas-soft);
+    border: 1px solid var(--color-hairline);
+    border-radius: var(--radius-md);
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+  }
+
+  .conf-card-header {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+  }
+
+  .conf-stars {
+    color: #f59e0b;
+    letter-spacing: 2px;
+  }
+
+  .conf-title {
+    font-weight: 600;
+    font-size: var(--font-size-body-sm);
+    color: var(--color-ink);
+  }
+
+  .conf-card-badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--spacing-xs);
+  }
+
+  .conf-badge {
+    font-family: var(--font-family-mono);
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--color-hairline);
+    background: var(--color-canvas);
+  }
+
+  .conf-badge-score {
+    color: var(--color-link);
+    font-weight: 600;
+  }
+
+  .rec-section {
+    border-top: 1px solid var(--color-hairline);
+  }
+
+  .rec-list {
+    padding: var(--spacing-lg);
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: var(--spacing-md);
+  }
+
+  .calc-extras {
+    border-top: 1px solid var(--color-hairline);
+    background-color: var(--color-canvas-soft);
+    padding: var(--spacing-lg);
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-lg);
+  }
+
+  @media (max-width: 640px) {
+    .results-metric-grid {
+      grid-template-columns: 1fr;
+      padding: var(--spacing-md);
+    }
+    .rec-list, .calc-extras, .svg-section {
+      padding: var(--spacing-md);
+    }
+    .confidence-summary-card {
+      margin: 0 var(--spacing-md) var(--spacing-md);
+      padding: var(--spacing-md);
+    }
+  }
+</style>
