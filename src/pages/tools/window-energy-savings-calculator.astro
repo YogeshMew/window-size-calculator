@@ -1,0 +1,1001 @@
+---
+/**
+ * WindowMetrics — Window Energy Savings Calculator Page
+ *
+ * Fully reactive energy efficiency and utility bill savings calculator.
+ * Calculates annual heat loss (HDD), solar heat gain (CDD), electricity & gas bill savings,
+ * CO2 carbon reduction, 10-year ROI, and payback period.
+ */
+
+import ToolLayout from '@/layouts/ToolLayout.astro';
+import CalculatorHero from '@/components/calculator/CalculatorHero.astro';
+import InputCard from '@/components/calculator/InputCard.astro';
+import UnitSelector from '@/components/calculator/UnitSelector.astro';
+import ResultMetricCard from '@/components/calculator/ResultMetricCard.astro';
+import ShareExportBar from '@/components/calculator/ShareExportBar.astro';
+import HistoryPanel from '@/components/calculator/HistoryPanel.astro';
+import RelatedTools from '@/components/calculator/RelatedTools.astro';
+import FAQSection from '@/components/content/FAQSection.astro';
+import { getToolBySlug } from '@/data/tools.js';
+
+const tool = getToolBySlug('window-energy-savings-calculator');
+if (!tool) {
+  throw new Error('Tool data for "window-energy-savings-calculator" not found in tool registry.');
+}
+
+const breadcrumbs = [
+  { label: 'Home', href: '/' },
+  { label: 'Tools', href: '/tools' },
+  { label: 'Window Energy Savings Calculator', href: '/tools/window-energy-savings-calculator' },
+];
+
+const faqs = [
+  {
+    question: 'How much money can new windows save on energy bills?',
+    answer: 'Replacing single-pane windows with ENERGY STAR certified double or triple-pane units saves an average of $125 to $465 per year on heating and cooling utility bills, or 12% to 18% of total home energy costs.',
+  },
+  {
+    question: 'What is U-Factor and why is it important for energy savings?',
+    answer: 'U-Factor measures how well a window prevents heat from escaping your home. The lower the U-Factor, the better the window insulates. Standard single-pane windows have a U-Factor of 1.10, double-pane Low-E windows average 0.30, and high-efficiency triple-pane windows achieve 0.18 to 0.22.',
+  },
+  {
+    question: 'What is SHGC (Solar Heat Gain Coefficient)?',
+    answer: 'SHGC measures how much heat from sunlight passes through the glass (on a scale of 0 to 1). In hot southern climates, a lower SHGC (below 0.25) blocks summer solar heat. In cold northern climates, a moderate SHGC (0.30 to 0.40) allows beneficial solar heat gain during winter.',
+  },
+  {
+    question: 'Are Argon and Krypton gas fills worth the extra cost?',
+    answer: 'Yes. Argon gas fill costs ~$45 per window and improves thermal insulation by 15% over standard air-filled double pane glass. Krypton gas is denser and ideal for narrow triple-pane gaps, boosting insulation efficiency by up to 25%.',
+  },
+  {
+    question: 'What is the average payback period for energy-efficient windows?',
+    answer: 'The typical payback period ranges from 6 to 12 years depending on your local climate zone, heating fuel costs, and whether you choose vinyl or premium wood frames. Energy savings continue for the entire 25+ year lifespan of the windows.',
+  },
+  {
+    question: 'How do climate zones affect window energy calculations?',
+    answer: 'Cold climates (high Heating Degree Days / HDD) require low U-Factor ratings to prevent furnace heat loss. Hot climates (high Cooling Degree Days / CDD) require low SHGC ratings to minimize air conditioner compressor load.',
+  },
+  {
+    question: 'How much CO₂ emission reduction does window replacement achieve?',
+    answer: 'Replacing 10 single-pane windows with ENERGY STAR double-pane Low-E windows reduces home CO₂ emissions by 500 kg to 1,200 kg annually—equivalent to planting 20 to 50 trees every year.',
+  },
+  {
+    question: 'Does frame material affect window insulation performance?',
+    answer: 'Yes. Vinyl and fiberglass frames contain hollow multi-chamber air pockets that act as excellent thermal insulators. Un-broken aluminum frames conduct heat rapidly and require a thermal break barrier to prevent condensation and heat loss.',
+  },
+  {
+    question: 'Are energy efficiency rebates available for window replacement?',
+    answer: 'Yes. Federal tax credits (e.g. US Inflation Reduction Act) offer up to $600/year for ENERGY STAR Most Efficient windows. Many municipal electric and gas utilities also offer $50 to $200 cash-back rebates per window.',
+  },
+  {
+    question: 'Can window film provide similar energy savings to new windows?',
+    answer: 'Applying solar control Low-E window film costs 80% less than new windows and captures 40% to 60% of the cooling bill savings. It is a highly cost-effective upgrade for existing structurally-sound double-pane windows.',
+  },
+];
+---
+
+<ToolLayout tool={tool} breadcrumbs={breadcrumbs} faqs={faqs}>
+  <CalculatorHero
+    tool={tool}
+    description="Calculate annual heating and cooling bill savings, U-factor heat loss, CO₂ carbon reduction, 10-year ROI, and payback period."
+    features={[
+      'Annual & monthly utility bill savings ($)',
+      'Heat loss (HDD) & solar heat gain (CDD) physics',
+      'Payback period (years) & 10-year ROI %',
+      'Annual CO₂ carbon footprint reduction',
+    ]}
+    trustItems={[
+      { label: 'NFRC thermal standards' },
+      { label: 'ENERGY STAR climate zones' },
+      { label: 'No signup' },
+      { label: 'Building physics formulas' },
+    ]}
+  />
+
+  <div class="calc-dashboard">
+    <!-- LEFT PANEL — Inputs -->
+    <div class="calc-panel calc-panel-inputs">
+      <div class="panel-header">
+        <span class="panel-label">Window Dimensions & Quantity</span>
+        <UnitSelector defaultUnit="in" />
+      </div>
+
+      <div class="panel-section-header">
+        <span class="panel-section-title">Measurements & Count</span>
+      </div>
+
+      <InputCard label="Window Width" inputId="input-width" hint="Frame width">
+        <input type="text" id="input-width" class="input" placeholder="e.g., 36" autocomplete="off" />
+      </InputCard>
+
+      <InputCard label="Window Height" inputId="input-height" hint="Frame height">
+        <input type="text" id="input-height" class="input" placeholder="e.g., 48" autocomplete="off" />
+      </InputCard>
+
+      <InputCard label="Number of Windows" inputId="input-windows-count" hint="Total windows to replace">
+        <input type="number" id="input-windows-count" class="input" value="10" min="1" max="100" step="1" />
+      </InputCard>
+
+      <div class="panel-section-header">
+        <span class="panel-section-title">Window Comparison Types</span>
+      </div>
+
+      <InputCard label="Current Existing Window" inputId="input-current-window">
+        <select id="input-current-window" class="input-select" aria-label="Select Current Window Type">
+          <option value="single-pane" selected>Single Pane Glass (U=1.10 - Clear Drafty)</option>
+          <option value="double-pane">Double Pane Standard Insulated (U=0.48)</option>
+          <option value="triple-pane">Triple Pane Standard (U=0.22)</option>
+          <option value="low-e">Double Pane Low-E Coated (U=0.30)</option>
+          <option value="gas-filled">Double Pane Gas-Filled (U=0.26)</option>
+        </select>
+      </InputCard>
+
+      <InputCard label="New Replacement Window" inputId="input-new-window">
+        <select id="input-new-window" class="input-select" aria-label="Select New Replacement Window Type">
+          <option value="double-pane">Double Pane Insulated Glass (U=0.48)</option>
+          <option value="low-e" selected>Double Pane Low-E Solar Control (U=0.30)</option>
+          <option value="argon">Double Pane Low-E + Argon Gas Fill (U=0.24)</option>
+          <option value="triple-pane">Triple Pane High Efficiency (U=0.22)</option>
+          <option value="krypton">Triple Pane Low-E + Krypton Gas Fill (U=0.18)</option>
+        </select>
+      </InputCard>
+
+      <InputCard label="Frame Material" inputId="input-frame-material">
+        <select id="input-frame-material" class="input-select" aria-label="Select Frame Material">
+          <option value="vinyl" selected>Low-Maintenance Insulated Vinyl (PVC)</option>
+          <option value="fiberglass">Pultruded Fiberglass Composite</option>
+          <option value="wood">Solid Wood Timber Frame</option>
+          <option value="aluminum">Aluminum Profile Frame</option>
+        </select>
+      </InputCard>
+
+      <div class="panel-section-header">
+        <span class="panel-section-title">Climate & Energy Rates</span>
+      </div>
+
+      <div class="input-card">
+        <div class="input-card-header">
+          <span class="input-card-label">Climate Zone</span>
+        </div>
+        <div class="option-selector" id="climate-selector" role="group">
+          <button type="button" class="option-btn" data-value="cold" aria-pressed="true">Cold / Northern</button>
+          <button type="button" class="option-btn" data-value="mixed" aria-pressed="false">Mixed / Central</button>
+          <button type="button" class="option-btn" data-value="hot" aria-pressed="false">Hot / Southern</button>
+        </div>
+      </div>
+
+      <InputCard label="Electricity Rate ($/kWh)" inputId="input-elec-cost" hint="US Avg: $0.16/kWh">
+        <input type="number" id="input-elec-cost" class="input" value="0.16" min="0.01" max="2.00" step="0.01" />
+      </InputCard>
+
+      <div class="input-card">
+        <div class="input-card-header">
+          <span class="input-card-label">Primary Heating Fuel</span>
+        </div>
+        <div class="option-selector" id="fuel-selector" role="group">
+          <button type="button" class="option-btn" data-value="gas" aria-pressed="true">Natural Gas</button>
+          <button type="button" class="option-btn" data-value="electricity" aria-pressed="false">Electric Resistance</button>
+          <button type="button" class="option-btn" data-value="heat-pump" aria-pressed="false">Heat Pump</button>
+          <button type="button" class="option-btn" data-value="oil" aria-pressed="false">Heating Oil</button>
+        </div>
+      </div>
+
+      <InputCard label="Average Monthly Bill ($)" inputId="input-monthly-bill" hint="Optional validation cap">
+        <input type="number" id="input-monthly-bill" class="input" value="220" min="0" max="5000" step="10" />
+      </InputCard>
+
+      <div class="input-card">
+        <div class="input-card-header">
+          <span class="input-card-label">Property Type</span>
+        </div>
+        <div class="option-selector" id="home-selector" role="group">
+          <button type="button" class="option-btn" data-value="house" aria-pressed="true">Single-Family House</button>
+          <button type="button" class="option-btn" data-value="apartment" aria-pressed="false">Apartment / Condo</button>
+          <button type="button" class="option-btn" data-value="office" aria-pressed="false">Commercial Office</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT PANEL — Results -->
+    <div class="calc-panel calc-panel-results">
+      <div id="results-empty" class="empty-state">
+        <div class="empty-icon-wrap">
+          <svg width="48" height="48" viewBox="0 0 48 48" fill="none" class="empty-svg">
+            <rect x="8" y="12" width="32" height="24" rx="3" stroke="currentColor" stroke-width="2.5" fill="none"/>
+            <circle cx="24" cy="24" r="6" stroke="currentColor" stroke-width="1.5" stroke-dasharray="2 2"/>
+          </svg>
+        </div>
+        <h3 class="empty-title">Enter window dimensions</h3>
+        <p class="empty-sub">Fill in Width and Height to calculate annual energy bill savings, CO₂ reduction & ROI.</p>
+      </div>
+
+      <div id="results-grid" hidden>
+        <!-- SVG Energy Flow Illustration -->
+        <div class="svg-section">
+          <div class="svg-header">
+            <span class="svg-label">Thermal Energy Flow & Insulation Diagram</span>
+            <span class="svg-subtitle" id="svg-subtitle">Winter Heat Loss vs. Summer Solar Gain</span>
+          </div>
+          <div class="svg-wrap">
+            <svg id="energy-svg" viewBox="0 0 400 340" width="100%" aria-label="Window energy flow illustration"></svg>
+          </div>
+        </div>
+
+        <div class="results-metric-grid">
+          <ResultMetricCard id="card-annual-savings" label="Annual Energy Savings" highlight={true} sublabel="Combined heating & cooling" animate={true} />
+          <ResultMetricCard id="card-payback" label="Payback Period" highlight={true} sublabel="Investment recoup duration" animate={true} />
+          <ResultMetricCard id="card-roi" label="10-Year Return on Investment" highlight={true} sublabel="Net 10-yr ROI percentage" animate={true} />
+          <ResultMetricCard id="card-monthly-savings" label="Monthly Bill Savings" highlight={true} sublabel="Average monthly reduction" animate={true} />
+          <ResultMetricCard id="card-co2" label="CO₂ Carbon Reduction" sublabel="Annual greenhouse gas saved" animate={true} />
+          <ResultMetricCard id="card-score" label="Efficiency Score" sublabel="1 to 100 thermal rating" animate={true} />
+          <ResultMetricCard id="card-lifetime-savings" label="25-Year Lifetime Savings" sublabel="Total lifespan energy savings" animate={true} />
+          <ResultMetricCard id="card-comfort" label="Indoor Comfort Rating" sublabel="Draft & cold spot reduction" animate={true} />
+        </div>
+
+        <!-- Unified Confidence Summary Card -->
+        <div id="card-confidence" class="confidence-summary-card" hidden>
+          <div class="conf-card-header">
+            <span class="conf-stars" id="confidence-stars">★★★★★</span>
+            <span class="conf-title" id="confidence-label">High Thermal Efficiency</span>
+          </div>
+          <div class="conf-card-badges">
+            <span class="conf-badge conf-badge-score" id="score-badge">Score: 88/100</span>
+            <span class="conf-badge conf-badge-order" id="confidence-ordering-badge">✓ Cold Climate Certified</span>
+            <span class="conf-badge conf-badge-cost" id="cost-badge">Comfort: SUPERIOR</span>
+          </div>
+        </div>
+
+        <!-- Recommendations Grid -->
+        <div id="rec-section" class="rec-section" hidden>
+          <div class="panel-header"><span class="panel-label">Smart Recommendations & Climate Guidance</span></div>
+          <div id="rec-list" class="rec-list"></div>
+        </div>
+
+        <!-- Share & Export + History Bar -->
+        <div class="calc-extras" id="calc-extras" hidden>
+          <ShareExportBar calculatorTitle="Window Energy Savings Calculator" />
+          <HistoryPanel slug="window-energy-savings-calculator" />
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <Fragment slot="sidebar">
+    <RelatedTools
+      links={[
+        {
+          title: 'Window Cost Calculator',
+          description: 'Calculate total window replacement cost, material costs, labor, and budget tiers.',
+          href: '/tools/window-cost-calculator',
+          icon: 'DollarSign',
+        },
+        {
+          title: 'Replacement Window Calculator',
+          description: 'Standard replacement window sizes, rough openings, and shim allowances.',
+          href: '/tools/replacement-window-calculator',
+          icon: 'RefreshCw',
+        },
+        {
+          title: 'Window Glass Calculator',
+          description: 'Calculate glass area, pane thickness, and weight for any shape.',
+          href: '/tools/window-glass-calculator',
+          icon: 'PanelTop',
+        },
+      ]}
+      tip={{
+        label: 'Energy Tip',
+        text: 'Adding Low-E glass with Argon gas fill reduces heating and cooling loss by up to 65% compared to single pane glass, paying for its upgrade cost in 3 to 5 years.',
+      }}
+    />
+    <FAQSection faqs={faqs} />
+  </Fragment>
+</ToolLayout>
+
+<script>
+  import {
+    calculateWindowEnergy,
+    type WindowEnergyInput,
+    type CurrentWindowType,
+    type NewWindowType,
+    type WindowEnergyFrameMaterial,
+    type ClimateZone,
+    type HeatingFuel,
+    type HomeType,
+  } from '@/engine/window-energy.js';
+  import { buildWindowEnergyRecommendations } from '@/engine/window-energy-recommendations.js';
+  import { toMm, fromMm, formatDimension, normalizeInput } from '@/engine/units.js';
+  import { readUrlState, pushUrlState } from '@/lib/url-state.js';
+  import { buildExportPayload } from '@/lib/export.js';
+  import { buildSummary } from '@/lib/share.js';
+  import { track } from '@/lib/analytics.js';
+  import type { MeasurementUnit } from '@/types/calculator.js';
+
+  let currentResult: ReturnType<typeof calculateWindowEnergy> | null = null;
+  let currentUnit: MeasurementUnit = 'in';
+  let currentOldWindow: CurrentWindowType = 'single-pane';
+  let currentNewWindow: NewWindowType = 'low-e';
+  let currentMaterial: WindowEnergyFrameMaterial = 'vinyl';
+  let currentClimate: ClimateZone = 'cold';
+  let currentFuel: HeatingFuel = 'gas';
+  let currentHomeType: HomeType = 'house';
+
+  // ── DOM references ────────────────────────────────────────────────────────
+  const widthInput   = document.getElementById('input-width')          as HTMLInputElement | null;
+  const heightInput  = document.getElementById('input-height')         as HTMLInputElement | null;
+  const countInput   = document.getElementById('input-windows-count')  as HTMLInputElement | null;
+  const elecInput    = document.getElementById('input-elec-cost')       as HTMLInputElement | null;
+  const billInput    = document.getElementById('input-monthly-bill')   as HTMLInputElement | null;
+
+  const resultsEmpty = document.getElementById('results-empty') as HTMLElement | null;
+  const resultsGrid  = document.getElementById('results-grid')  as HTMLElement | null;
+  const recSection   = document.getElementById('rec-section')   as HTMLElement | null;
+  const calcExtras   = document.getElementById('calc-extras')   as HTMLElement | null;
+  const cardConf     = document.getElementById('card-confidence') as HTMLElement | null;
+
+  function updateMetric(cardId: string, value: string, unitStr: string = '') {
+    const valEl = document.querySelector(`#${cardId} .result-value-text`);
+    const unitEl = document.querySelector(`#${cardId} .result-unit`);
+    if (valEl) valEl.textContent = value;
+    if (unitEl) unitEl.textContent = unitStr;
+  }
+
+  function initOptionSelector(containerId: string, onChange: (val: string) => void) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+    container.addEventListener('click', (e) => {
+      const btn = (e.target as HTMLElement).closest('.option-btn') as HTMLElement | null;
+      if (btn?.dataset.value) {
+        container.querySelectorAll('.option-btn').forEach(b => b.setAttribute('aria-pressed', 'false'));
+        btn.setAttribute('aria-pressed', 'true');
+        onChange(btn.dataset.value);
+      }
+    });
+  }
+
+  // ── Vector SVG Energy Flow Illustration Renderer ─────────────────────────────
+  function renderEnergySvg(result: ReturnType<typeof calculateWindowEnergy>, wMm: number, hMm: number) {
+    const svg = document.getElementById('energy-svg');
+    if (!svg) return;
+
+    const cx = 150, cy = 160;
+    const maxW = 180, maxH = 180;
+    const scale = Math.min(maxW / wMm, maxH / hMm);
+
+    const fw = wMm * scale;
+    const fh = hMm * scale;
+
+    svg.innerHTML = `
+      <defs>
+        <pattern id="grid-energy" width="20" height="20" patternUnits="userSpaceOnUse">
+          <path d="M 20 0 L 0 0 0 20" fill="none" stroke="rgba(0,0,0,0.03)" stroke-width="1"/>
+        </pattern>
+        <linearGradient id="sunGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stop-color="#f59e0b" />
+          <stop offset="100%" stop-color="#ef4444" />
+        </linearGradient>
+      </defs>
+      <rect width="400" height="340" fill="url(#grid-energy)" rx="6"/>
+
+      <!-- House / Wall Representation -->
+      <rect x="20" y="40" width="210" height="260" rx="8" fill="#f8fafc" stroke="#cbd5e1" stroke-width="2"/>
+      <text x="35" y="65" font-family="sans-serif" font-size="10" font-weight="700" fill="#64748b">INDOOR THERMAL ENVELOPE</text>
+
+      <!-- Window Profile -->
+      <rect x="${cx - fw/2}" y="${cy - fh/2}" width="${fw}" height="${fh}" fill="#ffffff" stroke="#0f172a" stroke-width="5" rx="3"/>
+      <rect x="${cx - fw/2 + 8}" y="${cy - fh/2 + 8}" width="${fw - 16}" height="${fh - 16}" fill="#e0f2fe" stroke="#0284c7" stroke-width="2" fill-opacity="0.7"/>
+
+      <!-- Thermal Conduction Flow Arrows -->
+      <path d="M 50 140 L 90 140" stroke="#ef4444" stroke-width="3" marker-end="url(#arrow)"/>
+      <text x="70" y="132" font-family="sans-serif" font-size="9" font-weight="700" text-anchor="middle" fill="#ef4444">FURNACE HEAT</text>
+
+      <!-- Outside Cold / Heat Vector -->
+      <path d="M 230 180 L 190 180" stroke="#0284c7" stroke-width="3" stroke-dasharray="3,3"/>
+      <text x="210" y="172" font-family="sans-serif" font-size="9" font-weight="700" text-anchor="middle" fill="#0284c7">HEAT LOSS</text>
+
+      <!-- Savings & Performance Card -->
+      <rect x="250" y="40" width="135" height="70" rx="6" fill="#0f172a"/>
+      <text x="317" y="62" font-family="sans-serif" font-size="10" font-weight="700" text-anchor="middle" fill="#94a3b8">ANNUAL SAVINGS</text>
+      <text x="317" y="85" font-family="monospace" font-size="16" font-weight="700" text-anchor="middle" fill="#4ade80">$${result.annualSavings.toLocaleString()}/yr</text>
+      <text x="317" y="100" font-family="sans-serif" font-size="9" font-weight="600" text-anchor="middle" fill="#38bdf8">$${result.monthlySavings.toFixed(2)}/mo</text>
+
+      <!-- Thermal U-Factor Comparison Box -->
+      <rect x="250" y="125" width="135" height="160" rx="6" fill="#ffffff" stroke="#cbd5e1" stroke-width="1"/>
+      <text x="317" y="145" font-family="sans-serif" font-size="10" font-weight="700" text-anchor="middle" fill="#0f172a">U-FACTOR COMPARISON</text>
+
+      <rect x="260" y="160" width="115" height="32" rx="4" fill="#fee2e2"/>
+      <text x="268" y="176" font-family="sans-serif" font-size="9" font-weight="600" fill="#991b1b">Original U-Factor</text>
+      <text x="367" y="180" font-family="monospace" font-size="11" font-weight="700" text-anchor="end" fill="#991b1b">${result.oldUFactorBtu.toFixed(2)}</text>
+
+      <rect x="260" y="200" width="115" height="32" rx="4" fill="#dcfce7"/>
+      <text x="268" y="216" font-family="sans-serif" font-size="9" font-weight="600" fill="#166534">New U-Factor</text>
+      <text x="367" y="220" font-family="monospace" font-size="11" font-weight="700" text-anchor="end" fill="#166534">${result.newUFactorBtu.toFixed(2)}</text>
+
+      <rect x="260" y="240" width="115" height="32" rx="4" fill="#f1f5f9"/>
+      <text x="268" y="256" font-family="sans-serif" font-size="9" font-weight="600" fill="#334155">CO₂ Saved / yr</text>
+      <text x="367" y="260" font-family="monospace" font-size="10" font-weight="700" text-anchor="end" fill="#0f172a">${result.co2ReductionKg} kg</text>
+
+      <!-- Dimension Annotations -->
+      <text x="${cx}" y="${cy + fh/2 + 20}" font-family="monospace" font-size="10" font-weight="700" text-anchor="middle" fill="#0f172a">${Math.round(fromMm(wMm, currentUnit))} ${currentUnit} W</text>
+      <text x="${cx + fw/2 + 15}" y="${cy}" font-family="monospace" font-size="10" font-weight="700" text-anchor="start" fill="#0f172a">${Math.round(fromMm(hMm, currentUnit))} ${currentUnit} H</text>
+    `;
+
+    const sub = document.getElementById('svg-subtitle');
+    if (sub) {
+      sub.textContent = `Original U: ${result.oldUFactorBtu.toFixed(2)} → New U: ${result.newUFactorBtu.toFixed(2)} (${result.energyEfficiencyScore}/100 Score)`;
+    }
+  }
+
+  function calculate() {
+    const wInput = widthInput?.value.trim() ?? '';
+    const hInput = heightInput?.value.trim() ?? '';
+    const numWindows = parseInt(countInput?.value || '10', 10);
+    const elecRate = parseFloat(elecInput?.value || '0.16');
+    const monthlyBill = parseFloat(billInput?.value || '220');
+
+    if (!wInput || !hInput) {
+      if (resultsEmpty) resultsEmpty.hidden = false;
+      if (resultsGrid)  resultsGrid.hidden  = true;
+      if (recSection)   recSection.hidden   = true;
+      if (calcExtras)   calcExtras.hidden   = true;
+      if (cardConf)     cardConf.hidden     = true;
+      return;
+    }
+
+    const w = normalizeInput(wInput, currentUnit);
+    const h = normalizeInput(hInput, currentUnit);
+
+    if (!w || !h || w <= 0 || h <= 0) {
+      if (resultsEmpty) resultsEmpty.hidden = false;
+      if (resultsGrid)  resultsGrid.hidden  = true;
+      if (recSection)   recSection.hidden   = true;
+      if (calcExtras)   calcExtras.hidden   = true;
+      if (cardConf)     cardConf.hidden     = true;
+      return;
+    }
+
+    const wMm = toMm(w, currentUnit);
+    const hMm = toMm(h, currentUnit);
+
+    const input: WindowEnergyInput = {
+      windowWidthMm: wMm,
+      windowHeightMm: hMm,
+      numberOfWindows: Math.max(1, numWindows),
+      currentWindow: currentOldWindow,
+      newWindow: currentNewWindow,
+      frameMaterial: currentMaterial,
+      climateZone: currentClimate,
+      electricityCostPerKwh: Math.max(0.01, elecRate),
+      heatingFuel: currentFuel,
+      averageMonthlyBill: Math.max(0, monthlyBill),
+      homeType: currentHomeType,
+    };
+
+    const result = calculateWindowEnergy(input);
+    currentResult = result;
+    const recs = buildWindowEnergyRecommendations(input, result);
+
+    // ── Metrics ──────────────────────────────────────────────────────────────
+    updateMetric('card-annual-savings', `$${result.annualSavings.toLocaleString()}`, '/ year');
+    updateMetric('card-payback', `${result.estimatedPaybackPeriodYears} Years`, 'Payback period');
+    updateMetric('card-roi', `${result.roiPercent}%`, '10-Year net ROI');
+    updateMetric('card-monthly-savings', `$${result.monthlySavings.toFixed(2)}`, '/ month');
+    updateMetric('card-co2', `${result.co2ReductionKg.toLocaleString()} kg`, '/ year saved');
+    updateMetric('card-score', `${result.energyEfficiencyScore} / 100`, 'Thermal score');
+    updateMetric('card-lifetime-savings', `$${result.lifetimeSavings.toLocaleString()}`, '25-Yr lifespan');
+    updateMetric('card-comfort', result.comfortRating.toUpperCase(), 'Comfort tier');
+
+    // ── Confidence summary card ───────────────────────────────────────────────
+    const starsEl = document.getElementById('confidence-stars');
+    const labelEl = document.getElementById('confidence-label');
+    const orderBadge = document.getElementById('confidence-ordering-badge');
+    const costBadge = document.getElementById('cost-badge');
+    const scoreBadge = document.getElementById('score-badge');
+
+    if (starsEl) starsEl.textContent = result.energyEfficiencyScore >= 85 ? '★★★★★' : (result.energyEfficiencyScore >= 70 ? '★★★★☆' : '★★★☆☆');
+    if (labelEl) labelEl.textContent = result.energyEfficiencyScore >= 85 ? 'Exceptional Energy Savings' : 'Strong Thermal Upgrade';
+    if (scoreBadge) scoreBadge.textContent = `SCORE: ${result.energyEfficiencyScore}/100`;
+    if (orderBadge) orderBadge.textContent = `✓ ${currentClimate.toUpperCase()} CLIMATE ZONE`;
+    if (costBadge) costBadge.textContent = `COMFORT: ${result.comfortRating.toUpperCase()}`;
+
+    // ── Recommendation cards ─────────────────────────────────────────────────
+    const recList = document.getElementById('rec-list');
+    if (recList) {
+      const iconMap: Record<string, string> = {
+        'upgrade': `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>`,
+        'glass': `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg>`,
+        'frame': `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/></svg>`,
+        'climate': `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 4v10.54a4 4 0 1 1-4 0V4a2 2 0 0 1 4 0z"/></svg>`,
+        'film': `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18"/><line x1="7" y1="2" x2="7" y2="22"/></svg>`,
+        'priority': `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>`,
+        'roi': `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>`,
+      };
+      recList.innerHTML = recs.items.map((item: any) =>
+        `<div class="rec-card">
+          <div class="rec-card-header">
+            <span class="rec-card-icon" aria-hidden="true">${iconMap[item.type] || iconMap['upgrade']}</span>
+            <span class="rec-card-title">${item.title}</span>
+          </div>
+          <div class="rec-card-body">${item.body}</div>
+          ${item.tip ? `<div class="rec-card-tip">${item.tip}</div>` : ''}
+        </div>`
+      ).join('');
+    }
+
+    try {
+      renderEnergySvg(result, wMm, hMm);
+    } catch (e) {
+      console.error('SVG rendering error:', e);
+    }
+
+    if (resultsEmpty) resultsEmpty.hidden = true;
+    if (resultsGrid)  resultsGrid.hidden  = false;
+    if (recSection)   recSection.hidden   = false;
+    if (calcExtras)   calcExtras.hidden   = false;
+    if (cardConf)     cardConf.hidden     = false;
+
+    const summaryText = `${w} × ${h} ${currentUnit} (${input.numberOfWindows}x)`;
+    const stateParams = {
+      width: String(w),
+      height: String(h),
+      unit: currentUnit,
+      count: String(input.numberOfWindows),
+      oldWin: currentOldWindow,
+      newWin: currentNewWindow,
+      material: currentMaterial,
+      climate: currentClimate,
+      elec: String(elecRate),
+      fuel: currentFuel,
+      bill: String(monthlyBill),
+      home: currentHomeType,
+      subtitle: `Savings: $${result.annualSavings}/yr · Payback: ${result.estimatedPaybackPeriodYears} yrs`,
+      summary: summaryText,
+      _display: summaryText,
+    };
+
+    (window as any).wmCurrentState = stateParams;
+    pushUrlState(stateParams);
+    (window as any).wmHistoryPanel?.add(`Window Energy Savings`, stateParams);
+
+    (window as any).wmBuildSummary = () => buildSummary(
+      'Window Energy Savings Calculator',
+      [
+        ['Window Dimensions', `${w} × ${h} ${currentUnit}`],
+        ['Number of Windows', String(input.numberOfWindows)],
+        ['Current Window', currentOldWindow],
+        ['New Window Upgrade', currentNewWindow],
+        ['Frame Material', currentMaterial],
+        ['Climate Zone', currentClimate],
+        ['Annual Savings', `$${result.annualSavings.toLocaleString()}/yr`],
+        ['Monthly Savings', `$${result.monthlySavings.toFixed(2)}/mo`],
+        ['25-Yr Lifetime Savings', `$${result.lifetimeSavings.toLocaleString()}`],
+        ['CO₂ Carbon Reduction', `${result.co2ReductionKg.toLocaleString()} kg/yr`],
+        ['Payback Period', `${result.estimatedPaybackPeriodYears} Years`],
+        ['10-Year ROI', `${result.roiPercent}%`],
+        ['Efficiency Score', `${result.energyEfficiencyScore} / 100`],
+      ],
+      typeof window !== 'undefined' ? window.location.href : undefined,
+    );
+
+    (window as any).wmBuildExport = () => buildExportPayload(
+      'window-energy-savings-calculator',
+      stateParams,
+      {
+        windowWidth: `${w} ${currentUnit}`,
+        windowHeight: `${h} ${currentUnit}`,
+        unit: currentUnit,
+        numberOfWindows: input.numberOfWindows,
+        currentWindow: currentOldWindow,
+        newWindow: currentNewWindow,
+        frameMaterial: currentMaterial,
+        climateZone: currentClimate,
+        electricityCostPerKwh: `$${elecRate}/kWh`,
+        heatingFuel: currentFuel,
+        totalWindowAreaSqFt: `${result.totalWindowAreaSqFt} sq ft`,
+        oldUFactor: result.oldUFactorBtu,
+        newUFactor: result.newUFactorBtu,
+        annualSavings: `$${result.annualSavings.toLocaleString()}`,
+        monthlySavings: `$${result.monthlySavings.toFixed(2)}`,
+        lifetimeSavings: `$${result.lifetimeSavings.toLocaleString()}`,
+        co2ReductionKg: `${result.co2ReductionKg} kg`,
+        paybackPeriodYears: `${result.estimatedPaybackPeriodYears} Years`,
+        roiPercent: `${result.roiPercent}%`,
+        energyEfficiencyScore: result.energyEfficiencyScore,
+        comfortRating: result.comfortRating,
+        recommendations: recs.items.map((i: any) => `${i.title}: ${i.body}`).join(' | '),
+        warnings: result.warnings.map((w: any) => w.message).join(' | '),
+      },
+    );
+
+    (window as any).wmShareExportBar?.show();
+
+    track({
+      type: 'calculation_completed',
+      properties: { slug: 'window-energy-savings-calculator', unit: currentUnit, inputs: stateParams },
+    });
+  }
+
+  // ── Event listeners ───────────────────────────────────────────────────────
+  widthInput?.addEventListener('input', calculate);
+  heightInput?.addEventListener('input', calculate);
+  countInput?.addEventListener('input', calculate);
+  countInput?.addEventListener('change', calculate);
+  elecInput?.addEventListener('input', calculate);
+  billInput?.addEventListener('input', calculate);
+
+  document.getElementById('input-current-window')?.addEventListener('change', () => {
+    currentOldWindow = (document.getElementById('input-current-window') as HTMLSelectElement).value as CurrentWindowType;
+    calculate();
+  });
+
+  document.getElementById('input-new-window')?.addEventListener('change', () => {
+    currentNewWindow = (document.getElementById('input-new-window') as HTMLSelectElement).value as NewWindowType;
+    calculate();
+  });
+
+  document.getElementById('input-frame-material')?.addEventListener('change', () => {
+    currentMaterial = (document.getElementById('input-frame-material') as HTMLSelectElement).value as WindowEnergyFrameMaterial;
+    calculate();
+  });
+
+  initOptionSelector('climate-selector', (val) => {
+    currentClimate = val as ClimateZone;
+    calculate();
+  });
+
+  initOptionSelector('fuel-selector', (val) => {
+    currentFuel = val as HeatingFuel;
+    calculate();
+  });
+
+  initOptionSelector('home-selector', (val) => {
+    currentHomeType = val as HomeType;
+    calculate();
+  });
+
+  document.getElementById('unit-selector')?.addEventListener('unitchange', (e) => {
+    const newUnit = (e as CustomEvent).detail?.unit as MeasurementUnit | undefined;
+    if (!newUnit) return;
+    if (widthInput?.value) {
+      const parsed = normalizeInput(widthInput.value, currentUnit);
+      if (parsed) widthInput.value = String(fromMm(toMm(parsed, currentUnit), newUnit));
+    }
+    if (heightInput?.value) {
+      const parsed = normalizeInput(heightInput.value, currentUnit);
+      if (parsed) heightInput.value = String(fromMm(toMm(parsed, currentUnit), newUnit));
+    }
+    const oldUnit = currentUnit;
+    currentUnit = newUnit;
+    track({ type: 'unit_changed', properties: { slug: 'window-energy-savings-calculator', from: oldUnit, to: newUnit } });
+    calculate();
+  });
+
+  // Restore URL state
+  const urlState = readUrlState();
+  if (urlState.width && widthInput)   widthInput.value  = urlState.width;
+  if (urlState.height && heightInput) heightInput.value = urlState.height;
+  if (urlState.count && countInput)   countInput.value  = urlState.count;
+  if (urlState.elec && elecInput)     elecInput.value   = urlState.elec;
+  if (urlState.bill && billInput)     billInput.value   = urlState.bill;
+  if (urlState.unit && ['mm','cm','m','in','ft'].includes(urlState.unit)) {
+    currentUnit = urlState.unit as MeasurementUnit;
+    document.querySelectorAll('.unit-btn').forEach(b => (b as HTMLElement).setAttribute('aria-pressed', (b as HTMLElement).dataset.unit === currentUnit ? 'true' : 'false'));
+  }
+  if (urlState.oldWin) {
+    currentOldWindow = urlState.oldWin as CurrentWindowType;
+    const sel = document.getElementById('input-current-window') as HTMLSelectElement;
+    if (sel) sel.value = currentOldWindow;
+  }
+  if (urlState.newWin) {
+    currentNewWindow = urlState.newWin as NewWindowType;
+    const sel = document.getElementById('input-new-window') as HTMLSelectElement;
+    if (sel) sel.value = currentNewWindow;
+  }
+  if (urlState.material) {
+    currentMaterial = urlState.material as WindowEnergyFrameMaterial;
+    const sel = document.getElementById('input-frame-material') as HTMLSelectElement;
+    if (sel) sel.value = currentMaterial;
+  }
+  if (urlState.climate) {
+    currentClimate = urlState.climate as ClimateZone;
+    document.querySelectorAll('#climate-selector .option-btn').forEach(b =>
+      (b as HTMLElement).setAttribute('aria-pressed', (b as HTMLElement).dataset.value === currentClimate ? 'true' : 'false'));
+  }
+  if (urlState.fuel) {
+    currentFuel = urlState.fuel as HeatingFuel;
+    document.querySelectorAll('#fuel-selector .option-btn').forEach(b =>
+      (b as HTMLElement).setAttribute('aria-pressed', (b as HTMLElement).dataset.value === currentFuel ? 'true' : 'false'));
+  }
+  if (urlState.home) {
+    currentHomeType = urlState.home as HomeType;
+    document.querySelectorAll('#home-selector .option-btn').forEach(b =>
+      (b as HTMLElement).setAttribute('aria-pressed', (b as HTMLElement).dataset.value === currentHomeType ? 'true' : 'false'));
+  }
+
+  // Initial calculation on page load
+  calculate();
+
+  // ── History restore ──────────────────────────────────────────────────────
+  document.addEventListener('wm:history-restore', (e: Event) => {
+    const { inputs } = (e as CustomEvent).detail;
+    if (inputs.width && widthInput)   widthInput.value  = inputs.width;
+    if (inputs.height && heightInput) heightInput.value = inputs.height;
+    if (inputs.count && countInput)   countInput.value  = inputs.count;
+    if (inputs.unit && ['mm','cm','m','in','ft'].includes(inputs.unit)) {
+      currentUnit = inputs.unit as MeasurementUnit;
+      document.querySelectorAll('.unit-btn').forEach(b => (b as HTMLElement).setAttribute('aria-pressed', (b as HTMLElement).dataset.unit === currentUnit ? 'true' : 'false'));
+    }
+    calculate();
+    track({ type: 'history_restored', properties: { slug: 'window-energy-savings-calculator', entryId: (e as CustomEvent).detail.entryId ?? '' } });
+  });
+</script>
+
+<style>
+  .calc-dashboard {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--spacing-xl);
+    align-items: start;
+    margin-top: var(--spacing-lg);
+  }
+
+  @media (min-width: 1024px) {
+    .calc-dashboard {
+      grid-template-columns: 380px 1fr;
+    }
+  }
+
+  .calc-panel {
+    background-color: var(--color-canvas);
+    border: 1px solid var(--color-hairline);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+  }
+
+  .calc-panel-inputs {
+    position: sticky;
+    top: var(--spacing-md);
+  }
+
+  .panel-header {
+    padding: var(--spacing-md);
+    background-color: var(--color-canvas-soft);
+    border-bottom: 1px solid var(--color-hairline);
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+  }
+
+  .panel-label {
+    font-family: var(--font-family-mono);
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--color-muted);
+  }
+
+  .panel-section-header {
+    padding: var(--spacing-xs) var(--spacing-md);
+    background-color: var(--color-canvas-soft);
+    border-top: 1px solid var(--color-hairline);
+    border-bottom: 1px solid var(--color-hairline);
+  }
+
+  .panel-section-title {
+    font-family: var(--font-family-mono);
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--color-ink-faint);
+  }
+
+  .input {
+    width: 100%;
+    padding: var(--spacing-sm) var(--spacing-md);
+    background-color: var(--color-canvas);
+    border: 1px solid var(--color-hairline);
+    border-radius: var(--radius-md);
+    font-family: var(--font-family-mono);
+    font-size: var(--font-size-body-md);
+    color: var(--color-ink);
+    transition: border-color 0.15s ease;
+  }
+
+  .input:focus {
+    outline: none;
+    border-color: var(--color-link);
+  }
+
+  .input-select {
+    width: 100%;
+    padding: var(--spacing-sm) var(--spacing-md);
+    background-color: var(--color-canvas);
+    border: 1px solid var(--color-hairline);
+    border-radius: var(--radius-md);
+    font-size: var(--font-size-body-sm);
+    color: var(--color-ink);
+  }
+
+  .option-selector {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--spacing-xs);
+    width: 100%;
+  }
+
+  .option-btn {
+    flex: 1 1 auto;
+    padding: 6px 10px;
+    font-size: 11px;
+    font-family: var(--font-family-mono);
+    border: 1px solid var(--color-hairline);
+    background: var(--color-canvas);
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    color: var(--color-ink-muted);
+    text-align: center;
+    transition: all 0.15s ease;
+  }
+
+  .option-btn[aria-pressed="true"] {
+    background: var(--color-ink);
+    color: var(--color-canvas);
+    border-color: var(--color-ink);
+    font-weight: 600;
+  }
+
+  /* Results Panel */
+  .empty-state {
+    padding: var(--spacing-3xl) var(--spacing-xl);
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .empty-icon-wrap {
+    color: var(--color-muted);
+    margin-bottom: var(--spacing-md);
+  }
+
+  .empty-title {
+    font-size: var(--font-size-h3);
+    font-weight: 600;
+    color: var(--color-ink);
+    margin: 0 0 var(--spacing-xs);
+  }
+
+  .empty-sub {
+    font-size: var(--font-size-body-sm);
+    color: var(--color-muted);
+    margin: 0;
+    max-width: 320px;
+  }
+
+  .svg-section {
+    border-bottom: 1px solid var(--color-hairline);
+    background-color: var(--color-canvas);
+  }
+
+  .svg-header {
+    padding: var(--spacing-sm) var(--spacing-md);
+    background-color: var(--color-canvas-soft);
+    border-bottom: 1px solid var(--color-hairline);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .svg-label {
+    font-family: var(--font-family-mono);
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--color-muted);
+  }
+
+  .svg-subtitle {
+    font-family: var(--font-family-mono);
+    font-size: 11px;
+    color: var(--color-ink-muted);
+  }
+
+  .svg-wrap {
+    padding: var(--spacing-md);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: var(--color-canvas);
+  }
+
+  .results-metric-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: var(--spacing-md);
+    padding: var(--spacing-lg);
+  }
+
+  .confidence-summary-card {
+    margin: 0 var(--spacing-lg) var(--spacing-lg);
+    padding: var(--spacing-md);
+    background-color: var(--color-canvas-soft);
+    border: 1px solid var(--color-hairline);
+    border-radius: var(--radius-md);
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+  }
+
+  .conf-card-header {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+  }
+
+  .conf-stars {
+    color: #f59e0b;
+    letter-spacing: 2px;
+  }
+
+  .conf-title {
+    font-weight: 600;
+    font-size: var(--font-size-body-sm);
+    color: var(--color-ink);
+  }
+
+  .conf-card-badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--spacing-xs);
+  }
+
+  .conf-badge {
+    font-family: var(--font-family-mono);
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--color-hairline);
+    background: var(--color-canvas);
+  }
+
+  .conf-badge-score {
+    color: var(--color-link);
+    font-weight: 600;
+  }
+
+  .rec-section {
+    border-top: 1px solid var(--color-hairline);
+  }
+
+  .rec-list {
+    padding: var(--spacing-lg);
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: var(--spacing-md);
+  }
+
+  .calc-extras {
+    border-top: 1px solid var(--color-hairline);
+    background-color: var(--color-canvas-soft);
+    padding: var(--spacing-lg);
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-lg);
+  }
+
+  @media (max-width: 640px) {
+    .results-metric-grid {
+      grid-template-columns: 1fr;
+      padding: var(--spacing-md);
+    }
+    .rec-list, .calc-extras, .svg-section {
+      padding: var(--spacing-md);
+    }
+    .confidence-summary-card {
+      margin: 0 var(--spacing-md) var(--spacing-md);
+      padding: var(--spacing-md);
+    }
+  }
+</style>
