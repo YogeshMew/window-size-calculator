@@ -1,0 +1,1011 @@
+---
+import ToolLayout from '@/layouts/ToolLayout.astro';
+import CalculatorHero from '@/components/calculator/CalculatorHero.astro';
+import InputCard from '@/components/calculator/InputCard.astro';
+import UnitSelector from '@/components/calculator/UnitSelector.astro';
+import ResultMetricCard from '@/components/calculator/ResultMetricCard.astro';
+import ShareExportBar from '@/components/calculator/ShareExportBar.astro';
+import HistoryPanel from '@/components/calculator/HistoryPanel.astro';
+import FAQSection from '@/components/content/FAQSection.astro';
+import RelatedTools from '@/components/calculator/RelatedTools.astro';
+import { getToolBySlug } from '@/data/tools.js';
+import type { BreadcrumbItem, FAQ } from '@/types/calculator.js';
+
+const tool = getToolBySlug('window-weight-calculator')!;
+
+const breadcrumbs: BreadcrumbItem[] = [
+  { label: 'Home', href: '/' },
+  { label: 'Tools', href: '/tools' },
+  { label: tool.title, href: tool.href, current: true },
+];
+
+const faqs: FAQ[] = [
+  {
+    question: 'How much does a standard glass window weigh?',
+    answer:
+      'Standard 4mm float glass weighs 10 kg per m² (2.05 lbs per sq ft). A typical double-pane vinyl replacement window measuring 36" × 60" weighs approximately 55 to 70 lbs (25 to 32 kg), requiring at least 2 people to carry under OSHA guidelines.',
+  },
+  {
+    question: 'How do you calculate glass weight by thickness?',
+    answer:
+      'Glass density is 2,500 kg/m³ (156 lbs/cu ft). Multiplied out, glass weighs 2.5 kg per square meter per millimeter of thickness (or 0.512 lbs/sq ft per mm). For example, 6mm glass weighs 15 kg/m² (3.07 lbs/sq ft).',
+  },
+  {
+    question: 'How many people are needed to safely lift a window?',
+    answer:
+      'OSHA guidelines recommend a maximum single-person lifting limit of 55 lbs (25 kg). Windows weighing 55–110 lbs require 2 installers, 110–220 lbs require 4 installers, and windows over 220 lbs (100 kg) require mechanical suction cranes or A-frame hoists.',
+  },
+  {
+    question: 'Does tempered glass weigh more than annealed glass?',
+    answer:
+      'No. Tempered glass undergoes thermal heat treatment, but its chemical density (2,500 kg/m³) and mass are identical to standard annealed float glass of the same thickness.',
+  },
+  {
+    question: 'How much does a double-glazed vs triple-glazed window weigh?',
+    answer:
+      'Double-glazed units contain two glass panes and weigh twice as much as a single pane unit (e.g., 20 kg/m² for two 4mm panes). Triple-glazed units contain three panes and add 50% more weight (30 kg/m²), requiring reinforced wall headers and heavy-duty frame shims.',
+  },
+  {
+    question: 'When should I use vacuum suction cups for glass handling?',
+    answer:
+      'Vacuum suction cups are recommended for any glass pane weighing over 44 lbs (20 kg) or measuring larger than 12 sq ft. Dual 8" vacuum cups provide positive suction grip, prevent glass edge slippage, and reduce finger strain.',
+  },
+  {
+    question: 'What are safe manual lifting limits for windows?',
+    answer:
+      'Always lift with your legs, keep heavy window frames close to your body at waist level, and wear cut-resistant Kevlar gloves and safety shoes. Avoid twisting your torso while carrying heavy double or triple pane units.',
+  },
+  {
+    question: 'How should heavy glass windows be packaged for shipping?',
+    answer:
+      'Windows under 80 lbs can ship on standard freight skids. Windows between 80–220 lbs require vertical A-frame wooden crates with corner foam pads. Glass units over 220 lbs require dedicated glass-rack A-frame flatbed trucks.',
+  },
+];
+
+const schema = {
+  '@context': 'https://schema.org',
+  '@type': 'SoftwareApplication',
+  name: tool.title,
+  description: tool.description,
+  applicationCategory: 'UtilityApplication',
+  operatingSystem: 'All',
+  offers: {
+    '@type': 'Offer',
+    price: '0',
+    priceCurrency: 'USD',
+  },
+};
+---
+
+<ToolLayout tool={tool} breadcrumbs={breadcrumbs} description={tool.description}>
+  <Fragment slot="schema">
+    <script type="application/ld+json" set:html={JSON.stringify(schema)} />
+  </Fragment>
+
+  <CalculatorHero
+    tool={tool}
+    description="Calculate total window weight, glass pane mass, frame weight, minimum required installers, and vacuum suction cup requirements."
+    features={[
+      'Total window unit weight in kg and lbs',
+      'Glass vs frame weight breakdown',
+      'OSHA safe lifting crew size calculator (25 kg limit)',
+      'Vacuum suction cup count recommendation',
+      '6 Glass shapes & 6 Frame materials',
+    ]}
+    trustItems={[
+      { label: 'OSHA 55 lb lifting limit' },
+      { label: 'All units (in, mm, cm, ft, m)' },
+      { label: 'No registration required' },
+      { label: 'Instant live calculation' },
+    ]}
+  />
+
+  <div class="calc-dashboard">
+    <!-- LEFT PANEL — Inputs -->
+    <div class="calc-panel calc-panel-inputs">
+      <div class="panel-header">
+        <span class="panel-label">Window Unit Dimensions</span>
+        <UnitSelector defaultUnit="in" />
+      </div>
+
+      <div class="panel-section-header">
+        <span class="panel-section-title">Measurements</span>
+      </div>
+
+      <InputCard label="Window Width" inputId="input-width" hint="Frame or glass width">
+        <input type="text" id="input-width" class="input" placeholder="e.g., 48" autocomplete="off" />
+      </InputCard>
+
+      <InputCard label="Window Height" inputId="input-height" hint="Frame or glass height">
+        <input type="text" id="input-height" class="input" placeholder="e.g., 60" autocomplete="off" />
+      </InputCard>
+
+      <InputCard label="Glass Shape" inputId="input-shape">
+        <select id="input-shape" class="input-select" aria-label="Select Glass Shape">
+          <option value="rectangle" selected>Rectangle</option>
+          <option value="square">Square</option>
+          <option value="circle">Circle</option>
+          <option value="half-circle">Half Circle / Arch</option>
+          <option value="triangle">Triangle / Gable</option>
+          <option value="trapezoid">Trapezoid</option>
+        </select>
+      </InputCard>
+
+      <InputCard label="Glass Thickness" inputId="input-thickness">
+        <select id="input-thickness" class="input-select" aria-label="Select Glass Thickness">
+          <option value="3">3 mm (1/8 inch - Lightweight)</option>
+          <option value="4" selected>4 mm (5/32 inch - Standard Single/Double)</option>
+          <option value="5">5 mm (3/16 inch - Commercial)</option>
+          <option value="6">6 mm (1/4 inch - Heavy Plate Glass)</option>
+          <option value="8">8 mm (5/16 inch - Structural Glass)</option>
+          <option value="10">10 mm (3/8 inch - Heavy Architectural)</option>
+          <option value="12">12 mm (1/2 inch - Storefront)</option>
+          <option value="15">15 mm (5/8 inch - Extra Heavy)</option>
+          <option value="19">19 mm (3/4 inch - Balustrade/Armor)</option>
+        </select>
+      </InputCard>
+
+      <InputCard label="Glass Type" inputId="input-glass-type">
+        <select id="input-glass-type" class="input-select" aria-label="Select Glass Type">
+          <option value="annealed">Single Annealed Float Glass</option>
+          <option value="tempered">Single Tempered Safety Glass</option>
+          <option value="laminated">Laminated Safety Glass (+0.76mm PVB)</option>
+          <option value="double-glazed" selected>Double Glazed Unit (2 Panes)</option>
+          <option value="triple-glazed">Triple Glazed Unit (3 Panes)</option>
+        </select>
+      </InputCard>
+
+      <InputCard label="Frame Material" inputId="input-frame-material">
+        <select id="input-frame-material" class="input-select" aria-label="Select Frame Material">
+          <option value="none">Frameless (Glass Only)</option>
+          <option value="aluminum">Extruded Aluminum (1.2 kg/m)</option>
+          <option value="vinyl" selected>Vinyl / PVC Profile (1.5 kg/m)</option>
+          <option value="wood">Solid Timber Wood (2.2 kg/m)</option>
+          <option value="fiberglass">Fiberglass Composite (1.8 kg/m)</option>
+          <option value="steel">Heavy Steel Frame (3.8 kg/m)</option>
+        </select>
+      </InputCard>
+    </div>
+
+    <!-- RIGHT PANEL — Results -->
+    <div class="calc-panel calc-panel-results">
+      <div id="results-empty" class="empty-state">
+        <div class="empty-icon-wrap">
+          <svg width="48" height="48" viewBox="0 0 48 48" fill="none" class="empty-svg">
+            <rect x="8" y="12" width="32" height="24" rx="3" stroke="currentColor" stroke-width="2.5" fill="none"/>
+            <circle cx="24" cy="24" r="6" stroke="currentColor" stroke-width="1.5" stroke-dasharray="2 2"/>
+          </svg>
+        </div>
+        <h3 class="empty-title">Enter window dimensions</h3>
+        <p class="empty-sub">Fill in Width and Height to calculate total window weight, crew size & suction cups.</p>
+      </div>
+
+      <div id="results-grid" hidden>
+        <!-- SVG diagram section -->
+        <div class="svg-section">
+          <div class="svg-header">
+            <span class="svg-label">Lifting & Gravity Diagram</span>
+            <span class="svg-subtitle" id="svg-subtitle">Center of Gravity & Lifting Points</span>
+          </div>
+          <div class="svg-wrap">
+            <svg id="weight-svg" viewBox="0 0 400 340" width="100%" aria-label="Window weight lifting diagram"></svg>
+          </div>
+        </div>
+
+        <div class="results-metric-grid">
+          <ResultMetricCard id="card-total-weight" label="Total Window Weight" highlight={true} sublabel="Glass + Frame combined" animate={true} />
+          <ResultMetricCard id="card-glass-weight" label="Glass Pane Mass" highlight={true} sublabel="Glass weight only" animate={true} />
+          <ResultMetricCard id="card-installers" label="Installers Required" highlight={true} sublabel="OSHA 55 lb (25 kg) limit" animate={true} />
+          <ResultMetricCard id="card-cups" label="Suction Cups" highlight={true} sublabel="Recommended vacuum cups" animate={true} />
+          <ResultMetricCard id="card-frame-weight" label="Frame Weight" sublabel="Perimeter profile mass" animate={true} />
+          <ResultMetricCard id="card-weight-m2" label="Weight per m²" sublabel="Glass load rating (kg/m²)" animate={true} />
+          <ResultMetricCard id="card-handling" label="Handling Difficulty" sublabel="Lifting risk assessment" animate={true} />
+          <ResultMetricCard id="card-transport" label="Freight Category" sublabel="Shipping & courier method" animate={true} />
+        </div>
+
+        <!-- Unified Confidence Summary Card -->
+        <div id="card-confidence" class="confidence-summary-card" hidden>
+          <div class="conf-card-header">
+            <span class="conf-stars" id="confidence-stars">★★★★★</span>
+            <span class="conf-title" id="confidence-label">Safe Handling Unit</span>
+          </div>
+          <div class="conf-card-badges">
+            <span class="conf-badge conf-badge-score" id="score-badge">100% Fit Match</span>
+            <span class="conf-badge conf-badge-order" id="confidence-ordering-badge">✓ 1 Person Carry</span>
+            <span class="conf-badge conf-badge-cost" id="cost-badge">Weight: Light</span>
+          </div>
+        </div>
+
+        <!-- Recommendations Grid -->
+        <div id="rec-section" class="rec-section" hidden>
+          <div class="panel-header"><span class="panel-label">Smart Recommendations</span></div>
+          <div id="rec-list" class="rec-list"></div>
+        </div>
+
+        <!-- Share & Export + History Bar -->
+        <div class="calc-extras" id="calc-extras" hidden>
+          <ShareExportBar calculatorTitle="Window Weight Calculator" />
+          <HistoryPanel slug="window-weight-calculator" />
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <Fragment slot="sidebar">
+    <RelatedTools
+      links={[
+        {
+          title: 'Window Glass Calculator',
+          description: 'Calculate glass area, pane thickness, and weight for any shape.',
+          href: '/tools/window-glass-calculator',
+          icon: 'PanelTop',
+        },
+        {
+          title: 'Window Size Calculator',
+          description: 'Window opening area, perimeter, and sizing recommendations.',
+          href: '/tools/window-size-calculator',
+          icon: 'Ruler',
+        },
+        {
+          title: 'Replacement Window Calculator',
+          description: 'Find standard replacement window sizes and rough openings.',
+          href: '/tools/replacement-window-calculator',
+          icon: 'RefreshCw',
+        },
+      ]}
+      tip={{
+        label: 'Safety Tip',
+        text: 'Under OSHA guidelines, any window weighing over 55 lbs (25 kg) requires at least two people to lift. Always test vacuum cup suction pressure before lifting heavy double or triple pane glass.',
+      }}
+    />
+    <FAQSection faqs={faqs} />
+  </Fragment>
+</ToolLayout>
+
+<script>
+  import { calculateWindowWeight, type WindowWeightInput, type WindowWeightShape, type WindowWeightGlassType, type WindowWeightFrameMaterial } from '@/engine/window-weight.js';
+  import { buildWindowWeightRecommendations } from '@/engine/window-weight-recommendations.js';
+  import { toMm, fromMm, formatDimension, normalizeInput } from '@/engine/units.js';
+  import { readUrlState, pushUrlState } from '@/lib/url-state.js';
+  import { buildExportPayload } from '@/lib/export.js';
+  import { buildSummary } from '@/lib/share.js';
+  import { track } from '@/lib/analytics.js';
+  import type { MeasurementUnit } from '@/types/calculator.js';
+
+  let currentResult: ReturnType<typeof calculateWindowWeight> | null = null;
+  let currentUnit: MeasurementUnit = 'in';
+  let currentShape: WindowWeightShape = 'rectangle';
+  let currentThicknessMm: number = 4;
+  let currentGlassType: WindowWeightGlassType = 'double-glazed';
+  let currentFrameMaterial: WindowWeightFrameMaterial = 'vinyl';
+
+  // ── DOM references ────────────────────────────────────────────────────────
+  const widthInput   = document.getElementById('input-width')   as HTMLInputElement | null;
+  const heightInput  = document.getElementById('input-height')  as HTMLInputElement | null;
+  const shapeSelect  = document.getElementById('input-shape')   as HTMLSelectElement | null;
+  const thickSelect  = document.getElementById('input-thickness') as HTMLSelectElement | null;
+  const glassSelect  = document.getElementById('input-glass-type') as HTMLSelectElement | null;
+  const frameSelect  = document.getElementById('input-frame-material') as HTMLSelectElement | null;
+
+  const resultsEmpty = document.getElementById('results-empty') as HTMLElement | null;
+  const resultsGrid  = document.getElementById('results-grid')  as HTMLElement | null;
+  const recSection   = document.getElementById('rec-section')   as HTMLElement | null;
+  const calcExtras   = document.getElementById('calc-extras')   as HTMLElement | null;
+  const cardConf     = document.getElementById('card-confidence') as HTMLElement | null;
+
+  function updateMetric(cardId: string, value: string, unitStr: string = '') {
+    const valEl = document.querySelector(`#${cardId} .result-value-text`);
+    const unitEl = document.querySelector(`#${cardId} .result-unit`);
+    if (valEl) valEl.textContent = value;
+    if (unitEl) unitEl.textContent = unitStr;
+  }
+
+  // ── Vector SVG Lifting Diagram Renderer ─────────────────────────────────────
+  function renderWeightSvg(result: ReturnType<typeof calculateWindowWeight>, wMm: number, hMm: number, shape: string) {
+    const svg = document.getElementById('weight-svg');
+    if (!svg) return;
+
+    const cx = 200, cy = 160;
+    const maxW = 240, maxH = 200;
+    const scale = Math.min(maxW / wMm, maxH / hMm);
+
+    const fw = wMm * scale;
+    const fh = hMm * scale;
+
+    const measureArrow = (x1: number, y1: number, x2: number, y2: number, label: string, isHoriz: boolean = false) => {
+      const mx = isHoriz ? (x1 + x2) / 2 : x2 + 18;
+      const my = isHoriz ? y1 - 12 : (y1 + y2) / 2;
+      return `
+        <line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="#0f172a" stroke-width="1.5"/>
+        <polygon points="${x1},${y1} ${x1-3},${y1+5} ${x1+3},${y1+5}" fill="#0f172a" transform="rotate(${isHoriz?90:0},${x1},${y1})"/>
+        <polygon points="${x2},${y2} ${x2-3},${y2-5} ${x2+3},${y2-5}" fill="#0f172a" transform="rotate(${isHoriz?90:0},${x2},${y2})"/>
+        <rect x="${mx - 24}" y="${my - 8}" width="48" height="16" rx="3" fill="#ffffff" stroke="#cbd5e1" stroke-width="1"/>
+        <text x="${mx}" y="${my + 4}" font-family="monospace" font-size="9" font-weight="600" text-anchor="middle" fill="#0f172a">${label}</text>`;
+    };
+
+    let shapePath = '';
+    if (shape === 'circle') {
+      shapePath = `<circle cx="${cx}" cy="${cy}" r="${fw/2}" fill="#e0f2fe" fill-opacity="0.6" stroke="#0284c7" stroke-width="4"/>`;
+    } else if (shape === 'half-circle') {
+      shapePath = `<path d="M ${cx - fw/2} ${cy + fh/2} A ${fw/2} ${fh/2} 0 0 1 ${cx + fw/2} ${cy + fh/2} Z" fill="#e0f2fe" fill-opacity="0.6" stroke="#0284c7" stroke-width="4"/>`;
+    } else if (shape === 'triangle') {
+      shapePath = `<polygon points="${cx},${cy - fh/2} ${cx + fw/2},${cy + fh/2} ${cx - fw/2},${cy + fh/2}" fill="#e0f2fe" fill-opacity="0.6" stroke="#0284c7" stroke-width="4"/>`;
+    } else {
+      shapePath = `<rect x="${cx - fw/2}" y="${cy - fh/2}" width="${fw}" height="${fh}" fill="#e0f2fe" fill-opacity="0.6" stroke="#0284c7" stroke-width="4" rx="4"/>`;
+    }
+
+    let cupsSvg = '';
+    if (result.vacuumCupsRecommended >= 2) {
+      const cupDistX = fw * 0.3;
+      cupsSvg += `
+        <circle cx="${cx - cupDistX}" cy="${cy}" r="10" fill="#f59e0b" stroke="#ffffff" stroke-width="2"/>
+        <circle cx="${cx + cupDistX}" cy="${cy}" r="10" fill="#f59e0b" stroke="#ffffff" stroke-width="2"/>
+        <text x="${cx - cupDistX}" y="${cy + 3}" font-family="sans-serif" font-size="8" font-weight="700" text-anchor="middle" fill="#ffffff">C1</text>
+        <text x="${cx + cupDistX}" y="${cy + 3}" font-family="sans-serif" font-size="8" font-weight="700" text-anchor="middle" fill="#ffffff">C2</text>`;
+    }
+
+    let crewSvg = '';
+    if (result.installersRequired === 1) {
+      crewSvg = `<text x="${cx}" y="${cy + fh/2 + 32}" font-family="sans-serif" font-size="11" font-weight="700" text-anchor="middle" fill="#16a34a">👤 Single Person Carry (${result.totalWindowWeightKg.toFixed(1)} kg)</text>`;
+    } else if (result.installersRequired === 2) {
+      crewSvg = `<text x="${cx}" y="${cy + fh/2 + 32}" font-family="sans-serif" font-size="11" font-weight="700" text-anchor="middle" fill="#2563eb">👤👤 2-Person Team Lift (${result.totalWindowWeightKg.toFixed(1)} kg)</text>`;
+    } else {
+      crewSvg = `<text x="${cx}" y="${cy + fh/2 + 32}" font-family="sans-serif" font-size="11" font-weight="700" text-anchor="middle" fill="#dc2626">👤👤👤👤 4-Person / Mechanical Crane Lift (${result.totalWindowWeightKg.toFixed(1)} kg)</text>`;
+    }
+
+    svg.innerHTML = `
+      <defs>
+        <pattern id="grid" width="20" height="20" patternUnits="userSpaceOnUse">
+          <path d="M 20 0 L 0 0 0 20" fill="none" stroke="rgba(0,0,0,0.03)" stroke-width="1"/>
+        </pattern>
+      </defs>
+      <rect width="400" height="340" fill="url(#grid)" rx="6"/>
+
+      ${shapePath}
+
+      <!-- Center of Gravity Crosshair -->
+      <circle cx="${cx}" cy="${cy}" r="14" fill="none" stroke="#ef4444" stroke-width="2" stroke-dasharray="2,2"/>
+      <line x1="${cx - 18}" y1="${cy}" x2="${cx + 18}" y2="${cy}" stroke="#ef4444" stroke-width="2"/>
+      <line x1="${cx}" y1="${cy - 18}" x2="${cx}" y2="${cy + 18}" stroke="#ef4444" stroke-width="2"/>
+      <text x="${cx}" y="${cy - 20}" font-family="monospace" font-size="8" font-weight="700" text-anchor="middle" fill="#ef4444">CENTER OF GRAVITY</text>
+
+      ${cupsSvg}
+      ${crewSvg}
+
+      ${measureArrow(cx - fw/2, cy + fh/2 + 16, cx + fw/2, cy + fh/2 + 16, `${Math.round(fromMm(wMm, currentUnit))} ${currentUnit}`, true)}
+      ${measureArrow(cx + fw/2 + 16, cy - fh/2, cx + fw/2 + 16, cy + fh/2, `${Math.round(fromMm(hMm, currentUnit))} ${currentUnit}`)}
+
+      <!-- Weight Badge -->
+      <rect x="${cx - 85}" y="306" width="170" height="24" rx="4" fill="#0f172a"/>
+      <text x="${cx}" y="322" font-family="monospace" font-size="10" font-weight="700" text-anchor="middle" fill="#ffffff">TOTAL: ${result.totalWindowWeightKg.toFixed(1)} kg (${result.totalWindowWeightLbs.toFixed(1)} lbs)</text>
+    `;
+
+    const sub = document.getElementById('svg-subtitle');
+    if (sub) {
+      sub.textContent = `Glass: ${result.glassWeightKg.toFixed(1)} kg · Frame: ${result.frameWeightKg.toFixed(1)} kg (${currentFrameMaterial.toUpperCase()})`;
+    }
+  }
+
+  function calculate() {
+    const wInput = widthInput?.value.trim() ?? '';
+    const hInput = heightInput?.value.trim() ?? '';
+
+    if (!wInput || !hInput) {
+      if (resultsEmpty) resultsEmpty.hidden = false;
+      if (resultsGrid)  resultsGrid.hidden  = true;
+      if (recSection)   recSection.hidden   = true;
+      if (calcExtras)   calcExtras.hidden   = true;
+      if (cardConf)     cardConf.hidden     = true;
+      return;
+    }
+
+    const w = normalizeInput(wInput, currentUnit);
+    const h = normalizeInput(hInput, currentUnit);
+
+    if (!w || !h || w <= 0 || h <= 0) {
+      if (resultsEmpty) resultsEmpty.hidden = false;
+      if (resultsGrid)  resultsGrid.hidden  = true;
+      if (recSection)   recSection.hidden   = true;
+      if (calcExtras)   calcExtras.hidden   = true;
+      if (cardConf)     cardConf.hidden     = true;
+      return;
+    }
+
+    const wMm = toMm(w, currentUnit);
+    const hMm = toMm(h, currentUnit);
+
+    const input: WindowWeightInput = {
+      windowWidthMm: wMm,
+      windowHeightMm: hMm,
+      shape: currentShape,
+      thicknessMm: currentThicknessMm,
+      glassType: currentGlassType,
+      frameMaterial: currentFrameMaterial,
+    };
+
+    const result = calculateWindowWeight(input);
+    currentResult = result;
+    const recs = buildWindowWeightRecommendations(input, result);
+
+    updateMetric('card-total-weight', `${result.totalWindowWeightKg.toFixed(1)} kg`, `(${result.totalWindowWeightLbs.toFixed(1)} lbs)`);
+    updateMetric('card-glass-weight', `${result.glassWeightKg.toFixed(1)} kg`, `(${result.glassWeightLbs.toFixed(1)} lbs)`);
+    updateMetric('card-installers', `${result.installersRequired} Person`, result.installersRequired === 1 ? 'OSHA safe single lift' : 'Team lift required');
+    updateMetric('card-cups', `${result.vacuumCupsRecommended} Cups`, result.vacuumCupsRecommended > 0 ? '8" vacuum suction cups' : 'Manual grip');
+    updateMetric('card-frame-weight', `${result.frameWeightKg.toFixed(1)} kg`, `(${result.frameWeightLbs.toFixed(1)} lbs)`);
+    updateMetric('card-weight-m2', `${result.weightPerM2.toFixed(1)} kg/m²`, `(${result.weightPerSqFt.toFixed(2)} lbs/ft²)`);
+    updateMetric('card-handling', result.handlingDifficulty.toUpperCase());
+    updateMetric('card-transport', result.transportationCategory.replace('-', ' ').toUpperCase());
+
+    const starsEl = document.getElementById('confidence-stars');
+    const labelEl = document.getElementById('confidence-label');
+    const orderBadge = document.getElementById('confidence-ordering-badge');
+    const costBadge = document.getElementById('cost-badge');
+    const scoreBadge = document.getElementById('score-badge');
+
+    if (starsEl) starsEl.textContent = result.totalWindowWeightKg <= 50 ? '★★★★★' : (result.totalWindowWeightKg <= 100 ? '★★★★☆' : '★★★☆☆');
+    if (labelEl) labelEl.textContent = result.totalWindowWeightKg <= 25 ? 'Single-Person Light Carry' : (result.totalWindowWeightKg <= 50 ? 'Two-Person Standard Lift' : 'Heavy Unit - Mechanical Assist');
+    if (scoreBadge) scoreBadge.textContent = `${result.totalWindowWeightKg.toFixed(1)} kg Unit Weight`;
+    if (orderBadge) orderBadge.textContent = `✓ ${result.installersRequired} Installer${result.installersRequired > 1 ? 's' : ''}`;
+    if (costBadge) costBadge.textContent = `Handling: ${result.handlingDifficulty.toUpperCase()}`;
+
+    const recList = document.getElementById('rec-list');
+    if (recList) {
+      const iconMap: Record<string, string> = {
+        'handling': `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 11V6a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v5"/><path d="M14 10V4a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v6"/><path d="M10 10.5V6a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v8"/><path d="M18 8a2 2 0 0 1 2 2v4a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.86-5.99-2.34l-3.6-3.6a2 2 0 0 1 2.83-2.82L7 15"/></svg>`,
+        'installers': `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>`,
+        'vacuum-cups': `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3"/></svg>`,
+        'transport': `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>`,
+        'safety': `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>`,
+      };
+      recList.innerHTML = recs.items.map((item: any) =>
+        `<div class="rec-card">
+          <div class="rec-card-header">
+            <span class="rec-card-icon" aria-hidden="true">${iconMap[item.type] || iconMap['handling']}</span>
+            <span class="rec-card-title">${item.title}</span>
+          </div>
+          <div class="rec-card-body">${item.body}</div>
+          ${item.tip ? `<div class="rec-card-tip">${item.tip}</div>` : ''}
+        </div>`
+      ).join('');
+    }
+
+    try {
+      renderWeightSvg(result, wMm, hMm, currentShape);
+    } catch (err) {
+      console.error('SVG rendering error:', err);
+    }
+
+    if (resultsEmpty) resultsEmpty.hidden = true;
+    if (resultsGrid)  resultsGrid.hidden  = false;
+    if (recSection)   recSection.hidden   = false;
+    if (calcExtras)   calcExtras.hidden   = false;
+    if (cardConf)     cardConf.hidden     = false;
+
+    const glassLabel = currentGlassType.split('-').map(s => s.charAt(0).toUpperCase() + s.slice(1)).join(' ');
+    const frameLabel = currentFrameMaterial.charAt(0).toUpperCase() + currentFrameMaterial.slice(1);
+    const summaryText = `${w} × ${h} ${currentUnit}`;
+    const stateParams = {
+      width: String(w),
+      height: String(h),
+      unit: currentUnit,
+      shape: currentShape,
+      thickness: String(currentThicknessMm),
+      glassType: currentGlassType,
+      frameMaterial: currentFrameMaterial,
+      subtitle: `${glassLabel} · ${frameLabel} (${result.totalWindowWeightKg.toFixed(1)} kg)`,
+      summary: summaryText,
+      _display: summaryText,
+    };
+
+    (window as any).wmCurrentState = stateParams;
+    pushUrlState(stateParams);
+    (window as any).wmHistoryPanel?.add(`Window Weight`, stateParams);
+
+    (window as any).wmBuildSummary = () => buildSummary(
+      'Window Weight Calculator',
+      [
+        ['Window Width', `${w} ${currentUnit}`],
+        ['Window Height', `${h} ${currentUnit}`],
+        ['Unit', currentUnit],
+        ['Shape', currentShape],
+        ['Glass Type', glassLabel],
+        ['Glass Thickness', `${currentThicknessMm} mm`],
+        ['Frame Material', frameLabel],
+        ['Total Weight', `${result.totalWindowWeightKg.toFixed(1)} kg (${result.totalWindowWeightLbs.toFixed(1)} lbs)`],
+        ['Glass Weight', `${result.glassWeightKg.toFixed(1)} kg`],
+        ['Frame Weight', `${result.frameWeightKg.toFixed(1)} kg`],
+        ['Installers', `${result.installersRequired} Person`],
+        ['Suction Cups', `${result.vacuumCupsRecommended} Cups`],
+      ],
+      typeof window !== 'undefined' ? window.location.href : undefined,
+    );
+
+    (window as any).wmBuildExport = () => buildExportPayload(
+      'window-weight-calculator',
+      stateParams,
+      {
+        windowWidth: `${w} ${currentUnit}`,
+        windowHeight: `${h} ${currentUnit}`,
+        unit: currentUnit,
+        shape: currentShape,
+        thickness: `${currentThicknessMm} mm`,
+        glassType: currentGlassType,
+        frameMaterial: currentFrameMaterial,
+        glassAreaM2: `${result.glassAreaM2.toFixed(2)} m²`,
+        glassAreaSqFt: `${result.glassAreaSqFt.toFixed(1)} sq ft`,
+        glassWeightKg: `${result.glassWeightKg.toFixed(1)} kg`,
+        frameWeightKg: `${result.frameWeightKg.toFixed(1)} kg`,
+        totalWindowWeightKg: `${result.totalWindowWeightKg.toFixed(1)} kg`,
+        totalWindowWeightLbs: `${result.totalWindowWeightLbs.toFixed(1)} lbs`,
+        weightPerM2: `${result.weightPerM2.toFixed(1)} kg/m²`,
+        installersRequired: result.installersRequired,
+        vacuumCupsRecommended: result.vacuumCupsRecommended,
+        transportationCategory: result.transportationCategory,
+        handlingDifficulty: result.handlingDifficulty,
+        confidence: result.confidence,
+        recommendations: recs.items.map((i: any) => `${i.title}: ${i.body}`).join(' | '),
+        warnings: result.warnings.map((w: any) => w.message).join(' | '),
+      },
+    );
+
+    (window as any).wmShareExportBar?.show();
+
+    track({
+      type: 'calculation_completed',
+      properties: { slug: 'window-weight-calculator', unit: currentUnit, inputs: stateParams },
+    });
+  }
+
+  // ── Event listeners ───────────────────────────────────────────────────────
+  widthInput?.addEventListener('input', calculate);
+  heightInput?.addEventListener('input', calculate);
+
+  shapeSelect?.addEventListener('change', () => {
+    if (shapeSelect) currentShape = shapeSelect.value as WindowWeightShape;
+    calculate();
+  });
+
+  thickSelect?.addEventListener('change', () => {
+    if (thickSelect) currentThicknessMm = parseFloat(thickSelect.value || '4');
+    calculate();
+  });
+
+  glassSelect?.addEventListener('change', () => {
+    if (glassSelect) currentGlassType = glassSelect.value as WindowWeightGlassType;
+    calculate();
+  });
+
+  frameSelect?.addEventListener('change', () => {
+    if (frameSelect) currentFrameMaterial = frameSelect.value as WindowWeightFrameMaterial;
+    calculate();
+  });
+
+  document.getElementById('unit-selector')?.addEventListener('unitchange', (e) => {
+    const newUnit = (e as CustomEvent).detail?.unit as MeasurementUnit | undefined;
+    if (!newUnit) return;
+    if (widthInput?.value) {
+      const parsed = normalizeInput(widthInput.value, currentUnit);
+      if (parsed) widthInput.value = String(fromMm(toMm(parsed, currentUnit), newUnit));
+    }
+    if (heightInput?.value) {
+      const parsed = normalizeInput(heightInput.value, currentUnit);
+      if (parsed) heightInput.value = String(fromMm(toMm(parsed, currentUnit), newUnit));
+    }
+    const oldUnit = currentUnit;
+    currentUnit = newUnit;
+    track({ type: 'unit_changed', properties: { slug: 'window-weight-calculator', from: oldUnit, to: newUnit } });
+    calculate();
+  });
+
+  // Restore URL state
+  const urlState = readUrlState();
+  if (urlState.width && widthInput)   widthInput.value  = urlState.width;
+  if (urlState.height && heightInput) heightInput.value = urlState.height;
+  if (urlState.unit && ['mm','cm','m','in','ft'].includes(urlState.unit)) {
+    currentUnit = urlState.unit as MeasurementUnit;
+    document.querySelectorAll('.unit-btn').forEach(b => (b as HTMLElement).setAttribute('aria-pressed', (b as HTMLElement).dataset.unit === currentUnit ? 'true' : 'false'));
+  }
+  if (urlState.shape && shapeSelect) {
+    currentShape = urlState.shape as WindowWeightShape;
+    shapeSelect.value = currentShape;
+  }
+  if (urlState.thickness && thickSelect) {
+    currentThicknessMm = parseFloat(urlState.thickness);
+    thickSelect.value = String(currentThicknessMm);
+  }
+  if (urlState.glassType && glassSelect) {
+    currentGlassType = urlState.glassType as WindowWeightGlassType;
+    glassSelect.value = currentGlassType;
+  }
+  if (urlState.frameMaterial && frameSelect) {
+    currentFrameMaterial = urlState.frameMaterial as WindowWeightFrameMaterial;
+    frameSelect.value = currentFrameMaterial;
+  }
+
+  // Initial calculation on page load
+  calculate();
+
+  // ── History restore ──────────────────────────────────────────────────────
+  document.addEventListener('wm:history-restore', (e: Event) => {
+    const { inputs } = (e as CustomEvent).detail;
+    if (inputs.width && widthInput)   widthInput.value  = inputs.width;
+    if (inputs.height && heightInput) heightInput.value = inputs.height;
+    if (inputs.unit && ['mm','cm','m','in','ft'].includes(inputs.unit)) {
+      currentUnit = inputs.unit as MeasurementUnit;
+      document.querySelectorAll('.unit-btn').forEach(b => (b as HTMLElement).setAttribute('aria-pressed', (b as HTMLElement).dataset.unit === currentUnit ? 'true' : 'false'));
+    }
+    if (inputs.shape && shapeSelect) {
+      currentShape = inputs.shape as WindowWeightShape;
+      shapeSelect.value = currentShape;
+    }
+    calculate();
+    track({ type: 'history_restored', properties: { slug: 'window-weight-calculator', entryId: (e as CustomEvent).detail.entryId ?? '' } });
+  });
+</script>
+
+<style>
+  .calc-dashboard {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--spacing-xl);
+    align-items: start;
+    margin-top: var(--spacing-lg);
+  }
+
+  @media (min-width: 1024px) {
+    .calc-dashboard {
+      grid-template-columns: 360px 1fr;
+    }
+  }
+
+  .calc-panel {
+    background-color: var(--color-canvas);
+    border: 1px solid var(--color-hairline);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+  }
+
+  .calc-panel-inputs {
+    position: sticky;
+    top: var(--spacing-md);
+  }
+
+  .panel-header {
+    padding: var(--spacing-md);
+    background-color: var(--color-canvas-soft);
+    border-bottom: 1px solid var(--color-hairline);
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+  }
+
+  .panel-label {
+    font-family: var(--font-family-mono);
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--color-muted);
+  }
+
+  .panel-section-header {
+    padding: var(--spacing-sm) var(--spacing-md);
+    background-color: var(--color-canvas-soft-2);
+    border-bottom: 1px solid var(--color-hairline);
+  }
+
+  .panel-section-title {
+    font-family: var(--font-family-mono);
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--color-brand);
+  }
+
+  .input {
+    width: 100%;
+    height: 38px;
+    padding: 0 var(--spacing-md);
+    font-family: var(--font-family-sans);
+    font-size: var(--font-size-body-sm);
+    color: var(--color-ink);
+    background-color: var(--color-canvas);
+    border: 1px solid var(--color-hairline-strong);
+    border-radius: var(--radius-sm);
+    box-sizing: border-box;
+    transition: border-color 150ms ease, box-shadow 150ms ease;
+  }
+
+  .input:focus {
+    outline: none;
+    border-color: var(--color-link);
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-link) 20%, transparent);
+  }
+
+  .input-select {
+    width: 100%;
+    height: 38px;
+    padding: 0 var(--spacing-md);
+    font-family: var(--font-family-sans);
+    font-size: var(--font-size-body-sm);
+    color: var(--color-ink);
+    background-color: var(--color-canvas);
+    border: 1px solid var(--color-hairline-strong);
+    border-radius: var(--radius-sm);
+    box-sizing: border-box;
+    cursor: pointer;
+  }
+
+  .input-select:focus {
+    outline: none;
+    border-color: var(--color-link);
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-link) 20%, transparent);
+  }
+
+  .empty-state {
+    padding: var(--spacing-3xl) var(--spacing-xl);
+    text-align: center;
+    color: var(--color-muted);
+  }
+
+  .empty-icon-wrap {
+    display: inline-flex;
+    padding: var(--spacing-md);
+    background: var(--color-canvas-soft);
+    border-radius: var(--radius-full);
+    margin-bottom: var(--spacing-md);
+  }
+
+  .empty-svg {
+    color: var(--color-muted);
+  }
+
+  .empty-title {
+    font-size: var(--font-size-title-sm);
+    font-weight: 600;
+    color: var(--color-ink);
+    margin: 0 0 var(--spacing-xs);
+  }
+
+  .empty-sub {
+    font-size: var(--font-size-caption);
+    margin: 0;
+  }
+
+  .results-metric-grid {
+    padding: var(--spacing-lg);
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--spacing-md);
+  }
+
+  @media (min-width: 640px) {
+    .results-metric-grid {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+
+  .results-metric-grid > * {
+    height: 100%;
+    min-height: 96px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+
+  /* ── Unified Confidence Summary Card ────────────────────────────── */
+  .confidence-summary-card {
+    margin: 0 var(--spacing-lg) var(--spacing-md);
+    padding: var(--spacing-lg);
+    background: linear-gradient(180deg, color-mix(in srgb, var(--color-brand) 8%, var(--color-canvas)) 0%, var(--color-canvas) 100%);
+    border: 1px solid color-mix(in srgb, var(--color-brand) 22%, transparent);
+    border-radius: var(--radius-lg);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+    text-align: center;
+  }
+
+  .conf-card-header {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    margin-bottom: var(--spacing-md);
+  }
+
+  .conf-stars {
+    font-size: 20px;
+    letter-spacing: 3px;
+    color: #f59e0b;
+  }
+
+  .conf-title {
+    font-weight: 700;
+    font-size: var(--font-size-body);
+    color: var(--color-ink);
+  }
+
+  .conf-card-badges {
+    display: flex;
+    justify-content: center;
+    gap: var(--spacing-sm);
+    flex-wrap: wrap;
+  }
+
+  .conf-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 12px;
+    border-radius: var(--radius-full);
+    font-size: var(--font-size-caption);
+    font-weight: 600;
+    background: var(--color-canvas-soft-2);
+    border: 1px solid var(--color-hairline);
+    color: var(--color-ink);
+    font-family: var(--font-family-mono);
+  }
+
+  .conf-badge-cost {
+    background: color-mix(in srgb, var(--color-brand) 12%, transparent);
+    border-color: color-mix(in srgb, var(--color-brand) 25%, transparent);
+    color: var(--color-brand);
+  }
+
+  .conf-badge-order {
+    background: color-mix(in srgb, #22c55e 12%, transparent);
+    border-color: color-mix(in srgb, #22c55e 25%, transparent);
+    color: #15803d;
+  }
+
+  [data-theme='dark'] .conf-badge-order {
+    color: #4ade80;
+  }
+
+  .conf-badge-score {
+    background: color-mix(in srgb, #22c55e 12%, transparent);
+    border-color: color-mix(in srgb, #22c55e 25%, transparent);
+    color: #15803d;
+  }
+
+  [data-theme='dark'] .conf-badge-score {
+    color: #4ade80;
+  }
+
+  .svg-section {
+    padding: var(--spacing-lg);
+    border-bottom: 1px solid var(--color-hairline);
+    background-color: var(--color-canvas-soft);
+  }
+
+  .svg-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--spacing-md);
+  }
+
+  .svg-label {
+    font-family: var(--font-family-mono);
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    color: var(--color-ink);
+  }
+
+  .svg-subtitle {
+    font-size: var(--font-size-caption);
+    color: var(--color-muted);
+    font-family: var(--font-family-mono);
+  }
+
+  .svg-wrap {
+    background-color: #ffffff;
+    border: 1px solid var(--color-hairline);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    padding: var(--spacing-md);
+    display: flex;
+    justify-content: center;
+    box-shadow: inset 0 1px 3px rgba(0,0,0,0.03);
+  }
+
+  [data-theme='dark'] .svg-wrap {
+    background-color: #0f172a;
+    border-color: #334155;
+  }
+
+  .rec-section {
+    border-top: 1px solid var(--color-hairline);
+  }
+
+  .rec-list {
+    padding: var(--spacing-lg);
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--spacing-md);
+  }
+
+  @media (min-width: 640px) {
+    .rec-list {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+
+  .rec-card {
+    padding: var(--spacing-md) var(--spacing-lg);
+    background: var(--color-canvas-soft);
+    border: 1px solid var(--color-hairline);
+    border-radius: var(--radius-md);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 4px;
+    height: 100%;
+    min-height: 100px;
+  }
+
+  .rec-card-header {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .rec-card-icon {
+    color: var(--color-brand);
+    display: inline-flex;
+    align-items: center;
+    flex-shrink: 0;
+  }
+
+  .rec-card-title {
+    font-family: var(--font-family-mono);
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--color-brand);
+  }
+
+  .rec-card-body {
+    font-size: var(--font-size-body-sm);
+    font-weight: 700;
+    color: var(--color-ink);
+    line-height: 1.3;
+  }
+
+  .rec-card-tip {
+    font-size: var(--font-size-caption);
+    color: var(--color-muted);
+    line-height: 1.35;
+  }
+
+  .calc-extras {
+    border-top: 1px solid var(--color-hairline);
+    background-color: var(--color-canvas-soft);
+    padding: var(--spacing-lg);
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-lg);
+  }
+
+  @media (max-width: 640px) {
+    .results-metric-grid {
+      grid-template-columns: 1fr;
+      padding: var(--spacing-md);
+    }
+    .rec-list, .calc-extras, .svg-section {
+      padding: var(--spacing-md);
+    }
+    .confidence-summary-card {
+      margin: 0 var(--spacing-md) var(--spacing-md);
+      padding: var(--spacing-md);
+    }
+    .conf-card-badges {
+      flex-direction: column;
+      align-items: stretch;
+    }
+    .conf-badge {
+      justify-content: center;
+    }
+  }
+</style>
