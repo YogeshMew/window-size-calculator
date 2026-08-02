@@ -253,12 +253,29 @@ export const TOOLS: Tool[] = [
   {
     slug: 'window-screen-calculator',
     title: 'Window Screen Calculator',
-    description: 'Calculate screen dimensions and material for window screens and replacements.',
+    description: 'Calculate exact window screen dimensions, frame perimeter, mesh area with waste, spline length, and stock frame suggestions.',
+    longDescription: 'The definitive window screen size and material calculator. Calculate finished screen frame dimensions, mesh roll area, spline channel lengths, frame weight, corner connectors, and DIY installation guidance for fiberglass, aluminum, pet screen, solar screen, and stainless steel mesh.',
     category: 'maintenance',
     href: '/tools/window-screen-calculator',
     icon: 'Grid2x2',
-    status: 'planned',
-    relatedSlugs: ['window-size-calculator'],
+    status: 'live',
+    useCases: ['Replacement', 'DIY Screen Frame', 'Insect Protection', 'Pet Screening', 'Solar Shading'],
+    benefits: [
+      'Finished screen width & height',
+      'Frame perimeter & 15% mesh area waste calculation',
+      'Spline diameter & length calculator',
+      'Corner connector & crossbar requirements',
+      'Mesh type comparison (Pet, Solar, Aluminum, Fiberglass)',
+      'Closest standard stock screen frame matches',
+    ],
+    keywords: [
+      'window screen calculator',
+      'window screen replacement size',
+      'screen frame calculator',
+      'window screen spline size',
+      'pet screen calculator',
+    ],
+    relatedSlugs: ['window-size-calculator', 'window-blinds-calculator', 'replacement-window-calculator'],
   },
 
   // -------------------------------------------------------------------------

@@ -1,0 +1,1317 @@
+---
+import ToolLayout from '@/layouts/ToolLayout.astro';
+import CalculatorHero from '@/components/calculator/CalculatorHero.astro';
+import InputCard from '@/components/calculator/InputCard.astro';
+import UnitSelector from '@/components/calculator/UnitSelector.astro';
+import ResultMetricCard from '@/components/calculator/ResultMetricCard.astro';
+import ShareExportBar from '@/components/calculator/ShareExportBar.astro';
+import HistoryPanel from '@/components/calculator/HistoryPanel.astro';
+import FAQSection from '@/components/content/FAQSection.astro';
+import RelatedTools from '@/components/calculator/RelatedTools.astro';
+import { getToolBySlug } from '@/data/tools.js';
+import type { BreadcrumbItem, FAQ } from '@/types/calculator.js';
+
+const tool = getToolBySlug('window-screen-calculator')!;
+
+const breadcrumbs: BreadcrumbItem[] = [
+  { label: 'Home', href: '/' },
+  { label: 'Tools', href: '/tools' },
+  { label: tool.title, href: tool.href, current: true },
+];
+
+const faqs: FAQ[] = [
+  {
+    question: 'How do I measure a window for a replacement screen?',
+    answer:
+      'Measure the existing screen frame from outside edge to outside edge for width and height. If the old screen is missing, measure the screen channel in the window frame and subtract 3/8" (9.5mm) from both width and height for standard clip clearance.',
+  },
+  {
+    question: 'What is the difference between Pet Screen and Standard Fiberglass mesh?',
+    answer:
+      'Pet Screen (TuffScreen) is heavy-duty vinyl-coated polyester that is 7x stronger than standard fiberglass mesh. It resists dog and cat claw tears, pet punctures, and heavy push pressure while remaining transparent.',
+  },
+  {
+    question: 'Why does my window screen need a center crossbar?',
+    answer:
+      'Screens taller than 48 inches (1219mm) require a middle stabilizer crossbar. Tight spline tension can bow aluminum side frame rails inward (known as "hourglassing"); a crossbar maintains rigid square geometry.',
+  },
+  {
+    question: 'What spline diameter size should I buy for my screen frame?',
+    answer:
+      'Standard 5/16" aluminum screen frames with fiberglass mesh use 0.140" (3.5mm) vinyl spline. Thicker mesh like Pet Screen requires a smaller 0.125" (3.2mm) spline, while metal aluminum wire mesh uses 0.150" (3.8mm) spline.',
+  },
+  {
+    question: 'How much extra mesh should I cut when screening a frame?',
+    answer:
+      'Always allow at least 1.5 to 2 inches (38–50mm) of mesh overhang on all four sides of the frame. This extra material gives your hands leverage while rolling spline into the channel and is trimmed off after securing.',
+  },
+  {
+    question: 'Which frame material is best: Aluminum, Vinyl, Fiberglass, or Wood?',
+    answer:
+      'Extruded aluminum is the industry standard for durability, lightweight structure, and weather resistance. Vinyl frames match vinyl window finishes, fiberglass offers extreme rigidity for large openings, and wood is ideal for historic homes.',
+  },
+  {
+    question: 'Do Solar Screens reduce indoor room temperature?',
+    answer:
+      'Yes, Solar Shade mesh blocks 70% to 90% of solar heat gain and harmful UV rays before heat hits the window glass. This dramatically reduces room temperature and summer air conditioner power usage.',
+  },
+];
+
+const schema = {
+  '@context': 'https://schema.org',
+  '@type': 'SoftwareApplication',
+  name: tool.title,
+  description: tool.description,
+  applicationCategory: 'UtilityApplication',
+  operatingSystem: 'All',
+  offers: {
+    '@type': 'Offer',
+    price: '0',
+    priceCurrency: 'USD',
+  },
+};
+---
+
+<ToolLayout tool={tool} breadcrumbs={breadcrumbs} description={tool.description}>
+  <Fragment slot="schema">
+    <script type="application/ld+json" set:html={JSON.stringify(schema)} />
+  </Fragment>
+
+  <CalculatorHero
+    tool={tool}
+    description="Calculate exact finished window screen frame dimensions, 15% mesh area waste, spline channel length, corner keys, frame weight, and closest stock frame matches."
+    features={[
+      'Finished screen width & height',
+      'Frame perimeter & mesh area with waste',
+      'Spline diameter & length calculator',
+      'Crossbar & corner key requirements',
+      'Pet, Solar, Aluminum & Fiberglass mesh support',
+    ]}
+    trustItems={[
+      { label: 'Standard frame deductions' },
+      { label: 'All units (in, mm, cm, ft)' },
+      { label: 'No registration required' },
+      { label: 'Instant live calculation' },
+    ]}
+  />
+
+  <div class="calc-dashboard">
+    <!-- LEFT PANEL — Inputs -->
+    <div class="calc-panel calc-panel-inputs">
+      <div class="panel-header">
+        <span class="panel-label">Window opening measurements</span>
+        <UnitSelector defaultUnit="in" />
+      </div>
+
+      <div class="panel-section-header">
+        <span class="panel-section-title">Window Dimensions</span>
+      </div>
+
+      <InputCard label="Window Width" inputId="input-width" hint="Opening or existing frame width">
+        <input type="text" id="input-width" class="input" placeholder="e.g., 36" autocomplete="off" />
+      </InputCard>
+
+      <InputCard label="Window Height" inputId="input-height" hint="Opening or existing frame height">
+        <input type="text" id="input-height" class="input" placeholder="e.g., 60" autocomplete="off" />
+      </InputCard>
+
+      <InputCard label="Mount Type" inputId="mount-selector">
+        <div class="option-selector" id="mount-selector" role="group" aria-label="Mount Type">
+          <button type="button" class="option-btn" data-value="standard" aria-pressed="true">Standard Clip</button>
+          <button type="button" class="option-btn" data-value="flush" aria-pressed="false">Flush Track</button>
+          <button type="button" class="option-btn" data-value="recessed" aria-pressed="false">Recessed Frame</button>
+        </div>
+      </InputCard>
+
+      <InputCard label="Frame Type" inputId="input-frame-type">
+        <select id="input-frame-type" class="input-select" aria-label="Select Frame Type">
+          <option value="aluminum" selected>Aluminum (Extruded 5/16")</option>
+          <option value="vinyl">Vinyl Frame Profile</option>
+          <option value="fiberglass">Composite Fiberglass</option>
+          <option value="wood">Traditional Wood</option>
+        </select>
+      </InputCard>
+
+      <InputCard label="Mesh Type" inputId="input-mesh-type">
+        <select id="input-mesh-type" class="input-select" aria-label="Select Mesh Type">
+          <option value="fiberglass" selected>Fiberglass Mesh (Standard)</option>
+          <option value="aluminum">Aluminum Wire Mesh</option>
+          <option value="pet-screen">Pet Screen (TuffScreen 7x)</option>
+          <option value="solar-screen">Solar Sun Shade (80% Block)</option>
+          <option value="stainless-steel">Stainless Steel Security</option>
+        </select>
+      </InputCard>
+
+      <InputCard label="Frame Color" inputId="color-selector">
+        <div class="option-selector" id="color-selector" role="group" aria-label="Frame Color">
+          <button type="button" class="option-btn" data-value="white" aria-pressed="true">White</button>
+          <button type="button" class="option-btn" data-value="bronze" aria-pressed="false">Bronze</button>
+          <button type="button" class="option-btn" data-value="silver" aria-pressed="false">Silver</button>
+          <button type="button" class="option-btn" data-value="black" aria-pressed="false">Black</button>
+          <button type="button" class="option-btn" data-value="tan" aria-pressed="false">Tan</button>
+        </div>
+      </InputCard>
+
+      <details class="advanced-section">
+        <summary>Advanced screen options</summary>
+        <div class="advanced-content">
+          <InputCard label="Frame Thickness" inputId="input-frame-thickness" hint="Override frame rail thickness">
+            <input type="text" id="input-frame-thickness" class="input" placeholder="e.g., 0.3125" autocomplete="off" />
+          </InputCard>
+          
+          <InputCard label="Spline Diameter" inputId="input-spline-diameter" hint="Override vinyl spline size">
+            <input type="text" id="input-spline-diameter" class="input" placeholder="e.g., 0.140" autocomplete="off" />
+          </InputCard>
+        </div>
+      </details>
+    </div>
+
+    <!-- RIGHT PANEL — Results -->
+    <div class="calc-panel calc-panel-results">
+      <div id="results-empty" class="empty-state">
+        <div class="empty-icon-wrap">
+          <svg width="48" height="48" viewBox="0 0 48 48" fill="none" class="empty-svg">
+            <rect x="8" y="8" width="32" height="32" rx="3" stroke="currentColor" stroke-width="2.5" fill="none"/>
+            <path d="M8 16H40M8 24H40M8 32H40M16 8V40M24 8V40M32 8V40" stroke="currentColor" stroke-width="1.2" stroke-dasharray="2 2"/>
+          </svg>
+        </div>
+        <h3 class="empty-title">Enter window dimensions</h3>
+        <p class="empty-sub">Fill in Width and Height to see instant screen frame sizing, mesh area & materials.</p>
+      </div>
+
+      <div id="results-grid" hidden>
+        <!-- SVG diagram section -->
+        <div class="svg-section">
+          <div class="svg-header">
+            <span class="svg-label">Diagram</span>
+            <span class="svg-subtitle" id="svg-subtitle">Fits inside window opening</span>
+          </div>
+          <div class="svg-wrap">
+            <svg id="screen-svg" viewBox="0 0 400 340" width="100%" aria-label="Window screen size diagram"></svg>
+          </div>
+        </div>
+
+        <div class="results-metric-grid">
+          <ResultMetricCard id="card-finished-width" label="Finished Width" highlight={true} sublabel="Order/cut frame to this width" animate={true} />
+          <ResultMetricCard id="card-finished-height" label="Finished Height" highlight={true} sublabel="Order/cut frame to this height" animate={true} />
+          <ResultMetricCard id="card-perimeter" label="Frame Perimeter" highlight={true} sublabel="Total frame rail length" animate={true} />
+          <ResultMetricCard id="card-mesh-area" label="Mesh Roll Area" highlight={true} sublabel="Includes 15% waste allowance" animate={true} />
+          <ResultMetricCard id="card-spline-len" label="Spline Length" sublabel="Includes 5% buffer" animate={true} />
+          <ResultMetricCard id="card-weight" label="Estimated Weight" sublabel="Frame & mesh weight" animate={true} />
+          <ResultMetricCard id="card-install-rating" label="DIY Rating" sublabel="Installation difficulty" animate={true} />
+          <ResultMetricCard id="card-rec-mesh" label="Recommended Mesh" sublabel="Best fit for window" animate={true} />
+        </div>
+
+        <!-- Unified Confidence Summary Card -->
+        <div id="card-confidence" class="confidence-summary-card" hidden>
+          <div class="conf-card-header">
+            <span class="conf-stars" id="confidence-stars">★★★★★</span>
+            <span class="conf-title" id="confidence-label">Exact Factory Match</span>
+          </div>
+          <div class="conf-card-badges">
+            <span class="conf-badge conf-badge-score" id="score-badge">100% Fit Match</span>
+            <span class="conf-badge conf-badge-order" id="confidence-ordering-badge">✓ Order Exact Size</span>
+            <span class="conf-badge conf-badge-cost" id="cost-badge">Est. Cost: $</span>
+          </div>
+        </div>
+
+        <!-- Interactive Stock Size Chips -->
+        <div id="stock-sizes-section" class="stock-section">
+          <div class="stock-section-header">
+            <span class="stock-label">Closest Stock Frame Widths</span>
+          </div>
+          <div class="stock-chips" id="stock-widths"></div>
+          <div class="stock-section-header">
+            <span class="stock-label">Closest Stock Frame Heights</span>
+          </div>
+          <div class="stock-chips" id="stock-heights"></div>
+        </div>
+
+        <!-- Recommendations Grid -->
+        <div id="rec-section" class="rec-section" hidden>
+          <div class="panel-header"><span class="panel-label">Smart Recommendations</span></div>
+          <div id="rec-list" class="rec-list"></div>
+        </div>
+
+        <!-- Share & Export + History Bar -->
+        <div class="calc-extras" id="calc-extras" hidden>
+          <ShareExportBar calculatorTitle="Window Screen Calculator" />
+          <HistoryPanel slug="window-screen-calculator" />
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <Fragment slot="sidebar">
+    <RelatedTools
+      links={[
+        {
+          title: 'Window Size Calculator',
+          description: 'Window opening area, perimeter, and sizing recommendations.',
+          href: '/tools/window-size-calculator',
+          icon: 'Ruler',
+        },
+        {
+          title: 'Window Blinds Size Calculator',
+          description: 'Inside and outside mount blind widths and deductions.',
+          href: '/tools/window-blinds-calculator',
+          icon: 'Grid2x2',
+        },
+        {
+          title: 'Replacement Window Calculator',
+          description: 'Find nearest standard replacement window factory sizes.',
+          href: '/tools/replacement-window-calculator',
+          icon: 'RefreshCw',
+        },
+        {
+          title: 'Window Glass Calculator',
+          description: 'Calculate glass area, weight, and pane thickness.',
+          href: '/tools/window-glass-calculator',
+          icon: 'PanelTop',
+        },
+        {
+          title: 'Window AC Calculator',
+          description: 'Calculate required BTU capacity for window air conditioners.',
+          href: '/tools/window-ac-calculator',
+          icon: 'Wind',
+        },
+      ]}
+      tip={{
+        label: 'Measuring Tip',
+        text: 'Always measure existing screen frame outside dimensions at top, middle, and bottom. Windows may bow slightly.',
+      }}
+    />
+    <FAQSection faqs={faqs} />
+  </Fragment>
+</ToolLayout>
+
+<script>
+  import { calculateScreen, type ScreenInput, type ScreenFrameType, type ScreenMeshType, type ScreenMountType, type ScreenFrameColor } from '@/engine/screen.js';
+  import { buildScreenRecommendations } from '@/engine/screen-recommendations.js';
+  import { toMm, fromMm, formatDimension, normalizeInput } from '@/engine/units.js';
+  import { readUrlState, pushUrlState } from '@/lib/url-state.js';
+  import { buildExportPayload } from '@/lib/export.js';
+  import { buildSummary } from '@/lib/share.js';
+  import { track } from '@/lib/analytics.js';
+  import type { MeasurementUnit } from '@/types/calculator.js';
+
+  let _debounceTimer: ReturnType<typeof setTimeout> | null = null;
+  function scheduleCalculate() {
+    if (_debounceTimer) clearTimeout(_debounceTimer);
+    _debounceTimer = setTimeout(() => calculate(), 300);
+  }
+
+  let currentResult: ReturnType<typeof calculateScreen> | null = null;
+  let currentUnit: MeasurementUnit = 'in';
+  let currentMountType: ScreenMountType = 'standard';
+  let currentFrameType: ScreenFrameType = 'aluminum';
+  let currentMeshType: ScreenMeshType = 'fiberglass';
+  let currentFrameColor: ScreenFrameColor = 'white';
+
+  function initOptionSelector(id: string, onChange: (val: string) => void) {
+    const el = document.getElementById(id);
+    el?.addEventListener('click', (e) => {
+      const btn = (e.target as HTMLElement).closest('[data-value]') as HTMLElement | null;
+      if (!btn) return;
+      el.querySelectorAll('[data-value]').forEach(b => (b as HTMLElement).setAttribute('aria-pressed', 'false'));
+      btn.setAttribute('aria-pressed', 'true');
+      onChange(btn.dataset.value ?? '');
+    });
+  }
+
+  function updateMetric(cardId: string, value: string, unitStr: string = '') {
+    const valEl = document.querySelector(`#${cardId} .result-value-text`);
+    const unitEl = document.querySelector(`#${cardId} .result-unit`);
+    if (valEl) valEl.textContent = value;
+    if (unitEl) unitEl.textContent = unitStr;
+  }
+
+  // ── Vector SVG Screen Diagram Renderer ─────────────────────────────────────
+  function renderScreenSvg(result: ReturnType<typeof calculateScreen>, wMm: number, hMm: number, frameType: string, meshType: string) {
+    const svg = document.getElementById('screen-svg');
+    if (!svg) return;
+
+    const cx = 200, cy = 170;
+    const maxW = 270, maxH = 220;
+    const scale = Math.min(maxW / wMm, maxH / hMm);
+    const fw = wMm * scale;
+    const fh = hMm * scale;
+
+    const bw = result.finishedWidthMm * scale;
+    const bh = result.finishedHeightMm * scale;
+    const bx = cx - bw / 2;
+    const by = cy - bh / 2;
+
+    // Frame colors per material
+    const frameColors: Record<string, string> = {
+      aluminum: '#64748b',
+      vinyl: '#e2e8f0',
+      fiberglass: '#334155',
+      wood: '#92400e',
+    };
+    const frameStroke = frameColors[frameType] ?? '#64748b';
+
+    // Mesh weave pattern
+    function meshPattern(id: string, mesh: string): string {
+      if (mesh === 'pet-screen') {
+        return `<pattern id="${id}" x="0" y="0" width="8" height="8" patternUnits="userSpaceOnUse">
+          <rect width="8" height="8" fill="#1e293b" opacity="0.8"/>
+          <path d="M 8 0 L 0 0 0 8" fill="none" stroke="#0f172a" stroke-width="2"/>
+        </pattern>`;
+      }
+      if (mesh === 'solar-screen') {
+        return `<pattern id="${id}" x="0" y="0" width="6" height="6" patternUnits="userSpaceOnUse">
+          <rect width="6" height="6" fill="#334155" opacity="0.9"/>
+          <path d="M 6 0 L 0 0 0 6" fill="none" stroke="#0f172a" stroke-width="1.5"/>
+        </pattern>`;
+      }
+      if (mesh === 'aluminum') {
+        return `<pattern id="${id}" x="0" y="0" width="10" height="10" patternUnits="userSpaceOnUse">
+          <rect width="10" height="10" fill="#94a3b8" opacity="0.3"/>
+          <path d="M 10 0 L 0 0 0 10" fill="none" stroke="#e2e8f0" stroke-width="1"/>
+        </pattern>`;
+      }
+      if (mesh === 'stainless-steel') {
+        return `<pattern id="${id}" x="0" y="0" width="7" height="7" patternUnits="userSpaceOnUse">
+          <rect width="7" height="7" fill="#475569" opacity="0.5"/>
+          <path d="M 7 0 L 0 0 0 7" fill="none" stroke="#cbd5e1" stroke-width="1.2"/>
+        </pattern>`;
+      }
+      // Standard fiberglass
+      return `<pattern id="${id}" x="0" y="0" width="10" height="10" patternUnits="userSpaceOnUse">
+        <rect width="10" height="10" fill="#e0f2fe" opacity="0.4"/>
+        <path d="M 10 0 L 0 0 0 10" fill="none" stroke="#64748b" stroke-width="1" stroke-dasharray="2,2"/>
+      </pattern>`;
+    }
+
+    const crossbarSvg = result.crossbarRequired
+      ? `<line x1="${bx}" y1="${cy}" x2="${bx + bw}" y2="${cy}" stroke="${frameStroke}" stroke-width="6" />
+         <rect x="${bx - 2}" y="${cy - 4}" width="4" height="8" fill="#1e293b"/>
+         <rect x="${bx + bw - 2}" y="${cy - 4}" width="4" height="8" fill="#1e293b"/>`
+      : '';
+
+    const measureArrow = (x1: number, y1: number, x2: number, y2: number, label: string, isHoriz: boolean = false) => {
+      const mx = isHoriz ? (x1 + x2) / 2 : x2 + 18;
+      const my = isHoriz ? y1 - 12 : (y1 + y2) / 2;
+      return `
+        <line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="#0f172a" stroke-width="1.5"/>
+        <polygon points="${x1},${y1} ${x1-3},${y1+5} ${x1+3},${y1+5}" fill="#0f172a" transform="rotate(${isHoriz?90:0},${x1},${y1})"/>
+        <polygon points="${x2},${y2} ${x2-3},${y2-5} ${x2+3},${y2-5}" fill="#0f172a" transform="rotate(${isHoriz?90:0},${x2},${y2})"/>
+        <rect x="${mx - 24}" y="${my - 8}" width="48" height="16" rx="3" fill="#ffffff" stroke="#cbd5e1" stroke-width="1"/>
+        <text x="${mx}" y="${my + 4}" font-family="monospace" font-size="9" font-weight="600" text-anchor="middle" fill="#0f172a">${label}</text>`;
+    };
+
+    svg.innerHTML = `
+      <defs>
+        <pattern id="grid" width="20" height="20" patternUnits="userSpaceOnUse">
+          <path d="M 20 0 L 0 0 0 20" fill="none" stroke="rgba(0,0,0,0.03)" stroke-width="1"/>
+        </pattern>
+        ${meshPattern('meshFill', meshType)}
+      </defs>
+      <rect width="400" height="340" fill="url(#grid)" rx="6"/>
+
+      <!-- Outer Window Opening -->
+      <rect x="${cx - fw/2 - 10}" y="${cy - fh/2 - 10}" width="${fw+20}" height="${fh+20}"
+        fill="#f8fafc" stroke="#94a3b8" stroke-width="2" rx="4"/>
+
+      <!-- Screen Mesh Panel -->
+      <rect x="${bx}" y="${by}" width="${bw}" height="${bh}"
+        fill="url(#meshFill)" stroke="#334155" stroke-width="1.5" rx="2"/>
+
+      ${crossbarSvg}
+
+      <!-- Screen Outer Frame Rails -->
+      <rect x="${bx - 4}" y="${by - 4}" width="${bw + 8}" height="${bh + 8}"
+        fill="none" stroke="${frameStroke}" stroke-width="8" rx="4"/>
+
+      <!-- Corner Connectors (Keys) -->
+      <rect x="${bx - 6}" y="${by - 6}" width="10" height="10" fill="#0f172a" rx="2"/>
+      <rect x="${bx + bw - 4}" y="${by - 6}" width="10" height="10" fill="#0f172a" rx="2"/>
+      <rect x="${bx - 6}" y="${by + bh - 4}" width="10" height="10" fill="#0f172a" rx="2"/>
+      <rect x="${bx + bw - 4}" y="${by + bh - 4}" width="10" height="10" fill="#0f172a" rx="2"/>
+
+      <!-- Spline channel outline -->
+      <rect x="${bx}" y="${by}" width="${bw}" height="${bh}"
+        fill="none" stroke="#0f172a" stroke-width="1.2" stroke-dasharray="3,2"/>
+
+      ${measureArrow(cx - fw/2, cy + fh/2 + 26, cx + fw/2, cy + fh/2 + 26, `${Math.round(fromMm(wMm, currentUnit))} ${currentUnit}`, true)}
+      ${measureArrow(cx + fw/2 + 26, cy - fh/2, cx + fw/2 + 26, cy + fh/2, `${Math.round(fromMm(hMm, currentUnit))} ${currentUnit}`)}
+
+      <!-- Frame & Mesh Badge -->
+      <rect x="${cx - 65}" y="310" width="130" height="20" rx="4" fill="#0f172a"/>
+      <text x="${cx}" y="324" font-family="monospace" font-size="9" font-weight="600" text-anchor="middle" fill="#ffffff">${frameType.toUpperCase()} · ${meshType.toUpperCase()}</text>
+    `;
+
+    const sub = document.getElementById('svg-subtitle');
+    if (sub) {
+      const mountMap: Record<string, string> = {
+        standard: 'Fits inside standard window frame opening',
+        flush: 'Flush slide track fit',
+        recessed: 'Recessed frame channel fit',
+      };
+      sub.textContent = mountMap[currentMountType] ?? 'Fits inside window opening';
+    }
+  }
+
+  function toggleResults(hasResults: boolean) {
+    const emptyEl = document.getElementById('results-empty');
+    const gridEl  = document.getElementById('results-grid');
+    const recEl   = document.getElementById('rec-section');
+    const extEl   = document.getElementById('calc-extras');
+
+    if (hasResults) {
+      emptyEl?.setAttribute('hidden', '');
+      gridEl?.removeAttribute('hidden');
+      recEl?.removeAttribute('hidden');
+      extEl?.removeAttribute('hidden');
+    } else {
+      emptyEl?.removeAttribute('hidden');
+      gridEl?.setAttribute('hidden', '');
+      recEl?.setAttribute('hidden', '');
+      extEl?.setAttribute('hidden', '');
+    }
+  }
+
+  function calculate() {
+    const wInput = (document.getElementById('input-width') as HTMLInputElement)?.value;
+    const hInput = (document.getElementById('input-height') as HTMLInputElement)?.value;
+    const ftInput = (document.getElementById('input-frame-thickness') as HTMLInputElement)?.value;
+    const sdInput = (document.getElementById('input-spline-diameter') as HTMLInputElement)?.value;
+
+    if (!wInput || !hInput) {
+      toggleResults(false);
+      return;
+    }
+
+    const w = normalizeInput(wInput, currentUnit);
+    const h = normalizeInput(hInput, currentUnit);
+    const ft = ftInput ? normalizeInput(ftInput, currentUnit) : undefined;
+    const sd = sdInput ? normalizeInput(sdInput, currentUnit) : undefined;
+
+    if (!w || !h || w <= 0 || h <= 0) {
+      toggleResults(false);
+      return;
+    }
+
+    const wMm = toMm(w, currentUnit);
+    const hMm = toMm(h, currentUnit);
+
+    const input: ScreenInput = {
+      windowWidthMm: wMm,
+      windowHeightMm: hMm,
+      frameType: currentFrameType,
+      meshType: currentMeshType,
+      mountType: currentMountType,
+      frameThicknessMm: ft ? toMm(ft, currentUnit) : undefined,
+      splineDiameterMm: sd ? toMm(sd, currentUnit) : undefined,
+      frameColor: currentFrameColor,
+    };
+
+    const result = calculateScreen(input);
+    currentResult = result;
+    const recs = buildScreenRecommendations(input, result);
+
+    // ── Primary metrics ──────────────────────────────────────────────────────
+    updateMetric('card-finished-width', formatDimension(result.finishedWidthMm, currentUnit));
+    updateMetric('card-finished-height', formatDimension(result.finishedHeightMm, currentUnit));
+    updateMetric('card-perimeter', formatDimension(result.framePerimeterMm, currentUnit));
+    updateMetric('card-mesh-area', `${result.meshAreaSqFt.toFixed(1)} sq ft`, `(${result.meshAreaM2.toFixed(2)} m²)`);
+    updateMetric('card-spline-len', formatDimension(result.splineLengthMm, currentUnit));
+    updateMetric('card-weight', `${result.estimatedWeightKg.toFixed(2)} kg`, `(${(result.estimatedWeightKg * 2.20462).toFixed(2)} lbs)`);
+
+    const difficultyMap: Record<string, string> = { easy: 'Easy DIY', moderate: 'Moderate DIY', professional: 'Professional' };
+    updateMetric('card-install-rating', difficultyMap[result.installationDifficulty] ?? 'Easy DIY');
+    updateMetric('card-rec-mesh', recs.recommendedMesh.split('-').map(s => s.charAt(0).toUpperCase() + s.slice(1)).join(' '));
+
+    // ── Confidence summary card ───────────────────────────────────────────────
+    const confEl = document.getElementById('card-confidence');
+    const starsEl = document.getElementById('confidence-stars');
+    const labelEl = document.getElementById('confidence-label');
+    const orderBadge = document.getElementById('confidence-ordering-badge');
+    const costBadge = document.getElementById('cost-badge');
+    const scoreBadge = document.getElementById('score-badge');
+
+    const confMap: Record<string, { stars: string; label: string; score: string }> = {
+      'excellent':        { stars: '★★★★★', label: 'Exact Factory Match', score: '100% Fit Match' },
+      'good':             { stars: '★★★★☆', label: 'Standard Stock Fit', score: '95% Fit Match' },
+      'minor-adjustment': { stars: '★★★☆☆', label: 'Stock Trim Required', score: '85% Fit Match' },
+      'custom-required':  { stars: '★★☆☆☆', label: 'Custom Sizing Required', score: '70% Custom Match' },
+    };
+    const conf = confMap[result.confidence] ?? confMap['good'];
+    if (starsEl) starsEl.textContent = conf.stars;
+    if (labelEl) labelEl.textContent = conf.label;
+    if (scoreBadge) scoreBadge.textContent = conf.score;
+    if (orderBadge) {
+      const orderMap: Record<string, string> = {
+        'exact': '✓ Order Exact Size',
+        'next-stock': '✓ Order Next Stock Size',
+        'trim': '✓ Trim Stock Frame',
+        'custom': '⚠ Custom Order',
+      };
+      orderBadge.textContent = orderMap[result.orderingRecommendation] ?? orderMap['exact'];
+    }
+    if (costBadge) costBadge.textContent = `Est. Cost: ${result.costTier}`;
+    if (confEl) confEl.removeAttribute('hidden');
+
+    // ── Interactive Stock Size Chips ──────────────────────────────────────────
+    const nearestW = result.stockWidthSuggestions[0] ?? 0;
+    const wChips = result.stockWidthSuggestions
+      .map((mm: number) => {
+        const isMatch = Math.abs(mm - result.finishedWidthMm) < 2 || mm === nearestW;
+        const cls = isMatch ? 'stock-chip stock-chip--nearest' : 'stock-chip';
+        const formattedVal = formatDimension(mm, currentUnit);
+        const userVal = String(fromMm(mm, currentUnit));
+        return `<button type="button" class="${cls}" data-val="${userVal}" aria-label="Use stock width ${formattedVal}">${formattedVal}</button>`;
+      }).join('');
+    const nearestH = result.stockHeightSuggestions[0] ?? 0;
+    const hChips = result.stockHeightSuggestions
+      .map((mm: number) => {
+        const isMatch = Math.abs(mm - result.finishedHeightMm) < 2 || mm === nearestH;
+        const cls = isMatch ? 'stock-chip stock-chip--nearest' : 'stock-chip';
+        const formattedVal = formatDimension(mm, currentUnit);
+        const userVal = String(fromMm(mm, currentUnit));
+        return `<button type="button" class="${cls}" data-val="${userVal}" aria-label="Use stock height ${formattedVal}">${formattedVal}</button>`;
+      }).join('');
+    
+    const wContainer = document.getElementById('stock-widths');
+    const hContainer = document.getElementById('stock-heights');
+    if (wContainer) wContainer.innerHTML = wChips;
+    if (hContainer) hContainer.innerHTML = hChips;
+
+    // ── Recommendation cards (Normalized with SVGs) ─────────────────────────
+    const recList = document.getElementById('rec-list');
+    if (recList) {
+      const iconMap: Record<string, string> = {
+        'mount': `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/></svg>`,
+        'frame-type': `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/></svg>`,
+        'mesh-type': `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16M4 9h16M4 14h16M4 19h16"/></svg>`,
+        'installation': `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>`,
+        'ordering': `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>`,
+        'safety': `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>`,
+      };
+      recList.innerHTML = recs.items.map((item: { title: string; body: string; tip?: string; type: string }) =>
+        `<div class="rec-card">
+          <div class="rec-card-header">
+            <span class="rec-card-icon" aria-hidden="true">${iconMap[item.type] || iconMap['mount']}</span>
+            <span class="rec-card-title">${item.title}</span>
+          </div>
+          <div class="rec-card-body">${item.body}</div>
+          ${item.tip ? `<div class="rec-card-tip">${item.tip}</div>` : ''}
+        </div>`
+      ).join('');
+    }
+
+    // ── SVG diagram ───────────────────────────────────────────────────────────
+    renderScreenSvg(result, wMm, hMm, currentFrameType, currentMeshType);
+
+    // ── Reveal results panel ──────────────────────────────────────────────────
+    toggleResults(true);
+
+    // ── Build shared state ────────────────────────────────────────────────────
+    const frameLabel = currentFrameType.charAt(0).toUpperCase() + currentFrameType.slice(1);
+    const meshLabel = currentMeshType.split('-').map(s => s.charAt(0).toUpperCase() + s.slice(1)).join(' ');
+    const histLabel = `Window Screen`;
+    const summaryText = `${w} × ${h} ${currentUnit}`;
+
+    const stateParams = {
+      width: String(w),
+      height: String(h),
+      unit: currentUnit,
+      mount: currentMountType,
+      frame: currentFrameType,
+      mesh: currentMeshType,
+      color: currentFrameColor,
+      subtitle: `${frameLabel} Frame · ${meshLabel}`,
+      summary: summaryText,
+      _display: summaryText,
+    };
+
+    (window as any).wmCurrentState = stateParams;
+
+    // ── URL state ─────────────────────────────────────────────────────────────
+    pushUrlState(stateParams);
+
+    // ── History ───────────────────────────────────────────────────────────────
+    (window as any).wmHistoryPanel?.add(histLabel, stateParams);
+
+    // ── Export / share wiring ─────────────────────────────────────────────────
+    (window as any).wmBuildSummary = () => buildSummary(
+      'Window Screen Calculator',
+      [
+        ['Window Width', `${w} ${currentUnit}`],
+        ['Window Height', `${h} ${currentUnit}`],
+        ['Unit', currentUnit],
+        ['Mount Type', currentMountType],
+        ['Frame Type', frameLabel],
+        ['Mesh Type', meshLabel],
+        ['Finished Width', formatDimension(result.finishedWidthMm, currentUnit)],
+        ['Finished Height', formatDimension(result.finishedHeightMm, currentUnit)],
+        ['Frame Perimeter', formatDimension(result.framePerimeterMm, currentUnit)],
+        ['Mesh Area', `${result.meshAreaSqFt.toFixed(1)} sq ft`],
+        ['Spline Length', formatDimension(result.splineLengthMm, currentUnit)],
+        ['Confidence', conf.label],
+        ['Ordering Recommendation', result.orderingRecommendation],
+        ['Cost Tier', result.costTier],
+      ],
+      typeof window !== 'undefined' ? window.location.href : undefined,
+    );
+
+    (window as any).wmBuildExport = () => buildExportPayload(
+      'window-screen-calculator',
+      stateParams,
+      {
+        windowWidth: `${w} ${currentUnit}`,
+        windowHeight: `${h} ${currentUnit}`,
+        unit: currentUnit,
+        mountType: currentMountType,
+        frameType: currentFrameType,
+        meshType: currentMeshType,
+        finishedWidth: formatDimension(result.finishedWidthMm, currentUnit),
+        finishedHeight: formatDimension(result.finishedHeightMm, currentUnit),
+        framePerimeter: formatDimension(result.framePerimeterMm, currentUnit),
+        meshArea: `${result.meshAreaSqFt.toFixed(1)} sq ft`,
+        splineLength: formatDimension(result.splineLengthMm, currentUnit),
+        confidence: result.confidence,
+        orderingRecommendation: result.orderingRecommendation,
+        costTier: result.costTier,
+        recommendations: recs.items.map((i: any) => `${i.title}: ${i.body}`).join(' | '),
+        warnings: result.warnings.map((w: any) => w.message).join(' | '),
+      },
+    );
+
+    (window as any).wmShareExportBar?.show();
+
+    // ── Analytics ─────────────────────────────────────────────────────────────
+    track({
+      type: 'calculation_completed',
+      properties: { slug: 'window-screen-calculator', unit: currentUnit, inputs: stateParams },
+    });
+  }
+
+  // ── DOMContentLoaded ─────────────────────────────────────────────────────
+  document.addEventListener('DOMContentLoaded', () => {
+    const widthInput  = document.getElementById('input-width')  as HTMLInputElement;
+    const heightInput = document.getElementById('input-height') as HTMLInputElement;
+    const ftInput     = document.getElementById('input-frame-thickness') as HTMLInputElement;
+    const sdInput     = document.getElementById('input-spline-diameter') as HTMLInputElement;
+
+    // Live calculation on every input change (debounced)
+    [widthInput, heightInput, ftInput, sdInput].forEach(el => {
+      el?.addEventListener('input', () => scheduleCalculate());
+      el?.addEventListener('change', () => calculate());
+      el?.addEventListener('keydown', (e) => { if (e.key === 'Enter') calculate(); });
+    });
+
+    document.getElementById('input-frame-type')?.addEventListener('change', () => {
+      currentFrameType = (document.getElementById('input-frame-type') as HTMLSelectElement).value as ScreenFrameType;
+      calculate();
+    });
+
+    document.getElementById('input-mesh-type')?.addEventListener('change', () => {
+      currentMeshType = (document.getElementById('input-mesh-type') as HTMLSelectElement).value as ScreenMeshType;
+      calculate();
+    });
+
+    initOptionSelector('mount-selector', (val) => {
+      currentMountType = val as ScreenMountType;
+      calculate();
+    });
+
+    initOptionSelector('color-selector', (val) => {
+      currentFrameColor = val as ScreenFrameColor;
+      calculate();
+    });
+
+    // Interactive stock chip selection
+    const handleStockClick = (containerId: string, inputEl: HTMLInputElement) => {
+      document.getElementById(containerId)?.addEventListener('click', (e) => {
+        const chip = (e.target as HTMLElement).closest('.stock-chip') as HTMLElement | null;
+        if (chip?.dataset.val && inputEl) {
+          inputEl.value = chip.dataset.val;
+          calculate();
+        }
+      });
+    };
+    if (widthInput) handleStockClick('stock-widths', widthInput);
+    if (heightInput) handleStockClick('stock-heights', heightInput);
+
+    // Unit selector — listens for custom 'unitchange' event
+    document.getElementById('unit-selector')?.addEventListener('unitchange', (e) => {
+      const newUnit = (e as CustomEvent).detail?.unit as MeasurementUnit | undefined;
+      if (!newUnit) return;
+      if (widthInput?.value) {
+        const parsed = normalizeInput(widthInput.value, currentUnit);
+        if (parsed) widthInput.value = String(fromMm(toMm(parsed, currentUnit), newUnit));
+      }
+      if (heightInput?.value) {
+        const parsed = normalizeInput(heightInput.value, currentUnit);
+        if (parsed) heightInput.value = String(fromMm(toMm(parsed, currentUnit), newUnit));
+      }
+      const oldUnit = currentUnit;
+      currentUnit = newUnit;
+      track({ type: 'unit_changed', properties: { slug: 'window-screen-calculator', from: oldUnit, to: newUnit } });
+      calculate();
+    });
+
+    // ── Restore URL state on load ────────────────────────────────────────────
+    const urlState = readUrlState();
+    if (urlState.width && widthInput)   widthInput.value  = urlState.width;
+    if (urlState.height && heightInput) heightInput.value = urlState.height;
+    if (urlState.unit && ['mm','cm','m','in','ft'].includes(urlState.unit)) {
+      currentUnit = urlState.unit as MeasurementUnit;
+      const unitBtn = document.querySelector<HTMLElement>(`.unit-btn[data-value="${currentUnit}"]`);
+      if (unitBtn) {
+        document.querySelectorAll('.unit-btn').forEach(b => (b as HTMLElement).setAttribute('aria-pressed','false'));
+        unitBtn.setAttribute('aria-pressed', 'true');
+      }
+    }
+    if (urlState.mount === 'standard' || urlState.mount === 'flush' || urlState.mount === 'recessed') {
+      currentMountType = urlState.mount as ScreenMountType;
+      document.querySelectorAll('#mount-selector .option-btn').forEach(b =>
+        (b as HTMLElement).setAttribute('aria-pressed', (b as HTMLElement).dataset.value === currentMountType ? 'true' : 'false'));
+    }
+    if (urlState.frame) {
+      currentFrameType = urlState.frame as ScreenFrameType;
+      const sel = document.getElementById('input-frame-type') as HTMLSelectElement;
+      if (sel) sel.value = currentFrameType;
+    }
+    if (urlState.mesh) {
+      currentMeshType = urlState.mesh as ScreenMeshType;
+      const sel = document.getElementById('input-mesh-type') as HTMLSelectElement;
+      if (sel) sel.value = currentMeshType;
+    }
+
+    // Auto-calculate on load if valid inputs exist
+    calculate();
+  });
+
+  // ── History restore ──────────────────────────────────────────────────────
+  document.addEventListener('wm:history-restore', (e: Event) => {
+    const { inputs } = (e as CustomEvent).detail;
+    const widthInput  = document.getElementById('input-width')  as HTMLInputElement;
+    const heightInput = document.getElementById('input-height') as HTMLInputElement;
+
+    if (inputs.width)  widthInput.value  = inputs.width;
+    if (inputs.height) heightInput.value = inputs.height;
+    if (inputs.unit && ['mm','cm','m','in','ft'].includes(inputs.unit)) {
+      currentUnit = inputs.unit as MeasurementUnit;
+      const unitBtn = document.querySelector<HTMLElement>(`.unit-btn[data-value="${currentUnit}"]`);
+      if (unitBtn) {
+        document.querySelectorAll('.unit-btn').forEach(b => (b as HTMLElement).setAttribute('aria-pressed','false'));
+        unitBtn.setAttribute('aria-pressed', 'true');
+      }
+    }
+    if (inputs.mount) {
+      currentMountType = inputs.mount as ScreenMountType;
+      document.querySelectorAll('#mount-selector .option-btn').forEach(b =>
+        (b as HTMLElement).setAttribute('aria-pressed', (b as HTMLElement).dataset.value === currentMountType ? 'true' : 'false'));
+    }
+    if (inputs.frame) {
+      currentFrameType = inputs.frame as ScreenFrameType;
+      const sel = document.getElementById('input-frame-type') as HTMLSelectElement;
+      if (sel) sel.value = currentFrameType;
+    }
+    if (inputs.mesh) {
+      currentMeshType = inputs.mesh as ScreenMeshType;
+      const sel = document.getElementById('input-mesh-type') as HTMLSelectElement;
+      if (sel) sel.value = currentMeshType;
+    }
+    calculate();
+    track({ type: 'history_restored', properties: { slug: 'window-screen-calculator', entryId: (e as CustomEvent).detail.entryId ?? '' } });
+  });
+</script>
+
+<style>
+  .calc-dashboard {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--spacing-xl);
+    align-items: start;
+    margin-top: var(--spacing-lg);
+  }
+
+  @media (min-width: 1024px) {
+    .calc-dashboard {
+      grid-template-columns: 360px 1fr;
+    }
+  }
+
+  .calc-panel {
+    background-color: var(--color-canvas);
+    border: 1px solid var(--color-hairline);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+  }
+
+  .calc-panel-inputs {
+    position: sticky;
+    top: var(--spacing-md);
+  }
+
+  .panel-header {
+    padding: var(--spacing-md);
+    background-color: var(--color-canvas-soft);
+    border-bottom: 1px solid var(--color-hairline);
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+  }
+
+  .panel-label {
+    font-family: var(--font-family-mono);
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--color-muted);
+  }
+
+  .panel-section-header {
+    padding: var(--spacing-sm) var(--spacing-md);
+    background-color: var(--color-canvas-soft-2);
+    border-bottom: 1px solid var(--color-hairline);
+  }
+
+  .panel-section-title {
+    font-family: var(--font-family-mono);
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--color-brand);
+  }
+
+  .input {
+    width: 100%;
+    height: 38px;
+    padding: 0 var(--spacing-md);
+    font-family: var(--font-family-sans);
+    font-size: var(--font-size-body-sm);
+    color: var(--color-ink);
+    background-color: var(--color-canvas);
+    border: 1px solid var(--color-hairline-strong);
+    border-radius: var(--radius-sm);
+    box-sizing: border-box;
+    transition: border-color 150ms ease, box-shadow 150ms ease;
+  }
+
+  .input:focus {
+    outline: none;
+    border-color: var(--color-link);
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-link) 20%, transparent);
+  }
+
+  .input-select {
+    width: 100%;
+    height: 38px;
+    padding: 0 var(--spacing-md);
+    font-family: var(--font-family-sans);
+    font-size: var(--font-size-body-sm);
+    color: var(--color-ink);
+    background-color: var(--color-canvas);
+    border: 1px solid var(--color-hairline-strong);
+    border-radius: var(--radius-sm);
+    box-sizing: border-box;
+    cursor: pointer;
+  }
+
+  .input-select:focus {
+    outline: none;
+    border-color: var(--color-link);
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-link) 20%, transparent);
+  }
+
+  .option-selector {
+    display: flex;
+    gap: 4px;
+    flex-wrap: wrap;
+  }
+
+  .option-btn {
+    flex: 1;
+    min-width: 70px;
+    height: 34px;
+    padding: 0 var(--spacing-xs);
+    font-family: var(--font-family-sans);
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--color-muted);
+    background-color: var(--color-canvas);
+    border: 1px solid var(--color-hairline-strong);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    white-space: nowrap;
+    text-align: center;
+    transition: all 120ms ease;
+  }
+
+  .option-btn:hover {
+    color: var(--color-ink);
+    border-color: var(--color-ink);
+  }
+
+  .option-btn[aria-pressed='true'] {
+    color: #ffffff;
+    background-color: var(--color-brand);
+    border-color: var(--color-brand);
+    font-weight: 600;
+  }
+
+  .advanced-section {
+    padding: var(--spacing-md);
+    border-top: 1px solid var(--color-hairline);
+  }
+
+  .advanced-section summary {
+    font-family: var(--font-family-mono);
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--color-muted);
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .advanced-content {
+    margin-top: var(--spacing-md);
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+  }
+
+  .empty-state {
+    padding: var(--spacing-3xl) var(--spacing-xl);
+    text-align: center;
+    color: var(--color-muted);
+  }
+
+  .empty-icon-wrap {
+    display: inline-flex;
+    padding: var(--spacing-md);
+    background: var(--color-canvas-soft);
+    border-radius: var(--radius-full);
+    margin-bottom: var(--spacing-md);
+
+  }
+
+  .empty-svg {
+    color: var(--color-muted);
+  }
+
+  .empty-title {
+    font-size: var(--font-size-title-sm);
+    font-weight: 600;
+    color: var(--color-ink);
+    margin: 0 0 var(--spacing-xs);
+  }
+
+  .empty-sub {
+    font-size: var(--font-size-caption);
+    margin: 0;
+  }
+
+  .results-metric-grid {
+    padding: var(--spacing-lg);
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--spacing-md);
+  }
+
+  @media (min-width: 640px) {
+    .results-metric-grid {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+
+  .results-metric-grid > * {
+    height: 100%;
+    min-height: 96px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+
+  /* ── Unified Confidence Summary Card ────────────────────────────── */
+  .confidence-summary-card {
+    margin: 0 var(--spacing-lg) var(--spacing-md);
+    padding: var(--spacing-lg);
+    background: linear-gradient(180deg, color-mix(in srgb, var(--color-brand) 8%, var(--color-canvas)) 0%, var(--color-canvas) 100%);
+    border: 1px solid color-mix(in srgb, var(--color-brand) 22%, transparent);
+    border-radius: var(--radius-lg);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+    text-align: center;
+  }
+
+  .conf-card-header {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    margin-bottom: var(--spacing-md);
+  }
+
+  .conf-stars {
+    font-size: 20px;
+    letter-spacing: 3px;
+    color: #f59e0b;
+  }
+
+  .conf-title {
+    font-weight: 700;
+    font-size: var(--font-size-body);
+    color: var(--color-ink);
+  }
+
+  .conf-card-badges {
+    display: flex;
+    justify-content: center;
+    gap: var(--spacing-sm);
+    flex-wrap: wrap;
+  }
+
+  .conf-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 12px;
+    border-radius: var(--radius-full);
+    font-size: var(--font-size-caption);
+    font-weight: 600;
+    background: var(--color-canvas-soft-2);
+    border: 1px solid var(--color-hairline);
+    color: var(--color-ink);
+    font-family: var(--font-family-mono);
+  }
+
+  .conf-badge-cost {
+    background: color-mix(in srgb, var(--color-brand) 12%, transparent);
+    border-color: color-mix(in srgb, var(--color-brand) 25%, transparent);
+    color: var(--color-brand);
+  }
+
+  .conf-badge-order {
+    background: color-mix(in srgb, #22c55e 12%, transparent);
+    border-color: color-mix(in srgb, #22c55e 25%, transparent);
+    color: #15803d;
+  }
+
+  [data-theme='dark'] .conf-badge-order {
+    color: #4ade80;
+  }
+
+  .conf-badge-score {
+    background: color-mix(in srgb, #22c55e 12%, transparent);
+    border-color: color-mix(in srgb, #22c55e 25%, transparent);
+    color: #15803d;
+  }
+
+  [data-theme='dark'] .conf-badge-score {
+    color: #4ade80;
+  }
+
+  /* ── Stock Chips ────────────────────────────────────────────────── */
+  .stock-section {
+    padding: var(--spacing-lg);
+    border-top: 1px solid var(--color-hairline);
+  }
+
+  .stock-section-header {
+    margin-bottom: var(--spacing-sm);
+    margin-top: var(--spacing-md);
+  }
+  
+  .stock-section-header:first-child {
+    margin-top: 0;
+  }
+
+  .stock-label {
+    font-family: var(--font-family-mono);
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    color: var(--color-muted);
+  }
+
+  .stock-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .stock-chip {
+    padding: 4px 10px;
+    background-color: var(--color-canvas-soft-2);
+    border: 1px solid var(--color-hairline);
+    border-radius: var(--radius-full);
+    font-size: var(--font-size-caption);
+    color: var(--color-ink);
+    font-family: var(--font-family-mono);
+    font-weight: 500;
+    cursor: pointer;
+    appearance: none;
+    transition: all 0.15s ease;
+  }
+
+  .stock-chip:hover {
+    border-color: var(--color-brand);
+    color: var(--color-brand);
+    background-color: var(--color-canvas);
+  }
+
+  .stock-chip:focus-visible {
+    outline: 2px solid var(--color-brand);
+    outline-offset: 2px;
+  }
+
+  .stock-chip--nearest {
+    background-color: var(--color-brand);
+    color: #ffffff !important;
+    border-color: var(--color-brand);
+    font-weight: 700;
+    box-shadow: 0 1px 4px color-mix(in srgb, var(--color-brand) 35%, transparent);
+  }
+
+  .stock-chip--nearest:hover {
+    background-color: color-mix(in srgb, var(--color-brand) 85%, black);
+    color: #ffffff !important;
+  }
+
+  .svg-section {
+    padding: var(--spacing-lg);
+    border-bottom: 1px solid var(--color-hairline);
+    background-color: var(--color-canvas-soft);
+  }
+
+  .svg-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--spacing-md);
+  }
+
+  .svg-label {
+    font-family: var(--font-family-mono);
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    color: var(--color-ink);
+  }
+
+  .svg-subtitle {
+    font-size: var(--font-size-caption);
+    color: var(--color-muted);
+    font-family: var(--font-family-mono);
+  }
+
+  .svg-wrap {
+    background-color: #ffffff;
+    border: 1px solid var(--color-hairline);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    padding: var(--spacing-md);
+    display: flex;
+    justify-content: center;
+    box-shadow: inset 0 1px 3px rgba(0,0,0,0.03);
+  }
+
+  [data-theme='dark'] .svg-wrap {
+    background-color: #0f172a;
+    border-color: #334155;
+  }
+
+  .rec-section {
+    border-top: 1px solid var(--color-hairline);
+  }
+
+  .rec-list {
+    padding: var(--spacing-lg);
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--spacing-md);
+  }
+
+  @media (min-width: 640px) {
+    .rec-list {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+
+  .rec-card {
+    padding: var(--spacing-md) var(--spacing-lg);
+    background: var(--color-canvas-soft);
+    border: 1px solid var(--color-hairline);
+    border-radius: var(--radius-md);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 4px;
+    height: 100%;
+    min-height: 100px;
+  }
+
+  .rec-card-header {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .rec-card-icon {
+    color: var(--color-brand);
+    display: inline-flex;
+    align-items: center;
+    flex-shrink: 0;
+  }
+
+  .rec-card-title {
+    font-family: var(--font-family-mono);
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--color-brand);
+  }
+
+  .rec-card-body {
+    font-size: var(--font-size-body-sm);
+    font-weight: 700;
+    color: var(--color-ink);
+    line-height: 1.3;
+  }
+
+  .rec-card-tip {
+    font-size: var(--font-size-caption);
+    color: var(--color-muted);
+    line-height: 1.35;
+  }
+
+  .calc-extras {
+    border-top: 1px solid var(--color-hairline);
+    background-color: var(--color-canvas-soft);
+    padding: var(--spacing-lg);
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-lg);
+  }
+
+  @media (max-width: 640px) {
+    .results-metric-grid {
+      grid-template-columns: 1fr;
+      padding: var(--spacing-md);
+    }
+    .stock-section, .rec-list, .calc-extras, .svg-section {
+      padding: var(--spacing-md);
+    }
+    .confidence-summary-card {
+      margin: 0 var(--spacing-md) var(--spacing-md);
+      padding: var(--spacing-md);
+    }
+    .stock-chips {
+      gap: 4px;
+    }
+    .conf-card-badges {
+      flex-direction: column;
+      align-items: stretch;
+    }
+    .conf-badge {
+      justify-content: center;
+    }
+  }
+</style>
