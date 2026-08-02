@@ -1,0 +1,856 @@
+---
+/**
+ * WindowMetrics — Window Frame Calculator Page
+ * Route: /tools/window-frame-calculator
+ *
+ * Dedicated carpentry and manufacturing window frame calculator.
+ * Calculates outer frame dimensions, daylight inner opening size, net glass rabbet pocket size,
+ * 4-piece cut list (Top Rail, Bottom Rail, Left Stile, Right Stile with 45° miter or 90° butt angles),
+ * linear material stock length, material volume, and frame weight across Wood, Aluminum, Vinyl, and Fiberglass.
+ */
+
+import ToolLayout from '@/layouts/ToolLayout.astro';
+import CalculatorHero from '@/components/calculator/CalculatorHero.astro';
+import InputCard from '@/components/calculator/InputCard.astro';
+import UnitSelector from '@/components/calculator/UnitSelector.astro';
+import ResultMetricCard from '@/components/calculator/ResultMetricCard.astro';
+import ShareExportBar from '@/components/calculator/ShareExportBar.astro';
+import HistoryPanel from '@/components/calculator/HistoryPanel.astro';
+import RelatedTools from '@/components/calculator/RelatedTools.astro';
+import FAQSection from '@/components/content/FAQSection.astro';
+import { getToolBySlug } from '@/data/tools.js';
+
+const tool = getToolBySlug('window-frame-calculator');
+if (!tool) {
+  throw new Error('Tool data for "window-frame-calculator" not found in tool registry.');
+}
+
+const breadcrumbs = [
+  { label: 'Home', href: '/' },
+  { label: 'Tools', href: '/tools' },
+  { label: 'Window Frame Calculator', href: '/tools/window-frame-calculator' },
+];
+
+const faqs = [
+  {
+    question: 'How do I calculate the cut list lengths for a mitred window frame?',
+    answer: 'For 45° mitred corner joints, all four profile pieces (Top Rail, Bottom Rail, Left Stile, Right Stile) are cut to the full outer frame dimensions. For example, a 48" × 60" frame requires two 48" rails and two 60" stiles, both cut at 45° miters on both ends.',
+  },
+  {
+    question: 'How do cut list lengths differ for 90° butt joint frames?',
+    answer: 'For 90° square butt joints, the Top and Bottom Rails run full width (48"), while the Left and Right Stiles are shortened by 2 times the profile face width. With a 2" profile width, the stiles are cut to 56" (60" minus 4").',
+  },
+  {
+    question: 'What is a glass rabbet pocket and how is it calculated?',
+    answer: 'A rabbet is an L-shaped groove cut into the inner frame edge where the glass pane rests. It typically extends 1/2 inch (12.7 mm) past the daylight inner opening on all sides. Glass size = Inner Opening + 1 inch in width and height.',
+  },
+  {
+    question: 'How much extra timber material should I order for miter waste?',
+    answer: 'Add 10% waste allowance to your total linear material length to account for miter saw kerf blade cuts (typically 1/8" per cut), end-grain trimming, and wood knot defects.',
+  },
+  {
+    question: 'How is window frame weight calculated?',
+    answer: 'Frame weight equals profile volume (length × face width × profile depth) multiplied by material density. Softwood timber averages 34 lbs/cu ft (550 kg/m³), while extruded aluminum averages 168 lbs/cu ft (2,700 kg/m³).',
+  },
+  {
+    question: 'What profile size is standard for residential window frames?',
+    answer: 'Standard residential window sashes and frames typically use a 2 inch (50.8 mm) face profile width with a 1.5 inch (38.1 mm) frame depth thickness.',
+  },
+  {
+    question: 'Should I use miter joints or mortise & tenon joints for wood window frames?',
+    answer: 'Mortise & tenon or bridle joints provide superior structural strength and water resistance for heavy wood exterior windows. Miters are common for interior casing trim or fusion-welded vinyl frames.',
+  },
+  {
+    question: 'Why are weep holes necessary in window frame rails?',
+    answer: 'Weep holes allow water that penetrates glazing perimeter seals to drain out through the bottom rail, preventing moisture pooling, seal degradation, and frame wood rot.',
+  },
+];
+---
+
+<ToolLayout
+  tool={tool}
+  breadcrumbs={breadcrumbs}
+  faqs={faqs}
+  title="Window Frame Calculator | WindowMetrics"
+  description="Calculate frame dimensions, cut list, perimeter, material quantities and glass opening sizes for any window frame."
+>
+  <CalculatorHero
+    tool={tool}
+    description="Calculate frame dimensions, cut list, perimeter, material quantities and glass opening sizes for any window frame."
+    features={[
+      '4-Piece Cut List (Rails & Stiles with 45°/90° angles)',
+      'Outer frame & daylight inner opening sizes',
+      'Glass rabbet pocket opening size calculation',
+      'Linear material length & frame weight by density',
+    ]}
+    trustItems={[
+      { label: 'Exact joinery geometry' },
+      { label: 'Multi-unit support' },
+      { label: 'No signup' },
+      { label: 'Instant calculation' },
+    ]}
+  />
+
+  <div class="calc-dashboard">
+    <!-- LEFT PANEL — Inputs -->
+    <div class="calc-panel calc-panel-inputs">
+      <div class="panel-header">
+        <span class="panel-label">Opening & Profile Size</span>
+        <UnitSelector defaultUnit="in" />
+      </div>
+
+      <div class="panel-section-header">
+        <span class="panel-section-title">Outer Opening Dimensions</span>
+      </div>
+
+      <InputCard label="Opening Width (Outer)" inputId="input-width" hint="Outer frame width">
+        <input type="text" id="input-width" class="input" placeholder="e.g., 48" autocomplete="off" />
+      </InputCard>
+
+      <InputCard label="Opening Height (Outer)" inputId="input-height" hint="Outer frame height">
+        <input type="text" id="input-height" class="input" placeholder="e.g., 60" autocomplete="off" />
+      </InputCard>
+
+      <div class="panel-section-header">
+        <span class="panel-section-title">Profile & Material</span>
+      </div>
+
+      <InputCard label="Frame Material" inputId="input-frame-material">
+        <select id="input-frame-material" class="input-select" aria-label="Select Frame Material">
+          <option value="wood" selected>Solid Wood Timber (550 kg/m³)</option>
+          <option value="aluminum">Extruded Aluminum Profile (2,700 kg/m³)</option>
+          <option value="vinyl">Rigid PVC Vinyl (1,400 kg/m³)</option>
+          <option value="fiberglass">Pultruded Fiberglass (1,800 kg/m³)</option>
+        </select>
+      </InputCard>
+
+      <InputCard label="Profile Face Width" inputId="input-profile-width" hint="Std: 2.0&quot; (50.8mm)">
+        <input type="number" id="input-profile-width" class="input" value="2.0" min="0.5" max="6.0" step="0.25" />
+      </InputCard>
+
+      <InputCard label="Profile Depth Thickness" inputId="input-profile-thickness" hint="Std: 1.5&quot; (38.1mm)">
+        <input type="number" id="input-profile-thickness" class="input" value="1.5" min="0.5" max="6.0" step="0.25" />
+      </InputCard>
+
+      <InputCard label="Corner Joinery Assembly" inputId="input-assembly-type">
+        <select id="input-assembly-type" class="input-select" aria-label="Select Assembly Type">
+          <option value="miter" selected>45° Miter Joint (Equal Outer Cuts)</option>
+          <option value="butt">90° Butt Joint (Shortened Stiles)</option>
+        </select>
+      </InputCard>
+
+      <div class="panel-section-header">
+        <span class="panel-section-title">Glazing & Quantity</span>
+      </div>
+
+      <InputCard label="Waste Allowance (%)" inputId="input-waste" hint="10% standard waste">
+        <input type="number" id="input-waste" class="input" value="10" min="0" max="50" step="1" />
+      </InputCard>
+
+      <InputCard label="Quantity" inputId="input-quantity" hint="Number of identical frames">
+        <input type="number" id="input-quantity" class="input" value="1" min="1" max="100" step="1" />
+      </InputCard>
+    </div>
+
+    <!-- RIGHT PANEL — Results -->
+    <div class="calc-panel calc-panel-results">
+      <div id="results-empty" class="empty-state">
+        <div class="empty-icon-wrap">
+          <svg width="48" height="48" viewBox="0 0 48 48" fill="none" class="empty-svg">
+            <rect x="8" y="12" width="32" height="24" rx="3" stroke="currentColor" stroke-width="2.5" fill="none"/>
+            <circle cx="24" cy="24" r="6" stroke="currentColor" stroke-width="1.5" stroke-dasharray="2 2"/>
+          </svg>
+        </div>
+        <h3 class="empty-title">Enter window dimensions</h3>
+        <p class="empty-sub">Fill in Width and Height to generate a 4-piece cut list, material stock lengths, and glass opening size.</p>
+      </div>
+
+      <div id="results-grid" hidden>
+        <!-- SVG Technical Frame Profile & Cut List Illustration -->
+        <div class="svg-section">
+          <div class="svg-header">
+            <span class="svg-label">Technical Frame Profile & Cut List Vector Diagram</span>
+            <span class="svg-subtitle" id="svg-subtitle">Rails, Stiles, Miter Cuts & Glass Pocket</span>
+          </div>
+          <div class="svg-wrap">
+            <svg id="frame-svg" viewBox="0 0 400 340" width="100%" aria-label="Window frame cut list diagram"></svg>
+          </div>
+        </div>
+
+        <div class="results-metric-grid">
+          <ResultMetricCard id="card-frame-size" label="Outer Frame Size" highlight={true} sublabel="Overall frame width × height" animate={true} />
+          <ResultMetricCard id="card-material-length" label="Total Material Length" highlight={true} sublabel="Linear stock needed (10% waste)" animate={true} />
+          <ResultMetricCard id="card-glass-opening" label="Glass Rabbet Opening" highlight={true} sublabel="Glass pane cut size" animate={true} />
+          <ResultMetricCard id="card-inner-opening" label="Daylight Inner Opening" highlight={true} sublabel="Visible glass daylight opening" animate={true} />
+          <ResultMetricCard id="card-perimeter" label="Frame Perimeter" sublabel="Outer edge linear length" animate={true} />
+          <ResultMetricCard id="card-weight" label="Estimated Frame Weight" sublabel="Empty frame mass (lbs & kg)" animate={true} />
+          <ResultMetricCard id="card-volume" label="Material Volume" sublabel="Profile volume (cu ft & m³)" animate={true} />
+          <ResultMetricCard id="card-waste" label="Waste Allowance Stock" sublabel="10% extra linear material" animate={true} />
+        </div>
+
+        <!-- Unified Confidence Summary Card -->
+        <div id="card-confidence" class="confidence-summary-card" hidden>
+          <div class="conf-card-header">
+            <span class="conf-stars" id="confidence-stars">★★★★★</span>
+            <span class="conf-title" id="confidence-label">4-Piece Manufacturing Cut List Ready</span>
+          </div>
+          <div class="conf-card-badges">
+            <span class="conf-badge conf-badge-score" id="score-badge">WOOD FRAME</span>
+            <span class="conf-badge conf-badge-order" id="confidence-ordering-badge">✓ 45° Miter Assembly</span>
+            <span class="conf-badge conf-badge-cost" id="cost-badge">19.8 ft Material Stock</span>
+          </div>
+        </div>
+
+        <!-- Recommendations Grid -->
+        <div id="rec-section" class="rec-section" hidden>
+          <div class="panel-header"><span class="panel-label">Smart Recommendations & Joinery Advice</span></div>
+          <div id="rec-list" class="rec-list"></div>
+        </div>
+
+        <!-- Share & Export + History Bar -->
+        <div class="calc-extras" id="calc-extras" hidden>
+          <ShareExportBar calculatorTitle="Window Frame Calculator" />
+          <HistoryPanel slug="window-frame-calculator" />
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <Fragment slot="sidebar">
+    <RelatedTools
+      links={[
+        {
+          title: 'Window Opening Calculator',
+          description: 'Calculate rough openings, finished openings, and shim spacing.',
+          href: '/tools/window-opening-calculator',
+          icon: 'Expand',
+        },
+        {
+          title: 'Replacement Window Calculator',
+          description: 'Find standard replacement window sizes and rough openings.',
+          href: '/tools/replacement-window-calculator',
+          icon: 'RefreshCw',
+        },
+        {
+          title: 'Window Glass Calculator',
+          description: 'Calculate glass area, pane thickness, and weight for any shape.',
+          href: '/tools/window-glass-calculator',
+          icon: 'PanelTop',
+        },
+        {
+          title: 'Window Weight Calculator',
+          description: 'Calculate total unit weight, glass pane mass, and installer crew needs.',
+          href: '/tools/window-weight-calculator',
+          icon: 'Scale',
+        },
+      ]}
+      tip={{
+        label: 'Carpentry Tip',
+        text: 'When cutting 45° miters for window frames, always cut the top and bottom rails together on your miter saw stop block to ensure exact identical lengths and square corner alignment.',
+      }}
+    />
+    <FAQSection faqs={faqs} />
+  </Fragment>
+</ToolLayout>
+
+<script>
+  import {
+    calculateWindowFrame,
+    type WindowFrameInput,
+    type WindowFrameMaterial,
+    type WindowFrameAssemblyType,
+  } from '@/engine/window-frame.js';
+  import { buildWindowFrameRecommendations } from '@/engine/window-frame-recommendations.js';
+  import { toMm, fromMm, formatDimension, normalizeInput } from '@/engine/units.js';
+  import { readUrlState, pushUrlState } from '@/lib/url-state.js';
+  import { buildExportPayload } from '@/lib/export.js';
+  import { buildSummary } from '@/lib/share.js';
+  import { track } from '@/lib/analytics.js';
+  import type { MeasurementUnit } from '@/types/calculator.js';
+
+  let currentResult: ReturnType<typeof calculateWindowFrame> | null = null;
+  let currentUnit: MeasurementUnit = 'in';
+  let currentMaterial: WindowFrameMaterial = 'wood';
+  let currentAssembly: WindowFrameAssemblyType = 'miter';
+
+  // ── DOM references ────────────────────────────────────────────────────────
+  const widthInput           = document.getElementById('input-width')             as HTMLInputElement | null;
+  const heightInput          = document.getElementById('input-height')            as HTMLInputElement | null;
+  const profileWidthInput    = document.getElementById('input-profile-width')     as HTMLInputElement | null;
+  const profileThicknessInput= document.getElementById('input-profile-thickness') as HTMLInputElement | null;
+  const wasteInput           = document.getElementById('input-waste')             as HTMLInputElement | null;
+  const qtyInput             = document.getElementById('input-quantity')          as HTMLInputElement | null;
+  const materialSelect       = document.getElementById('input-frame-material')    as HTMLSelectElement | null;
+  const assemblySelect       = document.getElementById('input-assembly-type')     as HTMLSelectElement | null;
+
+  const resultsEmpty         = document.getElementById('results-empty')           as HTMLElement | null;
+  const resultsGrid          = document.getElementById('results-grid')            as HTMLElement | null;
+  const recSection           = document.getElementById('rec-section')             as HTMLElement | null;
+  const calcExtras           = document.getElementById('calc-extras')             as HTMLElement | null;
+  const cardConf             = document.getElementById('card-confidence')          as HTMLElement | null;
+
+  function updateMetric(cardId: string, value: string, unitStr: string = '') {
+    const valEl = document.querySelector(`#${cardId} .result-value-text`);
+    const unitEl = document.querySelector(`#${cardId} .result-unit`);
+    if (valEl) valEl.textContent = value;
+    if (unitEl) unitEl.textContent = unitStr;
+  }
+
+  // ── Vector SVG Technical Frame & Cut List Renderer ───────────────────────────
+  function renderFrameSvg(result: ReturnType<typeof calculateWindowFrame>, wMm: number, hMm: number) {
+    const svg = document.getElementById('frame-svg');
+    if (!svg) return;
+
+    const cx = 170, cy = 160;
+    const maxW = 200, maxH = 180;
+    const scale = Math.min(maxW / wMm, maxH / hMm);
+
+    const fw = wMm * scale;
+    const fh = hMm * scale;
+    const profW = (profileWidthInput ? parseFloat(profileWidthInput.value || '2.0') : 2.0) * 25.4 * scale;
+
+    svg.innerHTML = `
+      <defs>
+        <pattern id="grid-frame" width="20" height="20" patternUnits="userSpaceOnUse">
+          <path d="M 20 0 L 0 0 0 20" fill="none" stroke="rgba(0,0,0,0.03)" stroke-width="1"/>
+        </pattern>
+      </defs>
+      <rect width="400" height="340" fill="url(#grid-frame)" rx="6"/>
+
+      <!-- Outer Frame Profile -->
+      <rect x="${cx - fw/2}" y="${cy - fh/2}" width="${fw}" height="${fh}" fill="#f1f5f9" stroke="#0f172a" stroke-width="4" rx="3"/>
+      <!-- Inner Daylight Opening -->
+      <rect x="${cx - fw/2 + profW}" y="${cy - fh/2 + profW}" width="${fw - 2*profW}" height="${fh - 2*profW}" fill="#e0f2fe" stroke="#0284c7" stroke-width="2"/>
+
+      <!-- Miter Cut Lines at 45° -->
+      ${currentAssembly === 'miter' ? `
+        <line x1="${cx - fw/2}" y1="${cy - fh/2}" x2="${cx - fw/2 + profW}" y2="${cy - fh/2 + profW}" stroke="#0f172a" stroke-width="2"/>
+        <line x1="${cx + fw/2}" y1="${cy - fh/2}" x2="${cx + fw/2 - profW}" y2="${cy - fh/2 + profW}" stroke="#0f172a" stroke-width="2"/>
+        <line x1="${cx - fw/2}" y1="${cy + fh/2}" x2="${cx - fw/2 + profW}" y2="${cy + fh/2 - profW}" stroke="#0f172a" stroke-width="2"/>
+        <line x1="${cx + fw/2}" y1="${cy + fh/2}" x2="${cx + fw/2 - profW}" y2="${cy + fh/2 - profW}" stroke="#0f172a" stroke-width="2"/>
+      ` : `
+        <line x1="${cx - fw/2}" y1="${cy - fh/2 + profW}" x2="${cx + fw/2}" y2="${cy - fh/2 + profW}" stroke="#0f172a" stroke-width="2"/>
+        <line x1="${cx - fw/2}" y1="${cy + fh/2 - profW}" x2="${cx + fw/2}" y2="${cy + fh/2 - profW}" stroke="#0f172a" stroke-width="2"/>
+      `}
+
+      <!-- Cut List Legend Box -->
+      <rect x="250" y="40" width="135" height="260" rx="6" fill="#0f172a"/>
+      <text x="317" y="62" font-family="sans-serif" font-size="10" font-weight="700" text-anchor="middle" fill="#94a3b8">4-PIECE CUT LIST</text>
+
+      ${result.cutList.map((item, idx) => `
+        <rect x="260" y="${80 + idx * 52}" width="115" height="42" rx="4" fill="#1e293b"/>
+        <text x="268" y="${96 + idx * 52}" font-family="sans-serif" font-size="9" font-weight="700" fill="#38bdf8">${item.name}</text>
+        <text x="367" y="${96 + idx * 52}" font-family="monospace" font-size="11" font-weight="700" text-anchor="end" fill="#ffffff">${item.lengthIn}"</text>
+        <text x="268" y="${112 + idx * 52}" font-family="sans-serif" font-size="8" fill="#94a3b8">${item.miterAngleLeft}° Miter · ${item.quantity}x</text>
+      `).join('')}
+    `;
+
+    const sub = document.getElementById('svg-subtitle');
+    if (sub) {
+      sub.textContent = `Outer: ${result.outerWidthIn}" × ${result.outerHeightIn}" · Daylight Inner: ${result.innerWidthIn}" × ${result.innerHeightIn}" · Glass Rabbet: ${result.glassOpeningWidthIn}" × ${result.glassOpeningHeightIn}"`;
+    }
+  }
+
+  function calculate() {
+    const wInput = widthInput?.value.trim() ?? '';
+    const hInput = heightInput?.value.trim() ?? '';
+    const profWVal = parseFloat(profileWidthInput?.value || '2.0');
+    const profTVal = parseFloat(profileThicknessInput?.value || '1.5');
+    const wasteVal = parseFloat(wasteInput?.value || '10');
+    const qVal = parseInt(qtyInput?.value || '1', 10);
+
+    if (!wInput || !hInput) {
+      if (resultsEmpty) resultsEmpty.hidden = false;
+      if (resultsGrid)  resultsGrid.hidden  = true;
+      if (recSection)   recSection.hidden   = true;
+      if (calcExtras)   calcExtras.hidden   = true;
+      if (cardConf)     cardConf.hidden     = true;
+      return;
+    }
+
+    const w = normalizeInput(wInput, currentUnit);
+    const h = normalizeInput(hInput, currentUnit);
+
+    if (!w || !h || w <= 0 || h <= 0) {
+      if (resultsEmpty) resultsEmpty.hidden = false;
+      if (resultsGrid)  resultsGrid.hidden  = true;
+      if (recSection)   recSection.hidden   = true;
+      if (calcExtras)   calcExtras.hidden   = true;
+      if (cardConf)     cardConf.hidden     = true;
+      return;
+    }
+
+    const wMm = toMm(w, currentUnit);
+    const hMm = toMm(h, currentUnit);
+
+    const input: WindowFrameInput = {
+      openingWidthMm: wMm,
+      openingHeightMm: hMm,
+      frameMaterial: currentMaterial,
+      profileWidthMm: toMm(profWVal, 'in'),
+      profileThicknessMm: toMm(profTVal, 'in'),
+      assemblyType: currentAssembly,
+      wastePct: wasteVal,
+      quantity: qVal,
+    };
+
+    const result = calculateWindowFrame(input);
+    currentResult = result;
+    const recs = buildWindowFrameRecommendations(input, result);
+
+    // ── Metrics ──────────────────────────────────────────────────────────────
+    updateMetric('card-frame-size', `${result.outerWidthIn}" × ${result.outerHeightIn}"`, `(${result.outerWidthMm} × ${result.outerHeightMm} mm)`);
+    updateMetric('card-material-length', `${result.totalMaterialLengthWithWasteFt} ft`, `Includes ${input.wastePct}% waste (${result.totalMaterialLengthFt} ft net)`);
+    updateMetric('card-glass-opening', `${result.glassOpeningWidthIn}" × ${result.glassOpeningHeightIn}"`, `(${result.glassOpeningWidthMm} × ${result.glassOpeningHeightMm} mm)`);
+    updateMetric('card-inner-opening', `${result.innerWidthIn}" × ${result.innerHeightIn}"`, `(${result.innerWidthMm} × ${result.innerHeightMm} mm)`);
+    updateMetric('card-perimeter', `${result.framePerimeterFt} ft`, `(${result.framePerimeterM} m perimeter)`);
+    updateMetric('card-weight', `${result.estimatedWeightLbs} lbs`, `(${result.estimatedWeightKg} kg frame mass)`);
+    updateMetric('card-volume', `${result.materialVolumeCuFt} cu ft`, `(${result.materialVolumeM3} m³ profile volume)`);
+    updateMetric('card-waste', `${(result.totalMaterialLengthWithWasteFt - result.totalMaterialLengthFt).toFixed(1)} ft`, `Extra material stock`);
+
+    // ── Confidence summary card ───────────────────────────────────────────────
+    const starsEl = document.getElementById('confidence-stars');
+    const labelEl = document.getElementById('confidence-label');
+    const orderBadge = document.getElementById('confidence-ordering-badge');
+    const costBadge = document.getElementById('cost-badge');
+    const scoreBadge = document.getElementById('score-badge');
+
+    if (starsEl) starsEl.textContent = result.confidence === 'excellent' ? '★★★★★' : '★★★★☆';
+    if (labelEl) labelEl.textContent = `4-Piece Manufacturing Cut List Ready`;
+    if (scoreBadge) scoreBadge.textContent = `${currentMaterial.toUpperCase()} FRAME`;
+    if (orderBadge) orderBadge.textContent = `✓ ${currentAssembly === 'miter' ? '45° Miter Assembly' : '90° Butt Assembly'}`;
+    if (costBadge) costBadge.textContent = `${result.totalMaterialLengthWithWasteFt} ft Material Stock`;
+
+    // ── Recommendation cards ─────────────────────────────────────────────────
+    const recList = document.getElementById('rec-list');
+    if (recList) {
+      const iconMap: Record<string, string> = {
+        'material': `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/></svg>`,
+        'joint': `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>`,
+        'profile': `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18"/><line x1="7" y1="2" x2="7" y2="22"/></svg>`,
+        'waste': `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>`,
+        'strength': `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>`,
+        'weather': `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>`,
+      };
+      recList.innerHTML = recs.items.map((item: any) =>
+        `<div class="rec-card">
+          <div class="rec-card-header">
+            <span class="rec-card-icon" aria-hidden="true">${iconMap[item.type] || iconMap['material']}</span>
+            <span class="rec-card-title">${item.title}</span>
+          </div>
+          <div class="rec-card-body">${item.body}</div>
+          ${item.tip ? `<div class="rec-card-tip">${item.tip}</div>` : ''}
+        </div>`
+      ).join('');
+    }
+
+    try {
+      renderFrameSvg(result, wMm, hMm);
+    } catch (e) {
+      console.error('SVG rendering error:', e);
+    }
+
+    if (resultsEmpty) resultsEmpty.hidden = true;
+    if (resultsGrid)  resultsGrid.hidden  = false;
+    if (recSection)   recSection.hidden   = false;
+    if (calcExtras)   calcExtras.hidden   = false;
+    if (cardConf)     cardConf.hidden     = false;
+
+    const historyLabelText = `${w} × ${h} ${currentUnit} • ${currentMaterial.charAt(0).toUpperCase() + currentMaterial.slice(1)} Frame`;
+    const summaryText = `${w} × ${h} ${currentUnit}`;
+    const stateParams = {
+      width: String(w),
+      height: String(h),
+      unit: currentUnit,
+      material: currentMaterial,
+      assembly: currentAssembly,
+      profW: String(profWVal),
+      profT: String(profTVal),
+      waste: String(wasteVal),
+      qty: String(qVal),
+      subtitle: `Frame: ${result.outerWidthIn}" × ${result.outerHeightIn}" · Stock: ${result.totalMaterialLengthWithWasteFt} ft`,
+      summary: summaryText,
+      _display: summaryText,
+    };
+
+    (window as any).wmCurrentState = stateParams;
+    pushUrlState(stateParams);
+    (window as any).wmHistoryPanel?.add(historyLabelText, stateParams);
+
+    (window as any).wmBuildSummary = () => buildSummary(
+      'Window Frame Calculator',
+      [
+        ['Outer Frame Size', `${result.outerWidthIn}" × ${result.outerHeightIn}" (${result.outerWidthMm} × ${result.outerHeightMm} mm)`],
+        ['Daylight Inner Opening', `${result.innerWidthIn}" × ${result.innerHeightIn}" (${result.innerWidthMm} × ${result.innerHeightMm} mm)`],
+        ['Glass Rabbet Opening', `${result.glassOpeningWidthIn}" × ${result.glassOpeningHeightIn}" (${result.glassOpeningWidthMm} × ${result.glassOpeningHeightMm} mm)`],
+        ['Frame Material', currentMaterial],
+        ['Profile Size', `${profWVal}" W × ${profTVal}" T`],
+        ['Joinery Assembly', currentAssembly === 'miter' ? '45° Miter Joint' : '90° Butt Joint'],
+        ['Total Linear Stock Needed', `${result.totalMaterialLengthWithWasteFt} ft (${result.totalMaterialLengthFt} ft net + ${input.wastePct}% waste)`],
+        ['Frame Weight', `${result.estimatedWeightLbs} lbs (${result.estimatedWeightKg} kg)`],
+        ['Cut List', result.cutList.map(c => `${c.name}: ${c.lengthIn}" (${c.miterAngleLeft}°)`).join(' | ')],
+      ],
+      typeof window !== 'undefined' ? window.location.href : undefined,
+    );
+
+    (window as any).wmBuildExport = () => buildExportPayload(
+      'window-frame-calculator',
+      stateParams,
+      {
+        outerWidthIn: `${result.outerWidthIn}"`,
+        outerHeightIn: `${result.outerHeightIn}"`,
+        innerWidthIn: `${result.innerWidthIn}"`,
+        innerHeightIn: `${result.innerHeightIn}"`,
+        glassOpeningWidthIn: `${result.glassOpeningWidthIn}"`,
+        glassOpeningHeightIn: `${result.glassOpeningHeightIn}"`,
+        frameMaterial: currentMaterial,
+        profileWidthIn: `${profWVal}"`,
+        profileThicknessIn: `${profTVal}"`,
+        assemblyType: currentAssembly,
+        totalMaterialLengthFt: `${result.totalMaterialLengthFt} ft`,
+        totalMaterialLengthWithWasteFt: `${result.totalMaterialLengthWithWasteFt} ft`,
+        estimatedWeightLbs: `${result.estimatedWeightLbs} lbs`,
+        estimatedWeightKg: `${result.estimatedWeightKg} kg`,
+        cutList: result.cutList.map(c => `${c.name}: ${c.lengthIn}" (${c.miterAngleLeft}° miter)`).join(' | '),
+        confidence: result.confidence,
+        recommendations: recs.items.map((i: any) => `${i.title}: ${i.body}`).join(' | '),
+        warnings: result.warnings.map((w: any) => w.message).join(' | '),
+      },
+    );
+
+    (window as any).wmShareExportBar?.show();
+
+    track({
+      type: 'calculation_completed',
+      properties: { slug: 'window-frame-calculator', unit: currentUnit, inputs: stateParams },
+    });
+  }
+
+  // ── Event listeners ───────────────────────────────────────────────────────
+  widthInput?.addEventListener('input', calculate);
+  heightInput?.addEventListener('input', calculate);
+  profileWidthInput?.addEventListener('input', calculate);
+  profileThicknessInput?.addEventListener('input', calculate);
+  wasteInput?.addEventListener('input', calculate);
+  qtyInput?.addEventListener('input', calculate);
+
+  materialSelect?.addEventListener('change', () => {
+    if (materialSelect) currentMaterial = materialSelect.value as WindowFrameMaterial;
+    calculate();
+  });
+
+  assemblySelect?.addEventListener('change', () => {
+    if (assemblySelect) currentAssembly = assemblySelect.value as WindowFrameAssemblyType;
+    calculate();
+  });
+
+  document.getElementById('unit-selector')?.addEventListener('unitchange', (e) => {
+    const newUnit = (e as CustomEvent).detail?.unit as MeasurementUnit | undefined;
+    if (!newUnit) return;
+    if (widthInput?.value) {
+      const parsed = normalizeInput(widthInput.value, currentUnit);
+      if (parsed) widthInput.value = String(fromMm(toMm(parsed, currentUnit), newUnit));
+    }
+    if (heightInput?.value) {
+      const parsed = normalizeInput(heightInput.value, currentUnit);
+      if (parsed) heightInput.value = String(fromMm(toMm(parsed, currentUnit), newUnit));
+    }
+    const oldUnit = currentUnit;
+    currentUnit = newUnit;
+    track({ type: 'unit_changed', properties: { slug: 'window-frame-calculator', from: oldUnit, to: newUnit } });
+    calculate();
+  });
+
+  // Restore URL state
+  const urlState = readUrlState();
+  if (urlState.width && widthInput)   widthInput.value  = urlState.width;
+  if (urlState.height && heightInput) heightInput.value = urlState.height;
+  if (urlState.profW && profileWidthInput) profileWidthInput.value = urlState.profW;
+  if (urlState.profT && profileThicknessInput) profileThicknessInput.value = urlState.profT;
+  if (urlState.waste && wasteInput)   wasteInput.value  = urlState.waste;
+  if (urlState.qty && qtyInput)       qtyInput.value    = urlState.qty;
+  if (urlState.unit && ['mm','cm','m','in','ft'].includes(urlState.unit)) {
+    currentUnit = urlState.unit as MeasurementUnit;
+    document.querySelectorAll('.unit-btn').forEach(b => (b as HTMLElement).setAttribute('aria-pressed', (b as HTMLElement).dataset.unit === currentUnit ? 'true' : 'false'));
+  }
+  if (urlState.material && materialSelect) {
+    currentMaterial = urlState.material as WindowFrameMaterial;
+    materialSelect.value = currentMaterial;
+  }
+  if (urlState.assembly && assemblySelect) {
+    currentAssembly = urlState.assembly as WindowFrameAssemblyType;
+    assemblySelect.value = currentAssembly;
+  }
+
+  // Initial calculation on page load
+  calculate();
+
+  // ── History restore ──────────────────────────────────────────────────────
+  document.addEventListener('wm:history-restore', (e: Event) => {
+    const { inputs } = (e as CustomEvent).detail;
+    if (inputs.width && widthInput)   widthInput.value  = inputs.width;
+    if (inputs.height && heightInput) heightInput.value = inputs.height;
+    if (inputs.profW && profileWidthInput) profileWidthInput.value = inputs.profW;
+    if (inputs.profT && profileThicknessInput) profileThicknessInput.value = inputs.profT;
+    if (inputs.waste && wasteInput)   wasteInput.value  = inputs.waste;
+    if (inputs.qty && qtyInput)       qtyInput.value    = inputs.qty;
+    if (inputs.unit && ['mm','cm','m','in','ft'].includes(inputs.unit)) {
+      currentUnit = inputs.unit as MeasurementUnit;
+      document.querySelectorAll('.unit-btn').forEach(b => (b as HTMLElement).setAttribute('aria-pressed', (b as HTMLElement).dataset.unit === currentUnit ? 'true' : 'false'));
+    }
+    if (inputs.material && materialSelect) {
+      currentMaterial = inputs.material as WindowFrameMaterial;
+      materialSelect.value = currentMaterial;
+    }
+    if (inputs.assembly && assemblySelect) {
+      currentAssembly = inputs.assembly as WindowFrameAssemblyType;
+      assemblySelect.value = currentAssembly;
+    }
+    calculate();
+    track({ type: 'history_restored', properties: { slug: 'window-frame-calculator', entryId: (e as CustomEvent).detail.entryId ?? '' } });
+  });
+</script>
+
+<style>
+  .calc-dashboard {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--spacing-xl);
+    align-items: start;
+    margin-top: var(--spacing-lg);
+  }
+
+  @media (min-width: 1024px) {
+    .calc-dashboard {
+      grid-template-columns: 380px 1fr;
+    }
+  }
+
+  .calc-panel {
+    background-color: var(--color-canvas);
+    border: 1px solid var(--color-hairline);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+  }
+
+  .calc-panel-inputs {
+    position: sticky;
+    top: var(--spacing-md);
+  }
+
+  .panel-header {
+    padding: var(--spacing-md);
+    background-color: var(--color-canvas-soft);
+    border-bottom: 1px solid var(--color-hairline);
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+  }
+
+  .panel-label {
+    font-family: var(--font-family-mono);
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--color-muted);
+  }
+
+  .panel-section-header {
+    padding: var(--spacing-xs) var(--spacing-md);
+    background-color: var(--color-canvas-soft);
+    border-top: 1px solid var(--color-hairline);
+    border-bottom: 1px solid var(--color-hairline);
+  }
+
+  .panel-section-title {
+    font-family: var(--font-family-mono);
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--color-ink-faint);
+  }
+
+  .input {
+    width: 100%;
+    padding: var(--spacing-sm) var(--spacing-md);
+    background-color: var(--color-canvas);
+    border: 1px solid var(--color-hairline);
+    border-radius: var(--radius-md);
+    font-family: var(--font-family-mono);
+    font-size: var(--font-size-body-md);
+    color: var(--color-ink);
+    transition: border-color 0.15s ease;
+  }
+
+  .input:focus {
+    outline: none;
+    border-color: var(--color-link);
+  }
+
+  .input-select {
+    width: 100%;
+    padding: var(--spacing-sm) var(--spacing-md);
+    background-color: var(--color-canvas);
+    border: 1px solid var(--color-hairline);
+    border-radius: var(--radius-md);
+    font-size: var(--font-size-body-sm);
+    color: var(--color-ink);
+  }
+
+  /* Results Panel */
+  .empty-state {
+    padding: var(--spacing-3xl) var(--spacing-xl);
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .empty-icon-wrap {
+    color: var(--color-muted);
+    margin-bottom: var(--spacing-md);
+  }
+
+  .empty-title {
+    font-size: var(--font-size-h3);
+    font-weight: 600;
+    color: var(--color-ink);
+    margin: 0 0 var(--spacing-xs);
+  }
+
+  .empty-sub {
+    font-size: var(--font-size-body-sm);
+    color: var(--color-muted);
+    margin: 0;
+    max-width: 320px;
+  }
+
+  .svg-section {
+    border-bottom: 1px solid var(--color-hairline);
+    background-color: var(--color-canvas);
+  }
+
+  .svg-header {
+    padding: var(--spacing-sm) var(--spacing-md);
+    background-color: var(--color-canvas-soft);
+    border-bottom: 1px solid var(--color-hairline);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .svg-label {
+    font-family: var(--font-family-mono);
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--color-muted);
+  }
+
+  .svg-subtitle {
+    font-family: var(--font-family-mono);
+    font-size: 11px;
+    color: var(--color-ink-muted);
+  }
+
+  .svg-wrap {
+    padding: var(--spacing-md);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: var(--color-canvas);
+  }
+
+  .results-metric-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: var(--spacing-md);
+    padding: var(--spacing-lg);
+  }
+
+  .confidence-summary-card {
+    margin: 0 var(--spacing-lg) var(--spacing-lg);
+    padding: var(--spacing-md);
+    background-color: var(--color-canvas-soft);
+    border: 1px solid var(--color-hairline);
+    border-radius: var(--radius-md);
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+  }
+
+  .conf-card-header {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+  }
+
+  .conf-stars {
+    color: #f59e0b;
+    letter-spacing: 2px;
+  }
+
+  .conf-title {
+    font-weight: 600;
+    font-size: var(--font-size-body-sm);
+    color: var(--color-ink);
+  }
+
+  .conf-card-badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--spacing-xs);
+  }
+
+  .conf-badge {
+    font-family: var(--font-family-mono);
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--color-hairline);
+    background: var(--color-canvas);
+  }
+
+  .conf-badge-score {
+    color: var(--color-link);
+    font-weight: 600;
+  }
+
+  .rec-section {
+    border-top: 1px solid var(--color-hairline);
+  }
+
+  .rec-list {
+    padding: var(--spacing-lg);
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: var(--spacing-md);
+  }
+
+  .calc-extras {
+    border-top: 1px solid var(--color-hairline);
+    background-color: var(--color-canvas-soft);
+    padding: var(--spacing-lg);
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-lg);
+  }
+
+  @media (max-width: 640px) {
+    .results-metric-grid {
+      grid-template-columns: 1fr;
+      padding: var(--spacing-md);
+    }
+    .rec-list, .calc-extras, .svg-section {
+      padding: var(--spacing-md);
+    }
+    .confidence-summary-card {
+      margin: 0 var(--spacing-md) var(--spacing-md);
+      padding: var(--spacing-md);
+    }
+  }
+</style>
