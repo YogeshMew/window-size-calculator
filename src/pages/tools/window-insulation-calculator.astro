@@ -1,0 +1,988 @@
+---
+/**
+ * WindowMetrics — Window Insulation Calculator Page
+ *
+ * Dedicated physical thermal insulation performance calculator.
+ * Calculates estimated U-Factor, thermal R-Value, heat transfer rate (Watts),
+ * 1-100 Thermal Efficiency Score, Insulation Rating, Air Leakage Risk,
+ * Condensation Risk, Draft Risk, and Upgrade Potential %.
+ */
+
+import ToolLayout from '@/layouts/ToolLayout.astro';
+import CalculatorHero from '@/components/calculator/CalculatorHero.astro';
+import InputCard from '@/components/calculator/InputCard.astro';
+import UnitSelector from '@/components/calculator/UnitSelector.astro';
+import ResultMetricCard from '@/components/calculator/ResultMetricCard.astro';
+import ShareExportBar from '@/components/calculator/ShareExportBar.astro';
+import HistoryPanel from '@/components/calculator/HistoryPanel.astro';
+import RelatedTools from '@/components/calculator/RelatedTools.astro';
+import FAQSection from '@/components/content/FAQSection.astro';
+import { getToolBySlug } from '@/data/tools.js';
+
+const tool = getToolBySlug('window-insulation-calculator');
+if (!tool) {
+  throw new Error('Tool data for "window-insulation-calculator" not found in tool registry.');
+}
+
+const breadcrumbs = [
+  { label: 'Home', href: '/' },
+  { label: 'Tools', href: '/tools' },
+  { label: 'Window Insulation Calculator', href: '/tools/window-insulation-calculator' },
+];
+
+const faqs = [
+  {
+    question: 'What is the difference between R-Value and U-Factor for window insulation?',
+    answer: 'R-Value measures a window’s resistance to heat flow (higher is better). U-Factor measures how fast heat flows through a window (lower is better). U-Factor and R-Value are mathematical reciprocals: R-Value = 1 / U-Factor.',
+  },
+  {
+    question: 'What is considered a good window R-Value for a home?',
+    answer: 'Single-pane windows have an R-Value of ~R-0.9. Standard double-pane windows achieve R-2.1. Double-pane Low-E windows average R-3.3, and premium Argon/Krypton triple-pane windows reach R-4.5 to R-5.5+.',
+  },
+  {
+    question: 'How do cellular shades improve window insulation?',
+    answer: 'Double-cell honeycomb shades create thousands of trapped dead-air pockets over the glass surface, adding +R-1.8 to your window insulation and reducing nighttime room heat loss by up to 40%.',
+  },
+  {
+    question: 'Why do windows feel drafty even when closed tightly?',
+    answer: 'Drafts are caused by two physical issues: 1) Air leakage around degraded weatherstripping seals, or 2) Convective thermal drafts where room air contacts freezing cold interior glass, cools rapidly, and sinks to the floor.',
+  },
+  {
+    question: 'How does window age affect insulation performance?',
+    answer: 'Over 10 to 20 years, insulating glass units (IGUs) can slowly lose gas fill concentration (1% to 2% per year), and rubber weatherstripping hardens, increasing air leakage by 15% to 30%.',
+  },
+  {
+    question: 'What causes window condensation on the interior glass?',
+    answer: 'Interior condensation occurs when humid room air contacts a cold glass surface below the dew point temperature. High-insulation Low-E glass keeps the interior glass surface warm, eliminating condensation.',
+  },
+  {
+    question: 'Which window frame material provides the best insulation?',
+    answer: 'Fiberglass, multi-chamber PVC vinyl, and wood frames provide excellent thermal insulation (R-1.2 to R-1.5). Un-broken aluminum frames conduct heat rapidly and require a polyamide thermal break barrier.',
+  },
+  {
+    question: 'How can I temporarily insulate drafty windows in winter?',
+    answer: 'Applying clear interior shrink-wrap thermal window film costs under $15 per window and creates an airtight dead-air insulation layer, boosting thermal performance by +R-1.0 immediately.',
+  },
+];
+---
+
+<ToolLayout
+  tool={tool}
+  breadcrumbs={breadcrumbs}
+  faqs={faqs}
+  title="Window Insulation Calculator | WindowMetrics"
+  description="Estimate window insulation performance, U-factor, R-value, draft risk and upgrade recommendations."
+>
+  <CalculatorHero
+    tool={tool}
+    description="Estimate window insulation performance, U-factor, R-value, draft risk and upgrade recommendations."
+    features={[
+      '1 to 100 Thermal Efficiency Score & Rating',
+      'Estimated U-Factor & R-Value calculations',
+      'Draft Risk, Air Leakage & Condensation Risk',
+      'Insulating shade & Low-E upgrade advice',
+    ]}
+    trustItems={[
+      { label: 'Thermal R-Value physics' },
+      { label: 'NFRC insulation standards' },
+      { label: 'No signup' },
+      { label: 'Instant live calculation' },
+    ]}
+  />
+
+  <div class="calc-dashboard">
+    <!-- LEFT PANEL — Inputs -->
+    <div class="calc-panel calc-panel-inputs">
+      <div class="panel-header">
+        <span class="panel-label">Window Dimensions & Unit Type</span>
+        <UnitSelector defaultUnit="in" />
+      </div>
+
+      <div class="panel-section-header">
+        <span class="panel-section-title">Measurements & Glazing</span>
+      </div>
+
+      <InputCard label="Window Width" inputId="input-width" hint="Frame width">
+        <input type="text" id="input-width" class="input" placeholder="e.g., 36" autocomplete="off" />
+      </InputCard>
+
+      <InputCard label="Window Height" inputId="input-height" hint="Frame height">
+        <input type="text" id="input-height" class="input" placeholder="e.g., 48" autocomplete="off" />
+      </InputCard>
+
+      <InputCard label="Window Glazing Type" inputId="input-window-type">
+        <select id="input-window-type" class="input-select" aria-label="Select Window Glazing Type">
+          <option value="single-pane">Single Pane Clear Glass (U=1.10 - R-0.9)</option>
+          <option value="double-pane" selected>Double Pane Standard Insulated (U=0.48 - R-2.1)</option>
+          <option value="low-e">Double Pane Low-E Solar Control (U=0.30 - R-3.3)</option>
+          <option value="argon">Double Pane Low-E + Argon Gas Fill (U=0.24 - R-4.2)</option>
+          <option value="triple-pane">Triple Pane High Efficiency (U=0.22 - R-4.5)</option>
+          <option value="krypton">Triple Pane Low-E + Krypton Gas Fill (U=0.18 - R-5.5)</option>
+        </select>
+      </InputCard>
+
+      <InputCard label="Frame Material" inputId="input-frame-material">
+        <select id="input-frame-material" class="input-select" aria-label="Select Frame Material">
+          <option value="vinyl" selected>Insulated Vinyl (PVC Profile)</option>
+          <option value="fiberglass">Pultruded Fiberglass Composite</option>
+          <option value="composite">Wood-Plastic Composite (WPC)</option>
+          <option value="wood">Solid Wood Timber Frame</option>
+          <option value="aluminum">Aluminum Profile (Un-broken)</option>
+        </select>
+      </InputCard>
+
+      <div class="panel-section-header">
+        <span class="panel-section-title">Condition & Accessories</span>
+      </div>
+
+      <div class="input-card">
+        <div class="input-card-header">
+          <span class="input-card-label">Regional Climate</span>
+        </div>
+        <div class="option-selector" id="climate-selector" role="group">
+          <button type="button" class="option-btn" data-value="cold" aria-pressed="true">Cold Winter</button>
+          <button type="button" class="option-btn" data-value="mixed" aria-pressed="false">Mixed</button>
+          <button type="button" class="option-btn" data-value="hot" aria-pressed="false">Mild Winter</button>
+        </div>
+      </div>
+
+      <InputCard label="Perimeter Seal Condition" inputId="input-seal-condition">
+        <select id="input-seal-condition" class="input-select" aria-label="Select Perimeter Seal Condition">
+          <option value="excellent" selected>Excellent (Airtight, fresh weatherstripping)</option>
+          <option value="good">Good (Intact seals, minor wear)</option>
+          <option value="average">Average (Slight draft, worn weatherstripping)</option>
+          <option value="poor">Poor (Noticeable air leaks, degraded caulk)</option>
+        </select>
+      </InputCard>
+
+      <InputCard label="Window Age" inputId="input-window-age">
+        <select id="input-window-age" class="input-select" aria-label="Select Window Age">
+          <option value="0-5" selected>0 to 5 years (Like New)</option>
+          <option value="5-10">5 to 10 years</option>
+          <option value="10-20">10 to 20 years (Potential gas seal depletion)</option>
+          <option value="20+">20+ years (Legacy installation)</option>
+        </select>
+      </InputCard>
+
+      <InputCard label="Curtains / Window Coverings" inputId="input-window-covering">
+        <select id="input-window-covering" class="input-select" aria-label="Select Window Covering">
+          <option value="none" selected>None / Open Glass</option>
+          <option value="blinds">Standard Slatted Blinds (+R-0.3)</option>
+          <option value="curtains">Heavy Thermal Curtains (+R-0.8)</option>
+          <option value="cellular-shades">Double-Cell Cellular Shades (+R-1.8 Boost)</option>
+        </select>
+      </InputCard>
+    </div>
+
+    <!-- RIGHT PANEL — Results -->
+    <div class="calc-panel calc-panel-results">
+      <div id="results-empty" class="empty-state">
+        <div class="empty-icon-wrap">
+          <svg width="48" height="48" viewBox="0 0 48 48" fill="none" class="empty-svg">
+            <rect x="8" y="12" width="32" height="24" rx="3" stroke="currentColor" stroke-width="2.5" fill="none"/>
+            <circle cx="24" cy="24" r="6" stroke="currentColor" stroke-width="1.5" stroke-dasharray="2 2"/>
+          </svg>
+        </div>
+        <h3 class="empty-title">Enter window dimensions</h3>
+        <p class="empty-sub">Fill in Width and Height to evaluate thermal insulation score, R-value, U-factor, and draft risk.</p>
+      </div>
+
+      <div id="results-grid" hidden>
+        <!-- SVG Thermal Insulation & Leakage Diagram Illustration -->
+        <div class="svg-section">
+          <div class="svg-header">
+            <span class="svg-label">Thermal Leakage & Layer Insulation Diagram</span>
+            <span class="svg-subtitle" id="svg-subtitle">Indoor Heat vs. Outdoor Cold Resistance</span>
+          </div>
+          <div class="svg-wrap">
+            <svg id="insulation-svg" viewBox="0 0 400 340" width="100%" aria-label="Window thermal insulation diagram"></svg>
+          </div>
+        </div>
+
+        <div class="results-metric-grid">
+          <ResultMetricCard id="card-score" label="Thermal Efficiency Score" highlight={true} sublabel="1 to 100 insulation rating" animate={true} />
+          <ResultMetricCard id="card-rating" label="Insulation Rating" highlight={true} sublabel="Performance tier" animate={true} />
+          <ResultMetricCard id="card-u-factor" label="Estimated U-Factor" highlight={true} sublabel="BTU/hr·ft²·°F (Lower is better)" animate={true} />
+          <ResultMetricCard id="card-r-value" label="Estimated R-Value" highlight={true} sublabel="Thermal resistance (Higher is better)" animate={true} />
+          <ResultMetricCard id="card-draft-risk" label="Draft & Air Leakage Risk" sublabel="Winter convective draft level" animate={true} />
+          <ResultMetricCard id="card-condensation-risk" label="Condensation Risk" sublabel="Interior glass fogging risk" animate={true} />
+          <ResultMetricCard id="card-upgrade-potential" label="Upgrade Potential" sublabel="Max score boost with Low-E" animate={true} />
+          <ResultMetricCard id="card-heat-loss-rate" label="Heat Transfer Rate" sublabel="Watts lost at ΔT=40°F" animate={true} />
+        </div>
+
+        <!-- Unified Confidence Summary Card -->
+        <div id="card-confidence" class="confidence-summary-card" hidden>
+          <div class="conf-card-header">
+            <span class="conf-stars" id="confidence-stars">★★★★☆</span>
+            <span class="conf-title" id="confidence-label">Good Thermal Insulation</span>
+          </div>
+          <div class="conf-card-badges">
+            <span class="conf-badge conf-badge-score" id="score-badge">SCORE: 72/100</span>
+            <span class="conf-badge conf-badge-order" id="confidence-ordering-badge">✓ R-2.1 Thermal Resistance</span>
+            <span class="conf-badge conf-badge-cost" id="cost-badge">Drafts: MINIMAL</span>
+          </div>
+        </div>
+
+        <!-- Recommendations Grid -->
+        <div id="rec-section" class="rec-section" hidden>
+          <div class="panel-header"><span class="panel-label">Smart Recommendations & Thermal Upgrades</span></div>
+          <div id="rec-list" class="rec-list"></div>
+        </div>
+
+        <!-- Share & Export + History Bar -->
+        <div class="calc-extras" id="calc-extras" hidden>
+          <ShareExportBar calculatorTitle="Window Insulation Calculator" />
+          <HistoryPanel slug="window-insulation-calculator" />
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <Fragment slot="sidebar">
+    <RelatedTools
+      links={[
+        {
+          title: 'Window Energy Savings Calculator',
+          description: 'Calculate annual heating/cooling bill savings and payback period.',
+          href: '/tools/window-energy-savings-calculator',
+          icon: 'Zap',
+        },
+        {
+          title: 'Window Heat Loss Calculator',
+          description: 'Calculate conduction heat loss rate in Watts and BTU/hr.',
+          href: '/tools/window-heat-loss-calculator',
+          icon: 'Flame',
+        },
+        {
+          title: 'Window Film Calculator',
+          description: 'Calculate roll width, trimming waste, and solar heat reduction.',
+          href: '/tools/window-film-calculator',
+          icon: 'Film',
+        },
+        {
+          title: 'Replacement Window Calculator',
+          description: 'Find standard replacement window sizes and rough openings.',
+          href: '/tools/replacement-window-calculator',
+          icon: 'RefreshCw',
+        },
+      ]}
+      tip={{
+        label: 'Insulation Tip',
+        text: 'Adding double-cell cellular shades over existing windows provides an instant +R-1.8 insulation boost, blocking cold winter nighttime drafts for a fraction of window replacement cost.',
+      }}
+    />
+    <FAQSection faqs={faqs} />
+  </Fragment>
+</ToolLayout>
+
+<script>
+  import {
+    calculateWindowInsulation,
+    type WindowInsulationInput,
+    type WindowInsulationType,
+    type WindowInsulationFrameMaterial,
+    type WindowInsulationClimate,
+    type WindowInsulationSealCondition,
+    type WindowInsulationAge,
+    type WindowInsulationCovering,
+  } from '@/engine/window-insulation.js';
+  import { buildWindowInsulationRecommendations } from '@/engine/window-insulation-recommendations.js';
+  import { toMm, fromMm, formatDimension, normalizeInput } from '@/engine/units.js';
+  import { readUrlState, pushUrlState } from '@/lib/url-state.js';
+  import { buildExportPayload } from '@/lib/export.js';
+  import { buildSummary } from '@/lib/share.js';
+  import { track } from '@/lib/analytics.js';
+  import type { MeasurementUnit } from '@/types/calculator.js';
+
+  let currentResult: ReturnType<typeof calculateWindowInsulation> | null = null;
+  let currentUnit: MeasurementUnit = 'in';
+  let currentType: WindowInsulationType = 'double-pane';
+  let currentMaterial: WindowInsulationFrameMaterial = 'vinyl';
+  let currentClimate: WindowInsulationClimate = 'cold';
+  let currentSeal: WindowInsulationSealCondition = 'excellent';
+  let currentAge: WindowInsulationAge = '0-5';
+  let currentCovering: WindowInsulationCovering = 'none';
+
+  // ── DOM references ────────────────────────────────────────────────────────
+  const widthInput    = document.getElementById('input-width')            as HTMLInputElement | null;
+  const heightInput   = document.getElementById('input-height')           as HTMLInputElement | null;
+  const typeSelect    = document.getElementById('input-window-type')      as HTMLSelectElement | null;
+  const materialSelect= document.getElementById('input-frame-material')   as HTMLSelectElement | null;
+  const sealSelect    = document.getElementById('input-seal-condition')   as HTMLSelectElement | null;
+  const ageSelect     = document.getElementById('input-window-age')        as HTMLSelectElement | null;
+  const coveringSelect= document.getElementById('input-window-covering')   as HTMLSelectElement | null;
+
+  const resultsEmpty  = document.getElementById('results-empty')          as HTMLElement | null;
+  const resultsGrid   = document.getElementById('results-grid')           as HTMLElement | null;
+  const recSection    = document.getElementById('rec-section')            as HTMLElement | null;
+  const calcExtras    = document.getElementById('calc-extras')            as HTMLElement | null;
+  const cardConf      = document.getElementById('card-confidence')         as HTMLElement | null;
+
+  function updateMetric(cardId: string, value: string, unitStr: string = '') {
+    const valEl = document.querySelector(`#${cardId} .result-value-text`);
+    const unitEl = document.querySelector(`#${cardId} .result-unit`);
+    if (valEl) valEl.textContent = value;
+    if (unitEl) unitEl.textContent = unitStr;
+  }
+
+  function initOptionSelector(containerId: string, onChange: (val: string) => void) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+    container.addEventListener('click', (e) => {
+      const btn = (e.target as HTMLElement).closest('.option-btn') as HTMLElement | null;
+      if (btn?.dataset.value) {
+        container.querySelectorAll('.option-btn').forEach(b => b.setAttribute('aria-pressed', 'false'));
+        btn.setAttribute('aria-pressed', 'true');
+        onChange(btn.dataset.value);
+      }
+    });
+  }
+
+  // ── Vector SVG Thermal Insulation Diagram Renderer ───────────────────────────
+  function renderInsulationSvg(result: ReturnType<typeof calculateWindowInsulation>, wMm: number, hMm: number) {
+    const svg = document.getElementById('insulation-svg');
+    if (!svg) return;
+
+    const cx = 170, cy = 160;
+    const maxW = 180, maxH = 180;
+    const scale = Math.min(maxW / wMm, maxH / hMm);
+
+    const fw = wMm * scale;
+    const fh = hMm * scale;
+
+    const heatColor = result.thermalEfficiencyScore > 75 ? '#22c55e' : (result.thermalEfficiencyScore > 50 ? '#f59e0b' : '#ef4444');
+
+    svg.innerHTML = `
+      <defs>
+        <pattern id="grid-insul" width="20" height="20" patternUnits="userSpaceOnUse">
+          <path d="M 20 0 L 0 0 0 20" fill="none" stroke="rgba(0,0,0,0.03)" stroke-width="1"/>
+        </pattern>
+        <linearGradient id="heatGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+          <stop offset="0%" stop-color="#ef4444"/>
+          <stop offset="50%" stop-color="#f59e0b"/>
+          <stop offset="100%" stop-color="#38bdf8"/>
+        </linearGradient>
+      </defs>
+      <rect width="400" height="340" fill="url(#grid-insul)" rx="6"/>
+
+      <!-- House Interior Envelope -->
+      <rect x="20" y="40" width="210" height="260" rx="8" fill="#fef2f2" stroke="#fca5a5" stroke-width="2"/>
+      <text x="35" y="65" font-family="sans-serif" font-size="10" font-weight="700" fill="#991b1b">INDOOR HEATED SPACE (70°F)</text>
+
+      <!-- Insulated Window Glass Unit -->
+      <rect x="${cx - fw/2}" y="${cy - fh/2}" width="${fw}" height="${fh}" fill="#ffffff" stroke="#0f172a" stroke-width="5" rx="3"/>
+      <rect x="${cx - fw/2 + 8}" y="${cy - fh/2 + 8}" width="${fw - 16}" height="${fh - 16}" fill="#e0f2fe" stroke="#0284c7" stroke-width="2" fill-opacity="0.6"/>
+
+      <!-- Heat Flow Arrows -->
+      <path d="M 50 160 L 190 160" stroke="${heatColor}" stroke-width="4" stroke-linecap="round"/>
+      <polygon points="195,160 185,154 185,166" fill="${heatColor}"/>
+
+      <!-- Summary Metrics Card -->
+      <rect x="250" y="40" width="135" height="70" rx="6" fill="#0f172a"/>
+      <text x="317" y="62" font-family="sans-serif" font-size="10" font-weight="700" text-anchor="middle" fill="#94a3b8">THERMAL SCORE</text>
+      <text x="317" y="86" font-family="monospace" font-size="18" font-weight="700" text-anchor="middle" fill="${heatColor}">${result.thermalEfficiencyScore} / 100</text>
+
+      <!-- R-Value & U-Factor Box -->
+      <rect x="250" y="125" width="135" height="150" rx="6" fill="#ffffff" stroke="#cbd5e1" stroke-width="1"/>
+      <text x="317" y="145" font-family="sans-serif" font-size="10" font-weight="700" text-anchor="middle" fill="#0f172a">INSULATION METRICS</text>
+
+      <rect x="260" y="160" width="115" height="30" rx="4" fill="#f1f5f9"/>
+      <text x="268" y="176" font-family="sans-serif" font-size="9" font-weight="600" fill="#334155">R-Value</text>
+      <text x="367" y="180" font-family="monospace" font-size="12" font-weight="700" text-anchor="end" fill="#0f172a">R-${result.estimatedRValue}</text>
+
+      <rect x="260" y="198" width="115" height="30" rx="4" fill="#f1f5f9"/>
+      <text x="268" y="214" font-family="sans-serif" font-size="9" font-weight="600" fill="#334155">U-Factor</text>
+      <text x="367" y="218" font-family="monospace" font-size="11" font-weight="700" text-anchor="end" fill="#0f172a">${result.estimatedUFactor.toFixed(2)}</text>
+
+      <rect x="260" y="236" width="115" height="30" rx="4" fill="#f1f5f9"/>
+      <text x="268" y="252" font-family="sans-serif" font-size="9" font-weight="600" fill="#334155">Heat Loss Rate</text>
+      <text x="367" y="256" font-family="monospace" font-size="10" font-weight="700" text-anchor="end" fill="#0f172a">${result.heatTransferRateW} W</text>
+    `;
+
+    const sub = document.getElementById('svg-subtitle');
+    if (sub) {
+      sub.textContent = `Score: ${result.thermalEfficiencyScore}/100 · Rating: ${result.insulationRating.toUpperCase()} · R-Value: R-${result.estimatedRValue}`;
+    }
+  }
+
+  function calculate() {
+    const wInput = widthInput?.value.trim() ?? '';
+    const hInput = heightInput?.value.trim() ?? '';
+
+    if (!wInput || !hInput) {
+      if (resultsEmpty) resultsEmpty.hidden = false;
+      if (resultsGrid)  resultsGrid.hidden  = true;
+      if (recSection)   recSection.hidden   = true;
+      if (calcExtras)   calcExtras.hidden   = true;
+      if (cardConf)     cardConf.hidden     = true;
+      return;
+    }
+
+    const w = normalizeInput(wInput, currentUnit);
+    const h = normalizeInput(hInput, currentUnit);
+
+    if (!w || !h || w <= 0 || h <= 0) {
+      if (resultsEmpty) resultsEmpty.hidden = false;
+      if (resultsGrid)  resultsGrid.hidden  = true;
+      if (recSection)   recSection.hidden   = true;
+      if (calcExtras)   calcExtras.hidden   = true;
+      if (cardConf)     cardConf.hidden     = true;
+      return;
+    }
+
+    const wMm = toMm(w, currentUnit);
+    const hMm = toMm(h, currentUnit);
+
+    const input: WindowInsulationInput = {
+      windowWidthMm: wMm,
+      windowHeightMm: hMm,
+      windowType: currentType,
+      frameMaterial: currentMaterial,
+      climate: currentClimate,
+      sealCondition: currentSeal,
+      windowAge: currentAge,
+      windowCovering: currentCovering,
+    };
+
+    const result = calculateWindowInsulation(input);
+    currentResult = result;
+    const recs = buildWindowInsulationRecommendations(input, result);
+
+    // ── Metrics ──────────────────────────────────────────────────────────────
+    updateMetric('card-score', `${result.thermalEfficiencyScore} / 100`, 'Thermal score');
+    updateMetric('card-rating', result.insulationRating.toUpperCase(), 'Insulation tier');
+    updateMetric('card-u-factor', `${result.estimatedUFactor.toFixed(2)}`, `BTU/hr·ft²·°F (${result.estimatedUFactorW} W/m²K)`);
+    updateMetric('card-r-value', `R-${result.estimatedRValue.toFixed(1)}`, 'Thermal resistance R-value');
+    updateMetric('card-draft-risk', result.draftRisk.toUpperCase(), 'Air leakage risk');
+    updateMetric('card-condensation-risk', result.condensationRisk.toUpperCase(), 'Glass fogging risk');
+    updateMetric('card-upgrade-potential', `+${result.upgradePotentialPercent}%`, 'Max score boost');
+    updateMetric('card-heat-loss-rate', `${result.heatTransferRateW.toLocaleString()} W`, 'Lost heat at ΔT=40°F');
+
+    // ── Confidence summary card ───────────────────────────────────────────────
+    const starsEl = document.getElementById('confidence-stars');
+    const labelEl = document.getElementById('confidence-label');
+    const orderBadge = document.getElementById('confidence-ordering-badge');
+    const costBadge = document.getElementById('cost-badge');
+    const scoreBadge = document.getElementById('score-badge');
+
+    if (starsEl) starsEl.textContent = result.thermalEfficiencyScore >= 80 ? '★★★★★' : (result.thermalEfficiencyScore >= 60 ? '★★★★☆' : '★★★☆☆');
+    if (labelEl) labelEl.textContent = result.insulationRating === 'Superior' || result.insulationRating === 'Excellent' ? 'High Thermal Insulation' : 'Insulation Upgrade Advised';
+    if (scoreBadge) scoreBadge.textContent = `SCORE: ${result.thermalEfficiencyScore}/100`;
+    if (orderBadge) orderBadge.textContent = `✓ R-${result.estimatedRValue} Thermal Resistance`;
+    if (costBadge) costBadge.textContent = `DRAFTS: ${result.draftRisk.toUpperCase()}`;
+
+    // ── Recommendation cards ─────────────────────────────────────────────────
+    const recList = document.getElementById('rec-list');
+    if (recList) {
+      const iconMap: Record<string, string> = {
+        'seal': `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>`,
+        'weatherstripping': `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 4v10.54a4 4 0 1 1-4 0V4a2 2 0 0 1 4 0z"/></svg>`,
+        'glass': `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg>`,
+        'frame': `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/></svg>`,
+        'curtain': `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 3h16v18H4z"/></svg>`,
+        'film': `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18"/><line x1="7" y1="2" x2="7" y2="22"/></svg>`,
+        'improvement': `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>`,
+      };
+      recList.innerHTML = recs.items.map((item: any) =>
+        `<div class="rec-card">
+          <div class="rec-card-header">
+            <span class="rec-card-icon" aria-hidden="true">${iconMap[item.type] || iconMap['seal']}</span>
+            <span class="rec-card-title">${item.title}</span>
+          </div>
+          <div class="rec-card-body">${item.body}</div>
+          ${item.tip ? `<div class="rec-card-tip">${item.tip}</div>` : ''}
+        </div>`
+      ).join('');
+    }
+
+    try {
+      renderInsulationSvg(result, wMm, hMm);
+    } catch (e) {
+      console.error('SVG rendering error:', e);
+    }
+
+    if (resultsEmpty) resultsEmpty.hidden = true;
+    if (resultsGrid)  resultsGrid.hidden  = false;
+    if (recSection)   recSection.hidden   = false;
+    if (calcExtras)   calcExtras.hidden   = false;
+    if (cardConf)     cardConf.hidden     = false;
+
+    const historyLabelText = `${currentType.split('-').map(s => s.charAt(0).toUpperCase() + s.slice(1)).join(' ')} • ${currentMaterial.charAt(0).toUpperCase() + currentMaterial.slice(1)} • ${currentClimate.charAt(0).toUpperCase() + currentClimate.slice(1)} Climate`;
+    const summaryText = `${w} × ${h} ${currentUnit}`;
+    const stateParams = {
+      width: String(w),
+      height: String(h),
+      unit: currentUnit,
+      type: currentType,
+      material: currentMaterial,
+      climate: currentClimate,
+      seal: currentSeal,
+      age: currentAge,
+      covering: currentCovering,
+      subtitle: `Score: ${result.thermalEfficiencyScore}/100 · Rating: ${result.insulationRating} · R-${result.estimatedRValue}`,
+      summary: summaryText,
+      _display: summaryText,
+    };
+
+    (window as any).wmCurrentState = stateParams;
+    pushUrlState(stateParams);
+    (window as any).wmHistoryPanel?.add(historyLabelText, stateParams);
+
+    (window as any).wmBuildSummary = () => buildSummary(
+      'Window Insulation Calculator',
+      [
+        ['Window Dimensions', `${w} × ${h} ${currentUnit}`],
+        ['Window Glazing Type', currentType],
+        ['Frame Material', currentMaterial],
+        ['Regional Climate', currentClimate],
+        ['Seal Condition', currentSeal],
+        ['Window Age', currentAge],
+        ['Window Covering', currentCovering],
+        ['Thermal Efficiency Score', `${result.thermalEfficiencyScore} / 100`],
+        ['Insulation Rating', result.insulationRating],
+        ['Estimated U-Factor', `${result.estimatedUFactor.toFixed(2)} BTU/hr·ft²·°F (${result.estimatedUFactorW} W/m²K)`],
+        ['Estimated R-Value', `R-${result.estimatedRValue.toFixed(1)}`],
+        ['Heat Transfer Rate', `${result.heatTransferRateW} W`],
+        ['Draft & Air Leakage Risk', result.draftRisk.toUpperCase()],
+        ['Condensation Risk', result.condensationRisk.toUpperCase()],
+        ['Upgrade Potential', `+${result.upgradePotentialPercent}% Score Boost`],
+      ],
+      typeof window !== 'undefined' ? window.location.href : undefined,
+    );
+
+    (window as any).wmBuildExport = () => buildExportPayload(
+      'window-insulation-calculator',
+      stateParams,
+      {
+        windowWidth: `${w} ${currentUnit}`,
+        windowHeight: `${h} ${currentUnit}`,
+        unit: currentUnit,
+        windowType: currentType,
+        frameMaterial: currentMaterial,
+        climate: currentClimate,
+        sealCondition: currentSeal,
+        windowAge: currentAge,
+        windowCovering: currentCovering,
+        windowAreaSqFt: `${result.windowAreaSqFt} sq ft`,
+        thermalEfficiencyScore: result.thermalEfficiencyScore,
+        insulationRating: result.insulationRating,
+        estimatedUFactor: result.estimatedUFactor,
+        estimatedUFactorW: result.estimatedUFactorW,
+        estimatedRValue: result.estimatedRValue,
+        heatTransferRateW: `${result.heatTransferRateW} W`,
+        airLeakageRisk: result.airLeakageRisk,
+        condensationRisk: result.condensationRisk,
+        draftRisk: result.draftRisk,
+        upgradePotentialPercent: `${result.upgradePotentialPercent}%`,
+        confidence: result.confidence,
+        recommendations: recs.items.map((i: any) => `${i.title}: ${i.body}`).join(' | '),
+        warnings: result.warnings.map((w: any) => w.message).join(' | '),
+      },
+    );
+
+    (window as any).wmShareExportBar?.show();
+
+    track({
+      type: 'calculation_completed',
+      properties: { slug: 'window-insulation-calculator', unit: currentUnit, inputs: stateParams },
+    });
+  }
+
+  // ── Event listeners ───────────────────────────────────────────────────────
+  widthInput?.addEventListener('input', calculate);
+  heightInput?.addEventListener('input', calculate);
+
+  typeSelect?.addEventListener('change', () => {
+    if (typeSelect) currentType = typeSelect.value as WindowInsulationType;
+    calculate();
+  });
+
+  materialSelect?.addEventListener('change', () => {
+    if (materialSelect) currentMaterial = materialSelect.value as WindowInsulationFrameMaterial;
+    calculate();
+  });
+
+  sealSelect?.addEventListener('change', () => {
+    if (sealSelect) currentSeal = sealSelect.value as WindowInsulationSealCondition;
+    calculate();
+  });
+
+  ageSelect?.addEventListener('change', () => {
+    if (ageSelect) currentAge = ageSelect.value as WindowInsulationAge;
+    calculate();
+  });
+
+  coveringSelect?.addEventListener('change', () => {
+    if (coveringSelect) currentCovering = coveringSelect.value as WindowInsulationCovering;
+    calculate();
+  });
+
+  initOptionSelector('climate-selector', (val) => {
+    currentClimate = val as WindowInsulationClimate;
+    calculate();
+  });
+
+  document.getElementById('unit-selector')?.addEventListener('unitchange', (e) => {
+    const newUnit = (e as CustomEvent).detail?.unit as MeasurementUnit | undefined;
+    if (!newUnit) return;
+    if (widthInput?.value) {
+      const parsed = normalizeInput(widthInput.value, currentUnit);
+      if (parsed) widthInput.value = String(fromMm(toMm(parsed, currentUnit), newUnit));
+    }
+    if (heightInput?.value) {
+      const parsed = normalizeInput(heightInput.value, currentUnit);
+      if (parsed) heightInput.value = String(fromMm(toMm(parsed, currentUnit), newUnit));
+    }
+    const oldUnit = currentUnit;
+    currentUnit = newUnit;
+    track({ type: 'unit_changed', properties: { slug: 'window-insulation-calculator', from: oldUnit, to: newUnit } });
+    calculate();
+  });
+
+  // Restore URL state
+  const urlState = readUrlState();
+  if (urlState.width && widthInput)   widthInput.value  = urlState.width;
+  if (urlState.height && heightInput) heightInput.value = urlState.height;
+  if (urlState.unit && ['mm','cm','m','in','ft'].includes(urlState.unit)) {
+    currentUnit = urlState.unit as MeasurementUnit;
+    document.querySelectorAll('.unit-btn').forEach(b => (b as HTMLElement).setAttribute('aria-pressed', (b as HTMLElement).dataset.unit === currentUnit ? 'true' : 'false'));
+  }
+  if (urlState.type && typeSelect) {
+    currentType = urlState.type as WindowInsulationType;
+    typeSelect.value = currentType;
+  }
+  if (urlState.material && materialSelect) {
+    currentMaterial = urlState.material as WindowInsulationFrameMaterial;
+    materialSelect.value = currentMaterial;
+  }
+  if (urlState.climate) {
+    currentClimate = urlState.climate as WindowInsulationClimate;
+    document.querySelectorAll('#climate-selector .option-btn').forEach(b =>
+      (b as HTMLElement).setAttribute('aria-pressed', (b as HTMLElement).dataset.value === currentClimate ? 'true' : 'false'));
+  }
+  if (urlState.seal && sealSelect) {
+    currentSeal = urlState.seal as WindowInsulationSealCondition;
+    sealSelect.value = currentSeal;
+  }
+  if (urlState.age && ageSelect) {
+    currentAge = urlState.age as WindowInsulationAge;
+    ageSelect.value = currentAge;
+  }
+  if (urlState.covering && coveringSelect) {
+    currentCovering = urlState.covering as WindowInsulationCovering;
+    coveringSelect.value = currentCovering;
+  }
+
+  // Initial calculation on page load
+  calculate();
+
+  // ── History restore ──────────────────────────────────────────────────────
+  document.addEventListener('wm:history-restore', (e: Event) => {
+    const { inputs } = (e as CustomEvent).detail;
+    if (inputs.width && widthInput)   widthInput.value  = inputs.width;
+    if (inputs.height && heightInput) heightInput.value = inputs.height;
+    if (inputs.unit && ['mm','cm','m','in','ft'].includes(inputs.unit)) {
+      currentUnit = inputs.unit as MeasurementUnit;
+      document.querySelectorAll('.unit-btn').forEach(b => (b as HTMLElement).setAttribute('aria-pressed', (b as HTMLElement).dataset.unit === currentUnit ? 'true' : 'false'));
+    }
+    if (inputs.type && typeSelect) {
+      currentType = inputs.type as WindowInsulationType;
+      typeSelect.value = currentType;
+    }
+    if (inputs.material && materialSelect) {
+      currentMaterial = inputs.material as WindowInsulationFrameMaterial;
+      materialSelect.value = currentMaterial;
+    }
+    if (inputs.climate) {
+      currentClimate = inputs.climate as WindowInsulationClimate;
+      document.querySelectorAll('#climate-selector .option-btn').forEach(b =>
+        (b as HTMLElement).setAttribute('aria-pressed', (b as HTMLElement).dataset.value === currentClimate ? 'true' : 'false'));
+    }
+    if (inputs.seal && sealSelect) {
+      currentSeal = inputs.seal as WindowInsulationSealCondition;
+      sealSelect.value = currentSeal;
+    }
+    if (inputs.age && ageSelect) {
+      currentAge = inputs.age as WindowInsulationAge;
+      ageSelect.value = currentAge;
+    }
+    if (inputs.covering && coveringSelect) {
+      currentCovering = inputs.covering as WindowInsulationCovering;
+      coveringSelect.value = currentCovering;
+    }
+    calculate();
+    track({ type: 'history_restored', properties: { slug: 'window-insulation-calculator', entryId: (e as CustomEvent).detail.entryId ?? '' } });
+  });
+</script>
+
+<style>
+  .calc-dashboard {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--spacing-xl);
+    align-items: start;
+    margin-top: var(--spacing-lg);
+  }
+
+  @media (min-width: 1024px) {
+    .calc-dashboard {
+      grid-template-columns: 380px 1fr;
+    }
+  }
+
+  .calc-panel {
+    background-color: var(--color-canvas);
+    border: 1px solid var(--color-hairline);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+  }
+
+  .calc-panel-inputs {
+    position: sticky;
+    top: var(--spacing-md);
+  }
+
+  .panel-header {
+    padding: var(--spacing-md);
+    background-color: var(--color-canvas-soft);
+    border-bottom: 1px solid var(--color-hairline);
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+  }
+
+  .panel-label {
+    font-family: var(--font-family-mono);
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--color-muted);
+  }
+
+  .panel-section-header {
+    padding: var(--spacing-xs) var(--spacing-md);
+    background-color: var(--color-canvas-soft);
+    border-top: 1px solid var(--color-hairline);
+    border-bottom: 1px solid var(--color-hairline);
+  }
+
+  .panel-section-title {
+    font-family: var(--font-family-mono);
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--color-ink-faint);
+  }
+
+  .input {
+    width: 100%;
+    padding: var(--spacing-sm) var(--spacing-md);
+    background-color: var(--color-canvas);
+    border: 1px solid var(--color-hairline);
+    border-radius: var(--radius-md);
+    font-family: var(--font-family-mono);
+    font-size: var(--font-size-body-md);
+    color: var(--color-ink);
+    transition: border-color 0.15s ease;
+  }
+
+  .input:focus {
+    outline: none;
+    border-color: var(--color-link);
+  }
+
+  .input-select {
+    width: 100%;
+    padding: var(--spacing-sm) var(--spacing-md);
+    background-color: var(--color-canvas);
+    border: 1px solid var(--color-hairline);
+    border-radius: var(--radius-md);
+    font-size: var(--font-size-body-sm);
+    color: var(--color-ink);
+  }
+
+  .option-selector {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--spacing-xs);
+    width: 100%;
+  }
+
+  .option-btn {
+    flex: 1 1 auto;
+    padding: 6px 10px;
+    font-size: 11px;
+    font-family: var(--font-family-mono);
+    border: 1px solid var(--color-hairline);
+    background: var(--color-canvas);
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    color: var(--color-ink-muted);
+    text-align: center;
+    transition: all 0.15s ease;
+  }
+
+  .option-btn[aria-pressed="true"] {
+    background: var(--color-ink);
+    color: var(--color-canvas);
+    border-color: var(--color-ink);
+    font-weight: 600;
+  }
+
+  /* Results Panel */
+  .empty-state {
+    padding: var(--spacing-3xl) var(--spacing-xl);
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .empty-icon-wrap {
+    color: var(--color-muted);
+    margin-bottom: var(--spacing-md);
+  }
+
+  .empty-title {
+    font-size: var(--font-size-h3);
+    font-weight: 600;
+    color: var(--color-ink);
+    margin: 0 0 var(--spacing-xs);
+  }
+
+  .empty-sub {
+    font-size: var(--font-size-body-sm);
+    color: var(--color-muted);
+    margin: 0;
+    max-width: 320px;
+  }
+
+  .svg-section {
+    border-bottom: 1px solid var(--color-hairline);
+    background-color: var(--color-canvas);
+  }
+
+  .svg-header {
+    padding: var(--spacing-sm) var(--spacing-md);
+    background-color: var(--color-canvas-soft);
+    border-bottom: 1px solid var(--color-hairline);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .svg-label {
+    font-family: var(--font-family-mono);
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--color-muted);
+  }
+
+  .svg-subtitle {
+    font-family: var(--font-family-mono);
+    font-size: 11px;
+    color: var(--color-ink-muted);
+  }
+
+  .svg-wrap {
+    padding: var(--spacing-md);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: var(--color-canvas);
+  }
+
+  .results-metric-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: var(--spacing-md);
+    padding: var(--spacing-lg);
+  }
+
+  .confidence-summary-card {
+    margin: 0 var(--spacing-lg) var(--spacing-lg);
+    padding: var(--spacing-md);
+    background-color: var(--color-canvas-soft);
+    border: 1px solid var(--color-hairline);
+    border-radius: var(--radius-md);
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+  }
+
+  .conf-card-header {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+  }
+
+  .conf-stars {
+    color: #f59e0b;
+    letter-spacing: 2px;
+  }
+
+  .conf-title {
+    font-weight: 600;
+    font-size: var(--font-size-body-sm);
+    color: var(--color-ink);
+  }
+
+  .conf-card-badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--spacing-xs);
+  }
+
+  .conf-badge {
+    font-family: var(--font-family-mono);
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--color-hairline);
+    background: var(--color-canvas);
+  }
+
+  .conf-badge-score {
+    color: var(--color-link);
+    font-weight: 600;
+  }
+
+  .rec-section {
+    border-top: 1px solid var(--color-hairline);
+  }
+
+  .rec-list {
+    padding: var(--spacing-lg);
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: var(--spacing-md);
+  }
+
+  .calc-extras {
+    border-top: 1px solid var(--color-hairline);
+    background-color: var(--color-canvas-soft);
+    padding: var(--spacing-lg);
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-lg);
+  }
+
+  @media (max-width: 640px) {
+    .results-metric-grid {
+      grid-template-columns: 1fr;
+      padding: var(--spacing-md);
+    }
+    .rec-list, .calc-extras, .svg-section {
+      padding: var(--spacing-md);
+    }
+    .confidence-summary-card {
+      margin: 0 var(--spacing-md) var(--spacing-md);
+      padding: var(--spacing-md);
+    }
+  }
+</style>
