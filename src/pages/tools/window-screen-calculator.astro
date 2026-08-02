@@ -459,17 +459,10 @@ const schema = {
     const recEl   = document.getElementById('rec-section');
     const extEl   = document.getElementById('calc-extras');
 
-    if (hasResults) {
-      emptyEl?.setAttribute('hidden', '');
-      gridEl?.removeAttribute('hidden');
-      recEl?.removeAttribute('hidden');
-      extEl?.removeAttribute('hidden');
-    } else {
-      emptyEl?.removeAttribute('hidden');
-      gridEl?.setAttribute('hidden', '');
-      recEl?.setAttribute('hidden', '');
-      extEl?.setAttribute('hidden', '');
-    }
+    if (emptyEl) emptyEl.hidden = hasResults;
+    if (gridEl)  gridEl.hidden  = !hasResults;
+    if (recEl)   recEl.hidden   = !hasResults;
+    if (extEl)   extEl.hidden   = !hasResults;
   }
 
   function calculate() {
@@ -689,18 +682,16 @@ const schema = {
   }
 
   // ── DOMContentLoaded ─────────────────────────────────────────────────────
-  document.addEventListener('DOMContentLoaded', () => {
+  function initCalculator() {
     const widthInput  = document.getElementById('input-width')  as HTMLInputElement;
     const heightInput = document.getElementById('input-height') as HTMLInputElement;
     const ftInput     = document.getElementById('input-frame-thickness') as HTMLInputElement;
     const sdInput     = document.getElementById('input-spline-diameter') as HTMLInputElement;
 
-    // Live calculation on every input change (debounced)
-    [widthInput, heightInput, ftInput, sdInput].forEach(el => {
-      el?.addEventListener('input', () => scheduleCalculate());
-      el?.addEventListener('change', () => calculate());
-      el?.addEventListener('keydown', (e) => { if (e.key === 'Enter') calculate(); });
-    });
+    widthInput?.addEventListener('input', calculate);
+    heightInput?.addEventListener('input', calculate);
+    ftInput?.addEventListener('input', calculate);
+    sdInput?.addEventListener('input', calculate);
 
     document.getElementById('input-frame-type')?.addEventListener('change', () => {
       currentFrameType = (document.getElementById('input-frame-type') as HTMLSelectElement).value as ScreenFrameType;
@@ -783,7 +774,13 @@ const schema = {
 
     // Auto-calculate on load if valid inputs exist
     calculate();
-  });
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initCalculator);
+  } else {
+    initCalculator();
+  }
 
   // ── History restore ──────────────────────────────────────────────────────
   document.addEventListener('wm:history-restore', (e: Event) => {
