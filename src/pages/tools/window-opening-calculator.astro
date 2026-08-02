@@ -1,0 +1,869 @@
+---
+/**
+ * WindowMetrics — Window Opening Calculator Page
+ * Route: /tools/window-opening-calculator
+ *
+ * Dedicated construction framing and rough opening calculator.
+ * Calculates required rough opening, finished opening, header framing dimensions,
+ * shim clearances, diagonal squareness tolerances, and installation difficulty.
+ */
+
+import ToolLayout from '@/layouts/ToolLayout.astro';
+import CalculatorHero from '@/components/calculator/CalculatorHero.astro';
+import InputCard from '@/components/calculator/InputCard.astro';
+import UnitSelector from '@/components/calculator/UnitSelector.astro';
+import ResultMetricCard from '@/components/calculator/ResultMetricCard.astro';
+import ShareExportBar from '@/components/calculator/ShareExportBar.astro';
+import HistoryPanel from '@/components/calculator/HistoryPanel.astro';
+import RelatedTools from '@/components/calculator/RelatedTools.astro';
+import FAQSection from '@/components/content/FAQSection.astro';
+import { getToolBySlug } from '@/data/tools.js';
+
+const tool = getToolBySlug('window-opening-calculator');
+if (!tool) {
+  throw new Error('Tool data for "window-opening-calculator" not found in tool registry.');
+}
+
+const breadcrumbs = [
+  { label: 'Home', href: '/' },
+  { label: 'Tools', href: '/tools' },
+  { label: 'Window Opening Calculator', href: '/tools/window-opening-calculator' },
+];
+
+const faqs = [
+  {
+    question: 'What is a window rough opening (R.O.)?',
+    answer: 'A window rough opening is the framed wall opening bounded by studs, header, and sill plate into which a window unit is installed. It is larger than the window frame size to allow for shimming, leveling, and insulation.',
+  },
+  {
+    question: 'How much larger should a rough opening be than the window size?',
+    answer: 'Standard industry rule of thumb is to add 1/2 inch (12.7 mm) to the window width and 1/2 inch (12.7 mm) to 3/4 inch to the window height. This provides a 1/4 inch shim clearance gap on each side.',
+  },
+  {
+    question: 'What is the difference between a rough opening and a finished opening?',
+    answer: 'The rough opening is the raw wood/steel framing before drywall or window unit installation. The finished opening is the exact outer frame dimension of the manufactured window unit.',
+  },
+  {
+    question: 'How do I check if a window rough opening is square?',
+    answer: 'Measure diagonally from top-left to bottom-right corner, and top-right to bottom-left corner. The difference between the two diagonal measurements should not exceed 1/8 inch (3.2 mm).',
+  },
+  {
+    question: 'What happens if a window rough opening is too small?',
+    answer: 'If a rough opening is too small (<1/8" gap), the window frame cannot be shimmed or leveled, and expanding vinyl frames may bind sashes. Studs must be trimmed or planed back to enlarge the opening.',
+  },
+  {
+    question: 'What happens if a window rough opening is oversized?',
+    answer: 'If a rough opening is oversized (>1 inch total gap), standard shims cannot provide solid structural backing. Add 2×4 or 1×4 wood furring strips to the trimmer studs to narrow the opening.',
+  },
+  {
+    question: 'Why is shim space necessary around a window frame?',
+    answer: 'Shim space provides room to plumb and level the window independently of out-of-square wall framing, and creates an insulating thermal break for low-expansion foam sealants.',
+  },
+  {
+    question: 'How do framing requirements differ for concrete or masonry walls?',
+    answer: 'Concrete and CMU masonry openings require pressure-treated 1x or 2x wood bucking secured to the masonry before setting the window frame unit, increasing the rough masonry opening by 1.5 to 3 inches.',
+  },
+];
+---
+
+<ToolLayout
+  tool={tool}
+  breadcrumbs={breadcrumbs}
+  faqs={faqs}
+  title="Window Opening Calculator | WindowMetrics"
+  description="Calculate rough openings, finished openings, shim spacing, framing dimensions and installation tolerances for any window."
+>
+  <CalculatorHero
+    tool={tool}
+    description="Calculate rough openings, finished openings, shim spacing, framing dimensions and installation tolerances for any window."
+    features={[
+      'Required rough opening W × H (in & mm)',
+      'Header framing width & jack stud heights',
+      'Side, top & bottom shim gap clearances',
+      'Diagonal squareness tolerance (1/8" max diff)',
+    ]}
+    trustItems={[
+      { label: 'AAMA construction standards' },
+      { label: 'Multi-unit support' },
+      { label: 'No signup' },
+      { label: 'Instant calculation' },
+    ]}
+  />
+
+  <div class="calc-dashboard">
+    <!-- LEFT PANEL — Inputs -->
+    <div class="calc-panel calc-panel-inputs">
+      <div class="panel-header">
+        <span class="panel-label">Window Unit Dimensions</span>
+        <UnitSelector defaultUnit="in" />
+      </div>
+
+      <div class="panel-section-header">
+        <span class="panel-section-title">Unit Size & Type</span>
+      </div>
+
+      <InputCard label="Window Unit Width" inputId="input-width" hint="Exact frame width">
+        <input type="text" id="input-width" class="input" placeholder="e.g., 48" autocomplete="off" />
+      </InputCard>
+
+      <InputCard label="Window Unit Height" inputId="input-height" hint="Exact frame height">
+        <input type="text" id="input-height" class="input" placeholder="e.g., 60" autocomplete="off" />
+      </InputCard>
+
+      <InputCard label="Installation Type" inputId="input-installation-type">
+        <select id="input-installation-type" class="input-select" aria-label="Select Installation Type">
+          <option value="new-construction" selected>New Construction (Nailing Flange + 1/2" Gap)</option>
+          <option value="replacement">Pocket Replacement (Existing Frame + 3/8" Gap)</option>
+          <option value="retrofit">Retrofit / Remodel (Furring + 3/4" Gap)</option>
+        </select>
+      </InputCard>
+
+      <div class="panel-section-header">
+        <span class="panel-section-title">Framing & Tolerances</span>
+      </div>
+
+      <InputCard label="Frame Profile Thickness" inputId="input-frame-thickness" hint="Std: 0.75&quot; (19mm)">
+        <input type="number" id="input-frame-thickness" class="input" value="0.75" min="0.25" max="3.0" step="0.125" />
+      </InputCard>
+
+      <InputCard label="Total Shim Clearance Gap" inputId="input-shim-gap" hint="Std: 0.50&quot; (12.7mm) total">
+        <input type="number" id="input-shim-gap" class="input" value="0.50" min="0.125" max="2.0" step="0.125" />
+      </InputCard>
+
+      <InputCard label="Framing Material" inputId="input-framing-material">
+        <select id="input-framing-material" class="input-select" aria-label="Select Framing Material">
+          <option value="wood" selected>Wood Framing (2×4 / 2×6 Studs)</option>
+          <option value="steel">Light Gauge Cold-Formed Steel Studs</option>
+          <option value="concrete">Concrete / CMU Masonry Bucking</option>
+        </select>
+      </InputCard>
+
+      <InputCard label="Window Style" inputId="input-window-style">
+        <select id="input-window-style" class="input-select" aria-label="Select Window Style">
+          <option value="double-hung" selected>Double Hung Window</option>
+          <option value="single-hung">Single Hung Window</option>
+          <option value="casement">Casement Window</option>
+          <option value="sliding">Sliding Window</option>
+          <option value="picture">Picture / Fixed Window</option>
+          <option value="awning">Awning Window</option>
+          <option value="bay">Bay Window (Pro Angle Buck)</option>
+          <option value="bow">Bow Window (Pro Multi-Angle)</option>
+        </select>
+      </InputCard>
+    </div>
+
+    <!-- RIGHT PANEL — Results -->
+    <div class="calc-panel calc-panel-results">
+      <div id="results-empty" class="empty-state">
+        <div class="empty-icon-wrap">
+          <svg width="48" height="48" viewBox="0 0 48 48" fill="none" class="empty-svg">
+            <rect x="8" y="12" width="32" height="24" rx="3" stroke="currentColor" stroke-width="2.5" fill="none"/>
+            <circle cx="24" cy="24" r="6" stroke="currentColor" stroke-width="1.5" stroke-dasharray="2 2"/>
+          </svg>
+        </div>
+        <h3 class="empty-title">Enter window dimensions</h3>
+        <p class="empty-sub">Fill in Width and Height to calculate required rough opening and framing dimensions.</p>
+      </div>
+
+      <div id="results-grid" hidden>
+        <!-- SVG Wall Framing & Opening Diagram Illustration -->
+        <div class="svg-section">
+          <div class="svg-header">
+            <span class="svg-label">Wall Framing & Rough Opening Vector Diagram</span>
+            <span class="svg-subtitle" id="svg-subtitle">Studs, Header, Sill & Shim Gap Clearances</span>
+          </div>
+          <div class="svg-wrap">
+            <svg id="opening-svg" viewBox="0 0 400 340" width="100%" aria-label="Window rough opening framing diagram"></svg>
+          </div>
+        </div>
+
+        <div class="results-metric-grid">
+          <ResultMetricCard id="card-rough-opening" label="Required Rough Opening" highlight={true} sublabel="Framed stud opening W × H" animate={true} />
+          <ResultMetricCard id="card-finished-opening" label="Finished Unit Opening" highlight={true} sublabel="Exact window frame size" animate={true} />
+          <ResultMetricCard id="card-rating" label="Tolerance Rating" highlight={true} sublabel="Fit & clearance rating" animate={true} />
+          <ResultMetricCard id="card-shim-space" label="Total Shim Space" highlight={true} sublabel="Total width shim clearance" animate={true} />
+          <ResultMetricCard id="card-diagonal" label="Diagonal Squareness" sublabel="Max 1/8&quot; difference allowed" animate={true} />
+          <ResultMetricCard id="card-header-width" label="Header Framing Width" sublabel="Includes double jack studs" animate={true} />
+          <ResultMetricCard id="card-side-clearance" label="Side Clearance Gap" sublabel="Per side shim space" animate={true} />
+          <ResultMetricCard id="card-difficulty" label="Installation Rating" sublabel="Complexity assessment" animate={true} />
+        </div>
+
+        <!-- Unified Confidence Summary Card -->
+        <div id="card-confidence" class="confidence-summary-card" hidden>
+          <div class="conf-card-header">
+            <span class="conf-stars" id="confidence-stars">★★★★★</span>
+            <span class="conf-title" id="confidence-label">Exact Construction Fit</span>
+          </div>
+          <div class="conf-card-badges">
+            <span class="conf-badge conf-badge-score" id="score-badge">RO: 48.5" × 60.5"</span>
+            <span class="conf-badge conf-badge-order" id="confidence-ordering-badge">✓ 0.50" Total Shim Gap</span>
+            <span class="conf-badge conf-badge-cost" id="cost-badge">Fit: ACCEPTABLE</span>
+          </div>
+        </div>
+
+        <!-- Recommendations Grid -->
+        <div id="rec-section" class="rec-section" hidden>
+          <div class="panel-header"><span class="panel-label">Smart Recommendations & Framing Guidance</span></div>
+          <div id="rec-list" class="rec-list"></div>
+        </div>
+
+        <!-- Share & Export + History Bar -->
+        <div class="calc-extras" id="calc-extras" hidden>
+          <ShareExportBar calculatorTitle="Window Opening Calculator" />
+          <HistoryPanel slug="window-opening-calculator" />
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <Fragment slot="sidebar">
+    <RelatedTools
+      links={[
+        {
+          title: 'Window Size Calculator',
+          description: 'Window opening area, perimeter, and sizing recommendations.',
+          href: '/tools/window-size-calculator',
+          icon: 'Ruler',
+        },
+        {
+          title: 'Replacement Window Calculator',
+          description: 'Find standard replacement window sizes and rough openings.',
+          href: '/tools/replacement-window-calculator',
+          icon: 'RefreshCw',
+        },
+        {
+          title: 'Window Weight Calculator',
+          description: 'Calculate total unit weight, glass pane mass, and installer crew needs.',
+          href: '/tools/window-weight-calculator',
+          icon: 'Scale',
+        },
+      ]}
+      tip={{
+        label: 'Framing Tip',
+        text: 'Always measure rough opening width at top, middle, and bottom, and height at left, center, and right. Use the smallest measurements to ensure the new window unit fits cleanly.',
+      }}
+    />
+    <FAQSection faqs={faqs} />
+  </Fragment>
+</ToolLayout>
+
+<script>
+  import {
+    calculateWindowOpening,
+    type WindowOpeningInput,
+    type WindowOpeningInstallationType,
+    type WindowOpeningFramingMaterial,
+    type WindowOpeningStyle,
+  } from '@/engine/window-opening.js';
+  import { buildWindowOpeningRecommendations } from '@/engine/window-opening-recommendations.js';
+  import { toMm, fromMm, formatDimension, normalizeInput } from '@/engine/units.js';
+  import { readUrlState, pushUrlState } from '@/lib/url-state.js';
+  import { buildExportPayload } from '@/lib/export.js';
+  import { buildSummary } from '@/lib/share.js';
+  import { track } from '@/lib/analytics.js';
+  import type { MeasurementUnit } from '@/types/calculator.js';
+
+  let currentResult: ReturnType<typeof calculateWindowOpening> | null = null;
+  let currentUnit: MeasurementUnit = 'in';
+  let currentType: WindowOpeningInstallationType = 'new-construction';
+  let currentMaterial: WindowOpeningFramingMaterial = 'wood';
+  let currentStyle: WindowOpeningStyle = 'double-hung';
+
+  // ── DOM references ────────────────────────────────────────────────────────
+  const widthInput     = document.getElementById('input-width')            as HTMLInputElement | null;
+  const heightInput    = document.getElementById('input-height')           as HTMLInputElement | null;
+  const thicknessInput = document.getElementById('input-frame-thickness') as HTMLInputElement | null;
+  const shimInput      = document.getElementById('input-shim-gap')         as HTMLInputElement | null;
+  const typeSelect     = document.getElementById('input-installation-type') as HTMLSelectElement | null;
+  const materialSelect = document.getElementById('input-framing-material') as HTMLSelectElement | null;
+  const styleSelect    = document.getElementById('input-window-style')      as HTMLSelectElement | null;
+
+  const resultsEmpty   = document.getElementById('results-empty')          as HTMLElement | null;
+  const resultsGrid    = document.getElementById('results-grid')           as HTMLElement | null;
+  const recSection     = document.getElementById('rec-section')            as HTMLElement | null;
+  const calcExtras     = document.getElementById('calc-extras')            as HTMLElement | null;
+  const cardConf       = document.getElementById('card-confidence')         as HTMLElement | null;
+
+  function updateMetric(cardId: string, value: string, unitStr: string = '') {
+    const valEl = document.querySelector(`#${cardId} .result-value-text`);
+    const unitEl = document.querySelector(`#${cardId} .result-unit`);
+    if (valEl) valEl.textContent = value;
+    if (unitEl) unitEl.textContent = unitStr;
+  }
+
+  // ── Vector SVG Wall Framing Technical Renderer ─────────────────────────────
+  function renderOpeningSvg(result: ReturnType<typeof calculateWindowOpening>, wMm: number, hMm: number) {
+    const svg = document.getElementById('opening-svg');
+    if (!svg) return;
+
+    const cx = 170, cy = 160;
+    const maxW = 200, maxH = 180;
+    const scale = Math.min(maxW / result.roughOpeningWidthMm, maxH / result.roughOpeningHeightMm);
+
+    const roW = result.roughOpeningWidthMm * scale;
+    const roH = result.roughOpeningHeightMm * scale;
+    const winW = result.finishedWidthMm * scale;
+    const winH = result.finishedHeightMm * scale;
+
+    const studW = 20;
+
+    svg.innerHTML = `
+      <defs>
+        <pattern id="grid-open" width="20" height="20" patternUnits="userSpaceOnUse">
+          <path d="M 20 0 L 0 0 0 20" fill="none" stroke="rgba(0,0,0,0.03)" stroke-width="1"/>
+        </pattern>
+      </defs>
+      <rect width="400" height="340" fill="url(#grid-open)" rx="6"/>
+
+      <!-- Wall Framing Studs (King Studs & Jack Studs) -->
+      <!-- Left King Stud -->
+      <rect x="${cx - roW/2 - studW*2}" y="${cy - roH/2 - 30}" width="${studW}" height="${roH + 60}" fill="#e2e8f0" stroke="#475569" stroke-width="1.5"/>
+      <!-- Left Jack Stud -->
+      <rect x="${cx - roW/2 - studW}" y="${cy - roH/2}" width="${studW}" height="${roH}" fill="#cbd5e1" stroke="#334155" stroke-width="1.5"/>
+
+      <!-- Right Jack Stud -->
+      <rect x="${cx + roW/2}" y="${cy - roH/2}" width="${studW}" height="${roH}" fill="#cbd5e1" stroke="#334155" stroke-width="1.5"/>
+      <!-- Right King Stud -->
+      <rect x="${cx + roW/2 + studW}" y="${cy - roH/2 - 30}" width="${studW}" height="${roH + 60}" fill="#e2e8f0" stroke="#475569" stroke-width="1.5"/>
+
+      <!-- Double Header Top -->
+      <rect x="${cx - roW/2 - studW*2}" y="${cy - roH/2 - 30}" width="${roW + studW*4}" height="30" fill="#f1f5f9" stroke="#334155" stroke-width="2"/>
+      <text x="${cx}" y="${cy - roH/2 - 11}" font-family="sans-serif" font-size="10" font-weight="700" text-anchor="middle" fill="#0f172a">HEADER BEAM</text>
+
+      <!-- Rough Opening Void -->
+      <rect x="${cx - roW/2}" y="${cy - roH/2}" width="${roW}" height="${roH}" fill="#fef3c7" fill-opacity="0.4" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4,4"/>
+
+      <!-- Window Frame (Finished Unit) -->
+      <rect x="${cx - winW/2}" y="${cy - winH/2}" width="${winW}" height="${winH}" fill="#ffffff" stroke="#0f172a" stroke-width="4" rx="3"/>
+      <rect x="${cx - winW/2 + 8}" y="${cy - winH/2 + 8}" width="${winW - 16}" height="${winH - 16}" fill="#e0f2fe" stroke="#0284c7" stroke-width="1.5"/>
+
+      <!-- Shim Placement Arrows (Yellow Shims) -->
+      <rect x="${cx - roW/2}" y="${cy - 20}" width="${(roW - winW)/2}" height="40" fill="#f59e0b"/>
+      <rect x="${cx + winW/2}" y="${cy - 20}" width="${(roW - winW)/2}" height="40" fill="#f59e0b"/>
+
+      <!-- Dimension Badges -->
+      <rect x="260" y="40" width="125" height="65" rx="6" fill="#0f172a"/>
+      <text x="322" y="60" font-family="sans-serif" font-size="10" font-weight="700" text-anchor="middle" fill="#94a3b8">ROUGH OPENING</text>
+      <text x="322" y="82" font-family="monospace" font-size="14" font-weight="700" text-anchor="middle" fill="#f59e0b">${result.roughOpeningWidthIn}" × ${result.roughOpeningHeightIn}"</text>
+
+      <rect x="260" y="120" width="125" height="65" rx="6" fill="#ffffff" stroke="#cbd5e1" stroke-width="1"/>
+      <text x="322" y="140" font-family="sans-serif" font-size="10" font-weight="700" text-anchor="middle" fill="#0f172a">FINISHED UNIT</text>
+      <text x="322" y="162" font-family="monospace" font-size="13" font-weight="700" text-anchor="middle" fill="#0284c7">${Math.round(fromMm(wMm, currentUnit))}" × ${Math.round(fromMm(hMm, currentUnit))}"</text>
+
+      <rect x="260" y="200" width="125" height="50" rx="6" fill="#f1f5f9"/>
+      <text x="322" y="218" font-family="sans-serif" font-size="9" font-weight="600" text-anchor="middle" fill="#475569">SHIM SPACE</text>
+      <text x="322" y="236" font-family="monospace" font-size="12" font-weight="700" text-anchor="middle" fill="#0f172a">${(result.totalShimGapWidthMm / 25.4).toFixed(2)}" total</text>
+    `;
+
+    const sub = document.getElementById('svg-subtitle');
+    if (sub) {
+      sub.textContent = `RO: ${result.roughOpeningWidthIn}" × ${result.roughOpeningHeightIn}" · Finished Unit: ${Math.round(fromMm(wMm, currentUnit))}" × ${Math.round(fromMm(hMm, currentUnit))}"`;
+    }
+  }
+
+  function calculate() {
+    const wInput = widthInput?.value.trim() ?? '';
+    const hInput = heightInput?.value.trim() ?? '';
+    const thickVal = parseFloat(thicknessInput?.value || '0.75');
+    const shimVal = parseFloat(shimInput?.value || '0.50');
+
+    if (!wInput || !hInput) {
+      if (resultsEmpty) resultsEmpty.hidden = false;
+      if (resultsGrid)  resultsGrid.hidden  = true;
+      if (recSection)   recSection.hidden   = true;
+      if (calcExtras)   calcExtras.hidden   = true;
+      if (cardConf)     cardConf.hidden     = true;
+      return;
+    }
+
+    const w = normalizeInput(wInput, currentUnit);
+    const h = normalizeInput(hInput, currentUnit);
+
+    if (!w || !h || w <= 0 || h <= 0) {
+      if (resultsEmpty) resultsEmpty.hidden = false;
+      if (resultsGrid)  resultsGrid.hidden  = true;
+      if (recSection)   recSection.hidden   = true;
+      if (calcExtras)   calcExtras.hidden   = true;
+      if (cardConf)     cardConf.hidden     = true;
+      return;
+    }
+
+    const wMm = toMm(w, currentUnit);
+    const hMm = toMm(h, currentUnit);
+    const shimMm = toMm(shimVal, 'in');
+
+    const input: WindowOpeningInput = {
+      windowWidthMm: wMm,
+      windowHeightMm: hMm,
+      installationType: currentType,
+      frameThicknessMm: toMm(thickVal, 'in'),
+      shimGapMm: shimMm,
+      framingMaterial: currentMaterial,
+      windowStyle: currentStyle,
+    };
+
+    const result = calculateWindowOpening(input);
+    currentResult = result;
+    const recs = buildWindowOpeningRecommendations(input, result);
+
+    // ── Metrics ──────────────────────────────────────────────────────────────
+    updateMetric('card-rough-opening', `${result.roughOpeningWidthIn}" × ${result.roughOpeningHeightIn}"`, `(${result.roughOpeningWidthMm} × ${result.roughOpeningHeightMm} mm)`);
+    updateMetric('card-finished-opening', `${(wMm/25.4).toFixed(1)}" × ${(hMm/25.4).toFixed(1)}"`, `(${wMm} × ${hMm} mm)`);
+    updateMetric('card-rating', result.toleranceRating.toUpperCase(), 'Clearance rating');
+    updateMetric('card-shim-space', `${(result.totalShimGapWidthMm / 25.4).toFixed(2)}"`, `(${result.totalShimGapWidthMm} mm total)`);
+    updateMetric('card-diagonal', `${(result.diagonalLengthMm / 25.4).toFixed(1)}"`, `Max 1/8" (3.2mm) diff`);
+    updateMetric('card-header-width', `${(result.framingHeaderWidthMm / 25.4).toFixed(1)}"`, `(${result.framingHeaderWidthMm} mm header)`);
+    updateMetric('card-side-clearance', `${(result.sideClearanceMm / 25.4).toFixed(3)}"`, `(${result.sideClearanceMm} mm per side)`);
+    updateMetric('card-difficulty', result.installationDifficulty.toUpperCase(), currentType.replace('-', ' '));
+
+    // ── Confidence summary card ───────────────────────────────────────────────
+    const starsEl = document.getElementById('confidence-stars');
+    const labelEl = document.getElementById('confidence-label');
+    const orderBadge = document.getElementById('confidence-ordering-badge');
+    const costBadge = document.getElementById('cost-badge');
+    const scoreBadge = document.getElementById('score-badge');
+
+    if (starsEl) starsEl.textContent = result.confidence === 'excellent' ? '★★★★★' : '★★★★☆';
+    if (labelEl) labelEl.textContent = result.isOpeningAcceptable ? 'Exact Construction Fit' : 'Framing Adjustment Required';
+    if (scoreBadge) scoreBadge.textContent = `RO: ${result.roughOpeningWidthIn}" × ${result.roughOpeningHeightIn}"`;
+    if (orderBadge) orderBadge.textContent = `✓ ${(result.totalShimGapWidthMm / 25.4).toFixed(2)}" Total Shim Gap`;
+    if (costBadge) costBadge.textContent = `FIT: ${result.toleranceRating.toUpperCase()}`;
+
+    // ── Recommendation cards ─────────────────────────────────────────────────
+    const recList = document.getElementById('rec-list');
+    if (recList) {
+      const iconMap: Record<string, string> = {
+        'installation': `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>`,
+        'shim': `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="12" rx="2"/></svg>`,
+        'tolerance': `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>`,
+        'frame': `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/></svg>`,
+        'construction': `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 20h20M5 20V8l7-5 7 5v12"/></svg>`,
+        'mistakes': `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>`,
+      };
+      recList.innerHTML = recs.items.map((item: any) =>
+        `<div class="rec-card">
+          <div class="rec-card-header">
+            <span class="rec-card-icon" aria-hidden="true">${iconMap[item.type] || iconMap['installation']}</span>
+            <span class="rec-card-title">${item.title}</span>
+          </div>
+          <div class="rec-card-body">${item.body}</div>
+          ${item.tip ? `<div class="rec-card-tip">${item.tip}</div>` : ''}
+        </div>`
+      ).join('');
+    }
+
+    try {
+      renderOpeningSvg(result, wMm, hMm);
+    } catch (e) {
+      console.error('SVG rendering error:', e);
+    }
+
+    if (resultsEmpty) resultsEmpty.hidden = true;
+    if (resultsGrid)  resultsGrid.hidden  = false;
+    if (recSection)   recSection.hidden   = false;
+    if (calcExtras)   calcExtras.hidden   = false;
+    if (cardConf)     cardConf.hidden     = false;
+
+    const historyLabelText = `${w} × ${h} ${currentUnit} • ${currentType.split('-').map(s => s.charAt(0).toUpperCase() + s.slice(1)).join(' ')}`;
+    const summaryText = `${w} × ${h} ${currentUnit}`;
+    const stateParams = {
+      width: String(w),
+      height: String(h),
+      unit: currentUnit,
+      type: currentType,
+      material: currentMaterial,
+      style: currentStyle,
+      shim: String(shimVal),
+      subtitle: `Rough Opening: ${result.roughOpeningWidthIn}" × ${result.roughOpeningHeightIn}"`,
+      summary: summaryText,
+      _display: summaryText,
+    };
+
+    (window as any).wmCurrentState = stateParams;
+    pushUrlState(stateParams);
+    (window as any).wmHistoryPanel?.add(historyLabelText, stateParams);
+
+    (window as any).wmBuildSummary = () => buildSummary(
+      'Window Opening Calculator',
+      [
+        ['Finished Unit Size', `${w} × ${h} ${currentUnit}`],
+        ['Required Rough Opening', `${result.roughOpeningWidthIn}" × ${result.roughOpeningHeightIn}" (${result.roughOpeningWidthMm} × ${result.roughOpeningHeightMm} mm)`],
+        ['Installation Type', currentType],
+        ['Framing Material', currentMaterial],
+        ['Window Style', currentStyle],
+        ['Side Clearance Gap', `${(result.sideClearanceMm / 25.4).toFixed(3)}" (${result.sideClearanceMm} mm)`],
+        ['Total Shim Gap Width', `${(result.totalShimGapWidthMm / 25.4).toFixed(2)}" (${result.totalShimGapWidthMm} mm)`],
+        ['Header Framing Width', `${(result.framingHeaderWidthMm / 25.4).toFixed(1)}" (${result.framingHeaderWidthMm} mm)`],
+        ['Diagonal Squareness Tolerance', `Max 1/8" (3.2mm) difference`],
+        ['Tolerance Rating', result.toleranceRating.toUpperCase()],
+        ['Installation Difficulty', result.installationDifficulty.toUpperCase()],
+      ],
+      typeof window !== 'undefined' ? window.location.href : undefined,
+    );
+
+    (window as any).wmBuildExport = () => buildExportPayload(
+      'window-opening-calculator',
+      stateParams,
+      {
+        finishedWindowWidth: `${w} ${currentUnit}`,
+        finishedWindowHeight: `${h} ${currentUnit}`,
+        roughOpeningWidthIn: `${result.roughOpeningWidthIn}"`,
+        roughOpeningHeightIn: `${result.roughOpeningHeightIn}"`,
+        roughOpeningWidthMm: `${result.roughOpeningWidthMm} mm`,
+        roughOpeningHeightMm: `${result.roughOpeningHeightMm} mm`,
+        installationType: currentType,
+        framingMaterial: currentMaterial,
+        windowStyle: currentStyle,
+        sideClearanceMm: `${result.sideClearanceMm} mm`,
+        totalShimGapWidthMm: `${result.totalShimGapWidthMm} mm`,
+        framingHeaderWidthMm: `${result.framingHeaderWidthMm} mm`,
+        diagonalLengthMm: `${result.diagonalLengthMm} mm`,
+        toleranceRating: result.toleranceRating,
+        installationDifficulty: result.installationDifficulty,
+        confidence: result.confidence,
+        recommendations: recs.items.map((i: any) => `${i.title}: ${i.body}`).join(' | '),
+        warnings: result.warnings.map((w: any) => w.message).join(' | '),
+      },
+    );
+
+    (window as any).wmShareExportBar?.show();
+
+    track({
+      type: 'calculation_completed',
+      properties: { slug: 'window-opening-calculator', unit: currentUnit, inputs: stateParams },
+    });
+  }
+
+  // ── Event listeners ───────────────────────────────────────────────────────
+  widthInput?.addEventListener('input', calculate);
+  heightInput?.addEventListener('input', calculate);
+  thicknessInput?.addEventListener('input', calculate);
+  shimInput?.addEventListener('input', calculate);
+
+  typeSelect?.addEventListener('change', () => {
+    if (typeSelect) currentType = typeSelect.value as WindowOpeningInstallationType;
+    calculate();
+  });
+
+  materialSelect?.addEventListener('change', () => {
+    if (materialSelect) currentMaterial = materialSelect.value as WindowOpeningFramingMaterial;
+    calculate();
+  });
+
+  styleSelect?.addEventListener('change', () => {
+    if (styleSelect) currentStyle = styleSelect.value as WindowOpeningStyle;
+    calculate();
+  });
+
+  document.getElementById('unit-selector')?.addEventListener('unitchange', (e) => {
+    const newUnit = (e as CustomEvent).detail?.unit as MeasurementUnit | undefined;
+    if (!newUnit) return;
+    if (widthInput?.value) {
+      const parsed = normalizeInput(widthInput.value, currentUnit);
+      if (parsed) widthInput.value = String(fromMm(toMm(parsed, currentUnit), newUnit));
+    }
+    if (heightInput?.value) {
+      const parsed = normalizeInput(heightInput.value, currentUnit);
+      if (parsed) heightInput.value = String(fromMm(toMm(parsed, currentUnit), newUnit));
+    }
+    const oldUnit = currentUnit;
+    currentUnit = newUnit;
+    track({ type: 'unit_changed', properties: { slug: 'window-opening-calculator', from: oldUnit, to: newUnit } });
+    calculate();
+  });
+
+  // Restore URL state
+  const urlState = readUrlState();
+  if (urlState.width && widthInput)   widthInput.value  = urlState.width;
+  if (urlState.height && heightInput) heightInput.value = urlState.height;
+  if (urlState.shim && shimInput)     shimInput.value   = urlState.shim;
+  if (urlState.unit && ['mm','cm','m','in','ft'].includes(urlState.unit)) {
+    currentUnit = urlState.unit as MeasurementUnit;
+    document.querySelectorAll('.unit-btn').forEach(b => (b as HTMLElement).setAttribute('aria-pressed', (b as HTMLElement).dataset.unit === currentUnit ? 'true' : 'false'));
+  }
+  if (urlState.type && typeSelect) {
+    currentType = urlState.type as WindowOpeningInstallationType;
+    typeSelect.value = currentType;
+  }
+  if (urlState.material && materialSelect) {
+    currentMaterial = urlState.material as WindowOpeningFramingMaterial;
+    materialSelect.value = currentMaterial;
+  }
+  if (urlState.style && styleSelect) {
+    currentStyle = urlState.style as WindowOpeningStyle;
+    styleSelect.value = currentStyle;
+  }
+
+  // Initial calculation on page load
+  calculate();
+
+  // ── History restore ──────────────────────────────────────────────────────
+  document.addEventListener('wm:history-restore', (e: Event) => {
+    const { inputs } = (e as CustomEvent).detail;
+    if (inputs.width && widthInput)   widthInput.value  = inputs.width;
+    if (inputs.height && heightInput) heightInput.value = inputs.height;
+    if (inputs.shim && shimInput)     shimInput.value   = inputs.shim;
+    if (inputs.unit && ['mm','cm','m','in','ft'].includes(inputs.unit)) {
+      currentUnit = inputs.unit as MeasurementUnit;
+      document.querySelectorAll('.unit-btn').forEach(b => (b as HTMLElement).setAttribute('aria-pressed', (b as HTMLElement).dataset.unit === currentUnit ? 'true' : 'false'));
+    }
+    if (inputs.type && typeSelect) {
+      currentType = inputs.type as WindowOpeningInstallationType;
+      typeSelect.value = currentType;
+    }
+    if (inputs.material && materialSelect) {
+      currentMaterial = inputs.material as WindowOpeningFramingMaterial;
+      materialSelect.value = currentMaterial;
+    }
+    if (inputs.style && styleSelect) {
+      currentStyle = inputs.style as WindowOpeningStyle;
+      styleSelect.value = currentStyle;
+    }
+    calculate();
+    track({ type: 'history_restored', properties: { slug: 'window-opening-calculator', entryId: (e as CustomEvent).detail.entryId ?? '' } });
+  });
+</script>
+
+<style>
+  .calc-dashboard {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--spacing-xl);
+    align-items: start;
+    margin-top: var(--spacing-lg);
+  }
+
+  @media (min-width: 1024px) {
+    .calc-dashboard {
+      grid-template-columns: 380px 1fr;
+    }
+  }
+
+  .calc-panel {
+    background-color: var(--color-canvas);
+    border: 1px solid var(--color-hairline);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+  }
+
+  .calc-panel-inputs {
+    position: sticky;
+    top: var(--spacing-md);
+  }
+
+  .panel-header {
+    padding: var(--spacing-md);
+    background-color: var(--color-canvas-soft);
+    border-bottom: 1px solid var(--color-hairline);
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+  }
+
+  .panel-label {
+    font-family: var(--font-family-mono);
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--color-muted);
+  }
+
+  .panel-section-header {
+    padding: var(--spacing-xs) var(--spacing-md);
+    background-color: var(--color-canvas-soft);
+    border-top: 1px solid var(--color-hairline);
+    border-bottom: 1px solid var(--color-hairline);
+  }
+
+  .panel-section-title {
+    font-family: var(--font-family-mono);
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--color-ink-faint);
+  }
+
+  .input {
+    width: 100%;
+    padding: var(--spacing-sm) var(--spacing-md);
+    background-color: var(--color-canvas);
+    border: 1px solid var(--color-hairline);
+    border-radius: var(--radius-md);
+    font-family: var(--font-family-mono);
+    font-size: var(--font-size-body-md);
+    color: var(--color-ink);
+    transition: border-color 0.15s ease;
+  }
+
+  .input:focus {
+    outline: none;
+    border-color: var(--color-link);
+  }
+
+  .input-select {
+    width: 100%;
+    padding: var(--spacing-sm) var(--spacing-md);
+    background-color: var(--color-canvas);
+    border: 1px solid var(--color-hairline);
+    border-radius: var(--radius-md);
+    font-size: var(--font-size-body-sm);
+    color: var(--color-ink);
+  }
+
+  /* Results Panel */
+  .empty-state {
+    padding: var(--spacing-3xl) var(--spacing-xl);
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .empty-icon-wrap {
+    color: var(--color-muted);
+    margin-bottom: var(--spacing-md);
+  }
+
+  .empty-title {
+    font-size: var(--font-size-h3);
+    font-weight: 600;
+    color: var(--color-ink);
+    margin: 0 0 var(--spacing-xs);
+  }
+
+  .empty-sub {
+    font-size: var(--font-size-body-sm);
+    color: var(--color-muted);
+    margin: 0;
+    max-width: 320px;
+  }
+
+  .svg-section {
+    border-bottom: 1px solid var(--color-hairline);
+    background-color: var(--color-canvas);
+  }
+
+  .svg-header {
+    padding: var(--spacing-sm) var(--spacing-md);
+    background-color: var(--color-canvas-soft);
+    border-bottom: 1px solid var(--color-hairline);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .svg-label {
+    font-family: var(--font-family-mono);
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--color-muted);
+  }
+
+  .svg-subtitle {
+    font-family: var(--font-family-mono);
+    font-size: 11px;
+    color: var(--color-ink-muted);
+  }
+
+  .svg-wrap {
+    padding: var(--spacing-md);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: var(--color-canvas);
+  }
+
+  .results-metric-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: var(--spacing-md);
+    padding: var(--spacing-lg);
+  }
+
+  .confidence-summary-card {
+    margin: 0 var(--spacing-lg) var(--spacing-lg);
+    padding: var(--spacing-md);
+    background-color: var(--color-canvas-soft);
+    border: 1px solid var(--color-hairline);
+    border-radius: var(--radius-md);
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+  }
+
+  .conf-card-header {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+  }
+
+  .conf-stars {
+    color: #f59e0b;
+    letter-spacing: 2px;
+  }
+
+  .conf-title {
+    font-weight: 600;
+    font-size: var(--font-size-body-sm);
+    color: var(--color-ink);
+  }
+
+  .conf-card-badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--spacing-xs);
+  }
+
+  .conf-badge {
+    font-family: var(--font-family-mono);
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--color-hairline);
+    background: var(--color-canvas);
+  }
+
+  .conf-badge-score {
+    color: var(--color-link);
+    font-weight: 600;
+  }
+
+  .rec-section {
+    border-top: 1px solid var(--color-hairline);
+  }
+
+  .rec-list {
+    padding: var(--spacing-lg);
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: var(--spacing-md);
+  }
+
+  .calc-extras {
+    border-top: 1px solid var(--color-hairline);
+    background-color: var(--color-canvas-soft);
+    padding: var(--spacing-lg);
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-lg);
+  }
+
+  @media (max-width: 640px) {
+    .results-metric-grid {
+      grid-template-columns: 1fr;
+      padding: var(--spacing-md);
+    }
+    .rec-list, .calc-extras, .svg-section {
+      padding: var(--spacing-md);
+    }
+    .confidence-summary-card {
+      margin: 0 var(--spacing-md) var(--spacing-md);
+      padding: var(--spacing-md);
+    }
+  }
+</style>
