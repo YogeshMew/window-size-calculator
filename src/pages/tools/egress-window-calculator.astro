@@ -1,0 +1,1092 @@
+---
+import ToolLayout from '@/layouts/ToolLayout.astro';
+import CalculatorHero from '@/components/calculator/CalculatorHero.astro';
+import InputCard from '@/components/calculator/InputCard.astro';
+import UnitSelector from '@/components/calculator/UnitSelector.astro';
+import ResultMetricCard from '@/components/calculator/ResultMetricCard.astro';
+import ShareExportBar from '@/components/calculator/ShareExportBar.astro';
+import HistoryPanel from '@/components/calculator/HistoryPanel.astro';
+import FAQSection from '@/components/content/FAQSection.astro';
+import RelatedTools from '@/components/calculator/RelatedTools.astro';
+import { getToolBySlug } from '@/data/tools.js';
+import type { BreadcrumbItem, FAQ } from '@/types/calculator.js';
+
+const tool = getToolBySlug('egress-window-calculator')!;
+
+const breadcrumbs: BreadcrumbItem[] = [
+  { label: 'Home', href: '/' },
+  { label: 'Tools', href: '/tools' },
+  { label: tool.title, href: tool.href, current: true },
+];
+
+const faqs: FAQ[] = [
+  {
+    question: 'What is an egress window?',
+    answer:
+      'An egress window is a window designed to serve as an emergency escape and rescue opening in residential buildings. It allows occupants to escape during a fire and provides emergency responders access from the outside.',
+  },
+  {
+    question: 'What is the minimum egress window size under IRC code?',
+    answer:
+      'Under IRC Section R310, an egress window must have a minimum net clear opening area of 5.7 sq ft (5.0 sq ft for grade-floor windows), a minimum clear opening width of 20 inches, a minimum clear opening height of 24 inches, and a maximum sill height of 44 inches above the floor.',
+  },
+  {
+    question: 'What are the basement egress window requirements?',
+    answer:
+      'Basements with habitable living space or sleeping rooms require at least one IRC-compliant egress window. Below-grade basement egress windows must feature a window well with at least 9 sq ft of floor area, 36" projection, and a permanently attached ladder if deeper than 44 inches.',
+  },
+  {
+    question: 'What are the bedroom egress window rules?',
+    answer:
+      'Every sleeping room (bedroom) in a residential home must have at least one operable emergency egress window or exterior door leading directly outside. Sashes must be operable from the inside without keys or special tools.',
+  },
+  {
+    question: 'Does a sliding window qualify as an egress window?',
+    answer:
+      'Yes, but because sliding window sashes overlap, only half the window frame width opens. To meet the 5.7 sq ft requirement, a sliding window generally needs an overall frame size of at least 48" × 48", whereas a Casement window needs only 24" × 48".',
+  },
+  {
+    question: 'How is clear opening measured?',
+    answer:
+      'Net clear opening is measured when the window sash is fully open. It measures the unobstructed space between the window frame, sash, and stops through which a person can crawl.',
+  },
+  {
+    question: 'When do I need an egress window?',
+    answer:
+      'You need an egress window whenever finishing a basement, adding a new bedroom, converting attic space, or replacing existing bedroom windows during major home renovations.',
+  },
+  {
+    question: 'Can I enlarge my existing window opening for egress?',
+    answer:
+      'Yes. Contractors can cut foundation concrete or wall studs downward or sideways to install a larger header, new frame, and compliant window unit.',
+  },
+];
+
+const schema = {
+  '@context': 'https://schema.org',
+  '@type': 'SoftwareApplication',
+  name: tool.title,
+  description: tool.description,
+  applicationCategory: 'UtilityApplication',
+  operatingSystem: 'All',
+  offers: {
+    '@type': 'Offer',
+    price: '0',
+    priceCurrency: 'USD',
+  },
+};
+---
+
+<ToolLayout tool={tool} breadcrumbs={breadcrumbs} description={tool.description}>
+  <Fragment slot="schema">
+    <script type="application/ld+json" set:html={JSON.stringify(schema)} />
+  </Fragment>
+
+  <CalculatorHero
+    tool={tool}
+    description="Calculate net clear opening area, width, height, and IRC Section R310 building code compliance for emergency escape and rescue windows."
+    features={[
+      'IRC Section R310 5.7 sq ft area verification',
+      'Minimum clear width (20") & height (24") check',
+      'Casement vs. Sliding vs. Double-Hung efficiency',
+      'Basement window well & sill height rules',
+      'Pass / Fail compliance & shortfall calculations',
+    ]}
+    trustItems={[
+      { label: 'IRC Section R310 code' },
+      { label: 'All units (in, mm, cm, ft, m)' },
+      { label: 'No registration required' },
+      { label: 'Instant live calculation' },
+    ]}
+  />
+
+  <div class="calc-dashboard">
+    <!-- LEFT PANEL — Inputs -->
+    <div class="calc-panel calc-panel-inputs">
+      <div class="panel-header">
+        <span class="panel-label">Window Opening Dimensions</span>
+        <UnitSelector defaultUnit="in" />
+      </div>
+
+      <div class="panel-section-header">
+        <span class="panel-section-title">Window Measurement</span>
+      </div>
+
+      <InputCard label="Window Width" inputId="input-width" hint="Opening width">
+        <input type="text" id="input-width" class="input" placeholder="e.g., 36" autocomplete="off" />
+      </InputCard>
+
+      <InputCard label="Window Height" inputId="input-height" hint="Opening height">
+        <input type="text" id="input-height" class="input" placeholder="e.g., 48" autocomplete="off" />
+      </InputCard>
+
+      <InputCard label="Window Style" inputId="input-style">
+        <select id="input-style" class="input-select" aria-label="Select Window Style">
+          <option value="casement" selected>Casement (Hinged Out - 90% Open)</option>
+          <option value="sliding">Sliding / Glider (Horizontal - 45% Open)</option>
+          <option value="single-hung">Single Hung (Vertical - 45% Open)</option>
+          <option value="double-hung">Double Hung (Vertical - 42% Open)</option>
+          <option value="awning">Awning (Top Hinge - 75% Open)</option>
+          <option value="hopper">Hopper (Bottom Hinge - 80% Open)</option>
+          <option value="picture">Picture / Fixed Glass (0% Open)</option>
+        </select>
+      </InputCard>
+
+      <InputCard label="Measurement Type" inputId="input-measurement-type">
+        <select id="input-measurement-type" class="input-select" aria-label="Select Measurement Type">
+          <option value="clear-opening" selected>Net Clear Opening (Inside stops)</option>
+          <option value="existing-opening">Existing Window Frame Size</option>
+          <option value="rough-opening">Rough Wall Stud Opening</option>
+        </select>
+      </InputCard>
+
+      <InputCard label="Room Location" inputId="location-selector">
+        <div class="option-selector" id="location-selector" role="group" aria-label="Room Location">
+          <button type="button" class="option-btn" data-value="bedroom" aria-pressed="true">Bedroom</button>
+          <button type="button" class="option-btn" data-value="basement" aria-pressed="false">Basement</button>
+          <button type="button" class="option-btn" data-value="living-room" aria-pressed="false">Living Room</button>
+          <button type="button" class="option-btn" data-value="other" aria-pressed="false">Other</button>
+        </div>
+      </InputCard>
+
+      <details class="advanced-section">
+        <summary>Advanced code options</summary>
+        <div class="advanced-content">
+          <InputCard label="Sill Height Above Floor" inputId="input-sill-height" hint="Max IRC limit is 44 inches">
+            <input type="text" id="input-sill-height" class="input" placeholder="e.g., 36" autocomplete="off" />
+          </InputCard>
+
+          <InputCard label="Custom Opening %" inputId="input-custom-pct" hint="Override style opening percentage">
+            <input type="text" id="input-custom-pct" class="input" placeholder="e.g., 90" autocomplete="off" />
+          </InputCard>
+        </div>
+      </details>
+    </div>
+
+    <!-- RIGHT PANEL — Results -->
+    <div class="calc-panel calc-panel-results">
+      <div id="results-empty" class="empty-state">
+        <div class="empty-icon-wrap">
+          <svg width="48" height="48" viewBox="0 0 48 48" fill="none" class="empty-svg">
+            <rect x="8" y="8" width="32" height="32" rx="3" stroke="currentColor" stroke-width="2.5" fill="none"/>
+            <path d="M16 8V40M24 8V40M32 8V40" stroke="currentColor" stroke-width="1.2" stroke-dasharray="2 2"/>
+          </svg>
+        </div>
+        <h3 class="empty-title">Enter window dimensions</h3>
+        <p class="empty-sub">Fill in Width and Height to verify IRC R310 egress emergency escape compliance.</p>
+      </div>
+
+      <div id="results-grid" hidden>
+        <!-- SVG diagram section -->
+        <div class="svg-section">
+          <div class="svg-header">
+            <span class="svg-label">Egress Escape Diagram</span>
+            <span class="svg-subtitle" id="svg-subtitle">IRC Section R310 Emergency Escape</span>
+          </div>
+          <div class="svg-wrap">
+            <svg id="egress-svg" viewBox="0 0 400 340" width="100%" aria-label="Egress window code diagram"></svg>
+          </div>
+        </div>
+
+        <div class="results-metric-grid">
+          <ResultMetricCard id="card-compliance" label="Compliance Status" highlight={true} sublabel="IRC Section R310 Code" animate={true} />
+          <ResultMetricCard id="card-area" label="Net Clear Opening Area" highlight={true} sublabel="Required: 5.7 sq ft min" animate={true} />
+          <ResultMetricCard id="card-net-width" label="Net Clear Width" highlight={true} sublabel="Required: 20.0&quot; min" animate={true} />
+          <ResultMetricCard id="card-net-height" label="Net Clear Height" highlight={true} sublabel="Required: 24.0&quot; min" animate={true} />
+          <ResultMetricCard id="card-area-shortfall" label="Area Difference" sublabel="Shortfall / Excess vs code" animate={true} />
+          <ResultMetricCard id="card-score" label="Code Score" sublabel="Compliance rating (0–100)" animate={true} />
+          <ResultMetricCard id="card-rec-style" label="Recommended Style" sublabel="Most space-efficient style" animate={true} />
+          <ResultMetricCard id="card-rec-size" label="Recommended Size" sublabel="Compliant replacement size" animate={true} />
+        </div>
+
+        <!-- Unified Confidence Summary Card -->
+        <div id="card-confidence" class="confidence-summary-card" hidden>
+          <div class="conf-card-header">
+            <span class="conf-stars" id="confidence-stars">★★★★★</span>
+            <span class="conf-title" id="confidence-label">IRC Code Compliant</span>
+          </div>
+          <div class="conf-card-badges">
+            <span class="conf-badge conf-badge-score" id="score-badge">100% Code Score</span>
+            <span class="conf-badge conf-badge-order" id="confidence-ordering-badge">✓ Order Egress Size</span>
+            <span class="conf-badge conf-badge-cost" id="cost-badge">Status: PASS</span>
+          </div>
+        </div>
+
+        <!-- Recommendations Grid -->
+        <div id="rec-section" class="rec-section" hidden>
+          <div class="panel-header"><span class="panel-label">Smart Recommendations</span></div>
+          <div id="rec-list" class="rec-list"></div>
+        </div>
+
+        <!-- Share & Export + History Bar -->
+        <div class="calc-extras" id="calc-extras" hidden>
+          <ShareExportBar calculatorTitle="Egress Window Calculator" />
+          <HistoryPanel slug="egress-window-calculator" />
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <Fragment slot="sidebar">
+    <RelatedTools
+      links={[
+        {
+          title: 'Replacement Window Calculator',
+          description: 'Find standard replacement window sizes and rough openings.',
+          href: '/tools/replacement-window-calculator',
+          icon: 'RefreshCw',
+        },
+        {
+          title: 'Window Size Calculator',
+          description: 'Window opening area, perimeter, and sizing recommendations.',
+          href: '/tools/window-size-calculator',
+          icon: 'Ruler',
+        },
+        {
+          title: 'Window Glass Calculator',
+          description: 'Calculate glass area, pane thickness, and weight.',
+          href: '/tools/window-glass-calculator',
+          icon: 'PanelTop',
+        },
+      ]}
+      tip={{
+        label: 'Inspector Tip',
+        text: 'Building inspectors measure net clear opening — not the frame size. A 36"x36" sliding window fails egress because only half opens (18" clear width < 20").',
+      }}
+    />
+    <FAQSection faqs={faqs} />
+  </Fragment>
+</ToolLayout>
+
+<script>
+  import { calculateEgressWindow, type EgressInput, type EgressWindowStyle, type EgressMeasurementType, type EgressLocation } from '@/engine/egress.js';
+  import { buildEgressRecommendations } from '@/engine/egress-recommendations.js';
+  import { toMm, fromMm, formatDimension, normalizeInput } from '@/engine/units.js';
+  import { readUrlState, pushUrlState } from '@/lib/url-state.js';
+  import { buildExportPayload } from '@/lib/export.js';
+  import { buildSummary } from '@/lib/share.js';
+  import { track } from '@/lib/analytics.js';
+  import type { MeasurementUnit } from '@/types/calculator.js';
+
+  let _debounceTimer: ReturnType<typeof setTimeout> | null = null;
+  function scheduleCalculate() {
+    if (_debounceTimer) clearTimeout(_debounceTimer);
+    _debounceTimer = setTimeout(() => calculate(), 300);
+  }
+
+  let currentResult: ReturnType<typeof calculateEgressWindow> | null = null;
+  let currentUnit: MeasurementUnit = 'in';
+  let currentStyle: EgressWindowStyle = 'casement';
+  let currentMeasurementType: EgressMeasurementType = 'clear-opening';
+  let currentLocation: EgressLocation = 'bedroom';
+
+  function initOptionSelector(id: string, onChange: (val: string) => void) {
+    const el = document.getElementById(id);
+    el?.addEventListener('click', (e) => {
+      const btn = (e.target as HTMLElement).closest('[data-value]') as HTMLElement | null;
+      if (!btn) return;
+      el.querySelectorAll('[data-value]').forEach(b => (b as HTMLElement).setAttribute('aria-pressed', 'false'));
+      btn.setAttribute('aria-pressed', 'true');
+      onChange(btn.dataset.value ?? '');
+    });
+  }
+
+  function updateMetric(cardId: string, value: string, unitStr: string = '') {
+    const valEl = document.querySelector(`#${cardId} .result-value-text`);
+    const unitEl = document.querySelector(`#${cardId} .result-unit`);
+    if (valEl) valEl.textContent = value;
+    if (unitEl) unitEl.textContent = unitStr;
+  }
+
+  // ── Vector SVG Egress Diagram Renderer ─────────────────────────────────────
+  function renderEgressSvg(result: ReturnType<typeof calculateEgressWindow>, wMm: number, hMm: number, style: string) {
+    const svg = document.getElementById('egress-svg');
+    if (!svg) return;
+
+    const cx = 200, cy = 160;
+    const maxW = 240, maxH = 200;
+    const scale = Math.min(maxW / wMm, maxH / hMm);
+
+    const fw = wMm * scale;
+    const fh = hMm * scale;
+
+    const cw = result.netClearWidthMm * scale;
+    const ch = result.netClearHeightMm * scale;
+
+    const passColor = result.pass ? '#22c55e' : (result.complianceStatus === 'warning' ? '#f59e0b' : '#ef4444');
+    const badgeText = result.pass ? 'PASS — IRC COMPLIANT' : 'FAIL — NON-COMPLIANT';
+
+    const measureArrow = (x1: number, y1: number, x2: number, y2: number, label: string, isHoriz: boolean = false) => {
+      const mx = isHoriz ? (x1 + x2) / 2 : x2 + 18;
+      const my = isHoriz ? y1 - 12 : (y1 + y2) / 2;
+      return `
+        <line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="#0f172a" stroke-width="1.5"/>
+        <polygon points="${x1},${y1} ${x1-3},${y1+5} ${x1+3},${y1+5}" fill="#0f172a" transform="rotate(${isHoriz?90:0},${x1},${y1})"/>
+        <polygon points="${x2},${y2} ${x2-3},${y2-5} ${x2+3},${y2-5}" fill="#0f172a" transform="rotate(${isHoriz?90:0},${x2},${y2})"/>
+        <rect x="${mx - 24}" y="${my - 8}" width="48" height="16" rx="3" fill="#ffffff" stroke="#cbd5e1" stroke-width="1"/>
+        <text x="${mx}" y="${my + 4}" font-family="monospace" font-size="9" font-weight="600" text-anchor="middle" fill="#0f172a">${label}</text>`;
+    };
+
+    svg.innerHTML = `
+      <defs>
+        <pattern id="grid" width="20" height="20" patternUnits="userSpaceOnUse">
+          <path d="M 20 0 L 0 0 0 20" fill="none" stroke="rgba(0,0,0,0.03)" stroke-width="1"/>
+        </pattern>
+      </defs>
+      <rect width="400" height="340" fill="url(#grid)" rx="6"/>
+
+      <!-- Wall Stud Structure -->
+      <rect x="${cx - fw/2 - 12}" y="${cy - fh/2 - 12}" width="${fw + 24}" height="${fh + 24}"
+        fill="#e2e8f0" stroke="#94a3b8" stroke-width="2" rx="4"/>
+
+      <!-- Window Frame -->
+      <rect x="${cx - fw/2}" y="${cy - fh/2}" width="${fw}" height="${fh}"
+        fill="#ffffff" stroke="#334155" stroke-width="4" rx="2"/>
+
+      <!-- Net Clear Operable Opening Area (Color Coded) -->
+      <rect x="${cx - cw/2}" y="${cy - ch/2}" width="${cw}" height="${ch}"
+        fill="${passColor}" fill-opacity="0.25" stroke="${passColor}" stroke-width="2" stroke-dasharray="3,2" rx="2"/>
+
+      <!-- Emergency Escape Path Arrow -->
+      ${result.pass ? `
+        <path d="M ${cx} ${cy + 15} L ${cx} ${cy - 25} M ${cx - 8} ${cy - 17} L ${cx} ${cy - 25} L ${cx + 8} ${cy - 17}"
+          stroke="#16a34a" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+        <text x="${cx}" y="${cy + 32}" font-family="sans-serif" font-size="10" font-weight="700" text-anchor="middle" fill="#15803d">Clear Escape Path</text>
+      ` : `
+        <line x1="${cx - 15}" y1="${cy - 15}" x2="${cx + 15}" y2="${cy + 15}" stroke="#dc2626" stroke-width="3" stroke-linecap="round"/>
+        <line x1="${cx + 15}" y1="${cy - 15}" x2="${cx - 15}" y2="${cy + 15}" stroke="#dc2626" stroke-width="3" stroke-linecap="round"/>
+        <text x="${cx}" y="${cy + 32}" font-family="sans-serif" font-size="10" font-weight="700" text-anchor="middle" fill="#b91c1c">Egress Opening Blocked</text>
+      `}
+
+      ${measureArrow(cx - cw/2, cy + fh/2 + 22, cx + cw/2, cy + fh/2 + 22, `${(result.netClearWidthMm / 25.4).toFixed(1)}"`, true)}
+      ${measureArrow(cx + fw/2 + 22, cy - ch/2, cx + fw/2 + 22, cy + ch/2, `${(result.netClearHeightMm / 25.4).toFixed(1)}"`)}
+
+      <!-- Status Badge -->
+      <rect x="${cx - 85}" y="306" width="170" height="24" rx="4" fill="${passColor}"/>
+      <text x="${cx}" y="322" font-family="monospace" font-size="10" font-weight="700" text-anchor="middle" fill="#ffffff">${badgeText}</text>
+    `;
+
+    const sub = document.getElementById('svg-subtitle');
+    if (sub) {
+      sub.textContent = `${result.openingAreaSqFt.toFixed(2)} sq ft clear opening area (Required: ${result.minRequiredAreaSqFt.toFixed(1)} sq ft)`;
+    }
+  }
+
+  function toggleResults(hasResults: boolean) {
+    const emptyEl = document.getElementById('results-empty');
+    const gridEl  = document.getElementById('results-grid');
+    const recEl   = document.getElementById('rec-section');
+    const extEl   = document.getElementById('calc-extras');
+
+    if (emptyEl) emptyEl.hidden = hasResults;
+    if (gridEl)  gridEl.hidden  = !hasResults;
+    if (recEl)   recEl.hidden   = !hasResults;
+    if (extEl)   extEl.hidden   = !hasResults;
+  }
+
+  function calculate() {
+    const wInput = (document.getElementById('input-width') as HTMLInputElement)?.value;
+    const hInput = (document.getElementById('input-height') as HTMLInputElement)?.value;
+    const sillInput = (document.getElementById('input-sill-height') as HTMLInputElement)?.value;
+    const customPctInput = (document.getElementById('input-custom-pct') as HTMLInputElement)?.value;
+
+    if (!wInput || !hInput) {
+      toggleResults(false);
+      return;
+    }
+
+    const w = normalizeInput(wInput, currentUnit);
+    const h = normalizeInput(hInput, currentUnit);
+
+    if (!w || !h || w <= 0 || h <= 0) {
+      toggleResults(false);
+      return;
+    }
+
+    const wMm = toMm(w, currentUnit);
+    const hMm = toMm(h, currentUnit);
+    const sillMm = sillInput ? toMm(normalizeInput(sillInput, currentUnit) || 36, currentUnit) : undefined;
+    const customPct = customPctInput ? parseFloat(customPctInput) : undefined;
+
+    const input: EgressInput = {
+      windowWidthMm: wMm,
+      windowHeightMm: hMm,
+      windowStyle: currentStyle,
+      measurementType: currentMeasurementType,
+      location: currentLocation,
+      sillHeightMm: sillMm,
+      openingPercentage: customPct,
+    };
+
+    const result = calculateEgressWindow(input);
+    currentResult = result;
+    const recs = buildEgressRecommendations(input, result);
+
+    // ── Primary metrics ──────────────────────────────────────────────────────
+    updateMetric('card-compliance', result.pass ? 'PASS' : 'FAIL', result.pass ? 'Meets IRC R310' : 'Code Shortfall');
+    updateMetric('card-area', `${result.openingAreaSqFt.toFixed(2)} sq ft`, `(Req: ${result.minRequiredAreaSqFt.toFixed(1)} sq ft)`);
+    updateMetric('card-net-width', formatDimension(result.netClearWidthMm, currentUnit), `(Req: 20.0" min)`);
+    updateMetric('card-net-height', formatDimension(result.netClearHeightMm, currentUnit), `(Req: 24.0" min)`);
+
+    const areaDiffText = result.areaShortfallSqFt > 0
+      ? `-${result.areaShortfallSqFt.toFixed(2)} sq ft`
+      : `+${(result.openingAreaSqFt - result.minRequiredAreaSqFt).toFixed(2)} sq ft`;
+    updateMetric('card-area-shortfall', areaDiffText, result.areaShortfallSqFt > 0 ? 'Area Shortfall' : 'Excess Area');
+    updateMetric('card-score', `${result.complianceScore} / 100`);
+    updateMetric('card-rec-style', result.recommendedWindowStyle.toUpperCase());
+    updateMetric('card-rec-size', formatDimension(result.recommendedWidthMm, currentUnit), `x ${formatDimension(result.recommendedHeightMm, currentUnit)}`);
+
+    // ── Confidence summary card ───────────────────────────────────────────────
+    const confEl = document.getElementById('card-confidence');
+    const starsEl = document.getElementById('confidence-stars');
+    const labelEl = document.getElementById('confidence-label');
+    const orderBadge = document.getElementById('confidence-ordering-badge');
+    const costBadge = document.getElementById('cost-badge');
+    const scoreBadge = document.getElementById('score-badge');
+
+    if (starsEl) starsEl.textContent = result.pass ? '★★★★★' : (result.complianceStatus === 'warning' ? '★★★☆☆' : '★☆☆☆☆');
+    if (labelEl) labelEl.textContent = result.pass ? 'IRC R310 Egress Compliant' : 'IRC Code Non-Compliant';
+    if (scoreBadge) scoreBadge.textContent = `${result.complianceScore}% Code Score`;
+    if (orderBadge) {
+      orderBadge.textContent = result.pass ? '✓ Order Egress Size' : '⚠ Action Required';
+    }
+    if (costBadge) costBadge.textContent = `Status: ${result.complianceStatus.toUpperCase()}`;
+    if (confEl) confEl.removeAttribute('hidden');
+
+    // ── Recommendation cards (Normalized with SVGs) ─────────────────────────
+    const recList = document.getElementById('rec-list');
+    if (recList) {
+      const iconMap: Record<string, string> = {
+        'compliance': `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>`,
+        'opening': `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/></svg>`,
+        'style': `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 3v18M6 3v18M3 12h18"/></svg>`,
+        'installation': `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>`,
+        'safety': `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>`,
+      };
+      recList.innerHTML = recs.items.map((item: { title: string; body: string; tip?: string; type: string }) =>
+        `<div class="rec-card">
+          <div class="rec-card-header">
+            <span class="rec-card-icon" aria-hidden="true">${iconMap[item.type] || iconMap['compliance']}</span>
+            <span class="rec-card-title">${item.title}</span>
+          </div>
+          <div class="rec-card-body">${item.body}</div>
+          ${item.tip ? `<div class="rec-card-tip">${item.tip}</div>` : ''}
+        </div>`
+      ).join('');
+    }
+
+    // ── SVG diagram ───────────────────────────────────────────────────────────
+    renderEgressSvg(result, wMm, hMm, currentStyle);
+
+    // ── Reveal results panel ──────────────────────────────────────────────────
+    toggleResults(true);
+
+    // ── Build shared state ────────────────────────────────────────────────────
+    const styleLabel = currentStyle.charAt(0).toUpperCase() + currentStyle.slice(1);
+    const locLabel = currentLocation.charAt(0).toUpperCase() + currentLocation.slice(1);
+    const histLabel = `Egress Window`;
+    const summaryText = `${w} × ${h} ${currentUnit}`;
+
+    const stateParams = {
+      width: String(w),
+      height: String(h),
+      unit: currentUnit,
+      windowStyle: currentStyle,
+      measurementType: currentMeasurementType,
+      location: currentLocation,
+      subtitle: `${styleLabel} · ${locLabel} (${result.pass ? 'PASS' : 'FAIL'})`,
+      summary: summaryText,
+      _display: summaryText,
+    };
+
+    (window as any).wmCurrentState = stateParams;
+
+    // ── URL state ─────────────────────────────────────────────────────────────
+    pushUrlState(stateParams);
+
+    // ── History ───────────────────────────────────────────────────────────────
+    (window as any).wmHistoryPanel?.add(histLabel, stateParams);
+
+    // ── Export / share wiring ─────────────────────────────────────────────────
+    (window as any).wmBuildSummary = () => buildSummary(
+      'Egress Window Calculator',
+      [
+        ['Window Width', `${w} ${currentUnit}`],
+        ['Window Height', `${h} ${currentUnit}`],
+        ['Unit', currentUnit],
+        ['Window Style', styleLabel],
+        ['Location', locLabel],
+        ['Net Clear Area', `${result.openingAreaSqFt.toFixed(2)} sq ft`],
+        ['Net Clear Width', formatDimension(result.netClearWidthMm, currentUnit)],
+        ['Net Clear Height', formatDimension(result.netClearHeightMm, currentUnit)],
+        ['Status', result.pass ? 'PASS (Compliant)' : 'FAIL (Non-Compliant)'],
+        ['Code Score', `${result.complianceScore} / 100`],
+      ],
+      typeof window !== 'undefined' ? window.location.href : undefined,
+    );
+
+    (window as any).wmBuildExport = () => buildExportPayload(
+      'egress-window-calculator',
+      stateParams,
+      {
+        windowWidth: `${w} ${currentUnit}`,
+        windowHeight: `${h} ${currentUnit}`,
+        unit: currentUnit,
+        windowStyle: currentStyle,
+        measurementType: currentMeasurementType,
+        location: currentLocation,
+        netClearWidth: formatDimension(result.netClearWidthMm, currentUnit),
+        netClearHeight: formatDimension(result.netClearHeightMm, currentUnit),
+        openingAreaSqFt: `${result.openingAreaSqFt.toFixed(2)} sq ft`,
+        minRequiredAreaSqFt: `${result.minRequiredAreaSqFt.toFixed(1)} sq ft`,
+        pass: result.pass,
+        complianceStatus: result.complianceStatus,
+        areaShortfallSqFt: `${result.areaShortfallSqFt.toFixed(2)} sq ft`,
+        complianceScore: result.complianceScore,
+        confidence: result.confidence,
+        recommendations: recs.items.map((i: any) => `${i.title}: ${i.body}`).join(' | '),
+        warnings: result.warnings.map((w: any) => w.message).join(' | '),
+      },
+    );
+
+    (window as any).wmShareExportBar?.show();
+
+    // ── Analytics ─────────────────────────────────────────────────────────────
+    track({
+      type: 'calculation_completed',
+      properties: { slug: 'egress-window-calculator', unit: currentUnit, inputs: stateParams },
+    });
+  }
+
+  // ── DOMContentLoaded ─────────────────────────────────────────────────────
+  function initCalculator() {
+    const widthInput  = document.getElementById('input-width')  as HTMLInputElement;
+    const heightInput = document.getElementById('input-height') as HTMLInputElement;
+    const sillInput   = document.getElementById('input-sill-height') as HTMLInputElement;
+    const customPct   = document.getElementById('input-custom-pct') as HTMLInputElement;
+
+    widthInput?.addEventListener('input', calculate);
+    heightInput?.addEventListener('input', calculate);
+    sillInput?.addEventListener('input', calculate);
+    customPct?.addEventListener('input', calculate);
+
+    document.getElementById('input-style')?.addEventListener('change', () => {
+      currentStyle = (document.getElementById('input-style') as HTMLSelectElement).value as EgressWindowStyle;
+      calculate();
+    });
+
+    document.getElementById('input-measurement-type')?.addEventListener('change', () => {
+      currentMeasurementType = (document.getElementById('input-measurement-type') as HTMLSelectElement).value as EgressMeasurementType;
+      calculate();
+    });
+
+    initOptionSelector('location-selector', (val) => {
+      currentLocation = val as EgressLocation;
+      calculate();
+    });
+
+    // Unit selector — listens for custom 'unitchange' event
+    document.getElementById('unit-selector')?.addEventListener('unitchange', (e) => {
+      const newUnit = (e as CustomEvent).detail?.unit as MeasurementUnit | undefined;
+      if (!newUnit) return;
+      if (widthInput?.value) {
+        const parsed = normalizeInput(widthInput.value, currentUnit);
+        if (parsed) widthInput.value = String(fromMm(toMm(parsed, currentUnit), newUnit));
+      }
+      if (heightInput?.value) {
+        const parsed = normalizeInput(heightInput.value, currentUnit);
+        if (parsed) heightInput.value = String(fromMm(toMm(parsed, currentUnit), newUnit));
+      }
+      const oldUnit = currentUnit;
+      currentUnit = newUnit;
+      track({ type: 'unit_changed', properties: { slug: 'egress-window-calculator', from: oldUnit, to: newUnit } });
+      calculate();
+    });
+
+    // ── Restore URL state on load ────────────────────────────────────────────
+    const urlState = readUrlState();
+    if (urlState.width && widthInput)   widthInput.value  = urlState.width;
+    if (urlState.height && heightInput) heightInput.value = urlState.height;
+    if (urlState.unit && ['mm','cm','m','in','ft'].includes(urlState.unit)) {
+      currentUnit = urlState.unit as MeasurementUnit;
+      const unitBtn = document.querySelector<HTMLElement>(`.unit-btn[data-value="${currentUnit}"]`);
+      if (unitBtn) {
+        document.querySelectorAll('.unit-btn').forEach(b => (b as HTMLElement).setAttribute('aria-pressed','false'));
+        unitBtn.setAttribute('aria-pressed', 'true');
+      }
+    }
+    if (urlState.windowStyle) {
+      currentStyle = urlState.windowStyle as EgressWindowStyle;
+      const sel = document.getElementById('input-style') as HTMLSelectElement;
+      if (sel) sel.value = currentStyle;
+    }
+    if (urlState.measurementType) {
+      currentMeasurementType = urlState.measurementType as EgressMeasurementType;
+      const sel = document.getElementById('input-measurement-type') as HTMLSelectElement;
+      if (sel) sel.value = currentMeasurementType;
+    }
+    if (urlState.location) {
+      currentLocation = urlState.location as EgressLocation;
+      document.querySelectorAll('#location-selector .option-btn').forEach(b =>
+        (b as HTMLElement).setAttribute('aria-pressed', (b as HTMLElement).dataset.value === currentLocation ? 'true' : 'false'));
+    }
+
+    // Auto-calculate on load if valid inputs exist
+    calculate();
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initCalculator);
+  } else {
+    initCalculator();
+  }
+
+  // ── History restore ──────────────────────────────────────────────────────
+  document.addEventListener('wm:history-restore', (e: Event) => {
+    const { inputs } = (e as CustomEvent).detail;
+    const widthInput  = document.getElementById('input-width')  as HTMLInputElement;
+    const heightInput = document.getElementById('input-height') as HTMLInputElement;
+
+    if (inputs.width)  widthInput.value  = inputs.width;
+    if (inputs.height) heightInput.value = inputs.height;
+    if (inputs.unit && ['mm','cm','m','in','ft'].includes(inputs.unit)) {
+      currentUnit = inputs.unit as MeasurementUnit;
+      const unitBtn = document.querySelector<HTMLElement>(`.unit-btn[data-value="${currentUnit}"]`);
+      if (unitBtn) {
+        document.querySelectorAll('.unit-btn').forEach(b => (b as HTMLElement).setAttribute('aria-pressed','false'));
+        unitBtn.setAttribute('aria-pressed', 'true');
+      }
+    }
+    if (inputs.windowStyle) {
+      currentStyle = inputs.windowStyle as EgressWindowStyle;
+      const sel = document.getElementById('input-style') as HTMLSelectElement;
+      if (sel) sel.value = currentStyle;
+    }
+    calculate();
+    track({ type: 'history_restored', properties: { slug: 'egress-window-calculator', entryId: (e as CustomEvent).detail.entryId ?? '' } });
+  });
+</script>
+
+<style>
+  .calc-dashboard {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--spacing-xl);
+    align-items: start;
+    margin-top: var(--spacing-lg);
+  }
+
+  @media (min-width: 1024px) {
+    .calc-dashboard {
+      grid-template-columns: 360px 1fr;
+    }
+  }
+
+  .calc-panel {
+    background-color: var(--color-canvas);
+    border: 1px solid var(--color-hairline);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+  }
+
+  .calc-panel-inputs {
+    position: sticky;
+    top: var(--spacing-md);
+  }
+
+  .panel-header {
+    padding: var(--spacing-md);
+    background-color: var(--color-canvas-soft);
+    border-bottom: 1px solid var(--color-hairline);
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+  }
+
+  .panel-label {
+    font-family: var(--font-family-mono);
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--color-muted);
+  }
+
+  .panel-section-header {
+    padding: var(--spacing-sm) var(--spacing-md);
+    background-color: var(--color-canvas-soft-2);
+    border-bottom: 1px solid var(--color-hairline);
+  }
+
+  .panel-section-title {
+    font-family: var(--font-family-mono);
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--color-brand);
+  }
+
+  .input {
+    width: 100%;
+    height: 38px;
+    padding: 0 var(--spacing-md);
+    font-family: var(--font-family-sans);
+    font-size: var(--font-size-body-sm);
+    color: var(--color-ink);
+    background-color: var(--color-canvas);
+    border: 1px solid var(--color-hairline-strong);
+    border-radius: var(--radius-sm);
+    box-sizing: border-box;
+    transition: border-color 150ms ease, box-shadow 150ms ease;
+  }
+
+  .input:focus {
+    outline: none;
+    border-color: var(--color-link);
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-link) 20%, transparent);
+  }
+
+  .input-select {
+    width: 100%;
+    height: 38px;
+    padding: 0 var(--spacing-md);
+    font-family: var(--font-family-sans);
+    font-size: var(--font-size-body-sm);
+    color: var(--color-ink);
+    background-color: var(--color-canvas);
+    border: 1px solid var(--color-hairline-strong);
+    border-radius: var(--radius-sm);
+    box-sizing: border-box;
+    cursor: pointer;
+  }
+
+  .input-select:focus {
+    outline: none;
+    border-color: var(--color-link);
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-link) 20%, transparent);
+  }
+
+  .option-selector {
+    display: flex;
+    gap: 4px;
+    flex-wrap: wrap;
+  }
+
+  .option-btn {
+    flex: 1;
+    min-width: 60px;
+    height: 34px;
+    padding: 0 var(--spacing-xs);
+    font-family: var(--font-family-sans);
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--color-muted);
+    background-color: var(--color-canvas);
+    border: 1px solid var(--color-hairline-strong);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    white-space: nowrap;
+    text-align: center;
+    transition: all 120ms ease;
+  }
+
+  .option-btn:hover {
+    color: var(--color-ink);
+    border-color: var(--color-ink);
+  }
+
+  .option-btn[aria-pressed='true'] {
+    color: #ffffff;
+    background-color: var(--color-brand);
+    border-color: var(--color-brand);
+    font-weight: 600;
+  }
+
+  .advanced-section {
+    padding: var(--spacing-md);
+    border-top: 1px solid var(--color-hairline);
+  }
+
+  .advanced-section summary {
+    font-family: var(--font-family-mono);
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--color-muted);
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .advanced-content {
+    margin-top: var(--spacing-md);
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+  }
+
+  .empty-state {
+    padding: var(--spacing-3xl) var(--spacing-xl);
+    text-align: center;
+    color: var(--color-muted);
+  }
+
+  .empty-icon-wrap {
+    display: inline-flex;
+    padding: var(--spacing-md);
+    background: var(--color-canvas-soft);
+    border-radius: var(--radius-full);
+    margin-bottom: var(--spacing-md);
+  }
+
+  .empty-svg {
+    color: var(--color-muted);
+  }
+
+  .empty-title {
+    font-size: var(--font-size-title-sm);
+    font-weight: 600;
+    color: var(--color-ink);
+    margin: 0 0 var(--spacing-xs);
+  }
+
+  .empty-sub {
+    font-size: var(--font-size-caption);
+    margin: 0;
+  }
+
+  .results-metric-grid {
+    padding: var(--spacing-lg);
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--spacing-md);
+  }
+
+  @media (min-width: 640px) {
+    .results-metric-grid {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+
+  .results-metric-grid > * {
+    height: 100%;
+    min-height: 96px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+
+  /* ── Unified Confidence Summary Card ────────────────────────────── */
+  .confidence-summary-card {
+    margin: 0 var(--spacing-lg) var(--spacing-md);
+    padding: var(--spacing-lg);
+    background: linear-gradient(180deg, color-mix(in srgb, var(--color-brand) 8%, var(--color-canvas)) 0%, var(--color-canvas) 100%);
+    border: 1px solid color-mix(in srgb, var(--color-brand) 22%, transparent);
+    border-radius: var(--radius-lg);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+    text-align: center;
+  }
+
+  .conf-card-header {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    margin-bottom: var(--spacing-md);
+  }
+
+  .conf-stars {
+    font-size: 20px;
+    letter-spacing: 3px;
+    color: #f59e0b;
+  }
+
+  .conf-title {
+    font-weight: 700;
+    font-size: var(--font-size-body);
+    color: var(--color-ink);
+  }
+
+  .conf-card-badges {
+    display: flex;
+    justify-content: center;
+    gap: var(--spacing-sm);
+    flex-wrap: wrap;
+  }
+
+  .conf-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 12px;
+    border-radius: var(--radius-full);
+    font-size: var(--font-size-caption);
+    font-weight: 600;
+    background: var(--color-canvas-soft-2);
+    border: 1px solid var(--color-hairline);
+    color: var(--color-ink);
+    font-family: var(--font-family-mono);
+  }
+
+  .conf-badge-cost {
+    background: color-mix(in srgb, var(--color-brand) 12%, transparent);
+    border-color: color-mix(in srgb, var(--color-brand) 25%, transparent);
+    color: var(--color-brand);
+  }
+
+  .conf-badge-order {
+    background: color-mix(in srgb, #22c55e 12%, transparent);
+    border-color: color-mix(in srgb, #22c55e 25%, transparent);
+    color: #15803d;
+  }
+
+  [data-theme='dark'] .conf-badge-order {
+    color: #4ade80;
+  }
+
+  .conf-badge-score {
+    background: color-mix(in srgb, #22c55e 12%, transparent);
+    border-color: color-mix(in srgb, #22c55e 25%, transparent);
+    color: #15803d;
+  }
+
+  [data-theme='dark'] .conf-badge-score {
+    color: #4ade80;
+  }
+
+  .svg-section {
+    padding: var(--spacing-lg);
+    border-bottom: 1px solid var(--color-hairline);
+    background-color: var(--color-canvas-soft);
+  }
+
+  .svg-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--spacing-md);
+  }
+
+  .svg-label {
+    font-family: var(--font-family-mono);
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    color: var(--color-ink);
+  }
+
+  .svg-subtitle {
+    font-size: var(--font-size-caption);
+    color: var(--color-muted);
+    font-family: var(--font-family-mono);
+  }
+
+  .svg-wrap {
+    background-color: #ffffff;
+    border: 1px solid var(--color-hairline);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    padding: var(--spacing-md);
+    display: flex;
+    justify-content: center;
+    box-shadow: inset 0 1px 3px rgba(0,0,0,0.03);
+  }
+
+  [data-theme='dark'] .svg-wrap {
+    background-color: #0f172a;
+    border-color: #334155;
+  }
+
+  .rec-section {
+    border-top: 1px solid var(--color-hairline);
+  }
+
+  .rec-list {
+    padding: var(--spacing-lg);
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--spacing-md);
+  }
+
+  @media (min-width: 640px) {
+    .rec-list {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+
+  .rec-card {
+    padding: var(--spacing-md) var(--spacing-lg);
+    background: var(--color-canvas-soft);
+    border: 1px solid var(--color-hairline);
+    border-radius: var(--radius-md);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 4px;
+    height: 100%;
+    min-height: 100px;
+  }
+
+  .rec-card-header {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .rec-card-icon {
+    color: var(--color-brand);
+    display: inline-flex;
+    align-items: center;
+    flex-shrink: 0;
+  }
+
+  .rec-card-title {
+    font-family: var(--font-family-mono);
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--color-brand);
+  }
+
+  .rec-card-body {
+    font-size: var(--font-size-body-sm);
+    font-weight: 700;
+    color: var(--color-ink);
+    line-height: 1.3;
+  }
+
+  .rec-card-tip {
+    font-size: var(--font-size-caption);
+    color: var(--color-muted);
+    line-height: 1.35;
+  }
+
+  .calc-extras {
+    border-top: 1px solid var(--color-hairline);
+    background-color: var(--color-canvas-soft);
+    padding: var(--spacing-lg);
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-lg);
+  }
+
+  @media (max-width: 640px) {
+    .results-metric-grid {
+      grid-template-columns: 1fr;
+      padding: var(--spacing-md);
+    }
+    .rec-list, .calc-extras, .svg-section {
+      padding: var(--spacing-md);
+    }
+    .confidence-summary-card {
+      margin: 0 var(--spacing-md) var(--spacing-md);
+      padding: var(--spacing-md);
+    }
+    .conf-card-badges {
+      flex-direction: column;
+      align-items: stretch;
+    }
+    .conf-badge {
+      justify-content: center;
+    }
+  }
+</style>
