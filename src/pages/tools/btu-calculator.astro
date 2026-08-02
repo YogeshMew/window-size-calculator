@@ -1,0 +1,997 @@
+---
+/**
+ * WindowMetrics — General BTU Calculator Page
+ * Route: /tools/btu-calculator
+ *
+ * Dedicated HVAC heating and cooling load calculator.
+ * Calculates room area, room volume, cooling BTU load, heating BTU load,
+ * recommended HVAC tonnage, power consumption (kW), monthly electricity cost ($),
+ * and equipment sizing across residential and commercial spaces.
+ */
+
+import ToolLayout from '@/layouts/ToolLayout.astro';
+import CalculatorHero from '@/components/calculator/CalculatorHero.astro';
+import InputCard from '@/components/calculator/InputCard.astro';
+import UnitSelector from '@/components/calculator/UnitSelector.astro';
+import ResultMetricCard from '@/components/calculator/ResultMetricCard.astro';
+import ShareExportBar from '@/components/calculator/ShareExportBar.astro';
+import HistoryPanel from '@/components/calculator/HistoryPanel.astro';
+import RelatedTools from '@/components/calculator/RelatedTools.astro';
+import FAQSection from '@/components/content/FAQSection.astro';
+import { getToolBySlug } from '@/data/tools.js';
+
+const tool = getToolBySlug('btu-calculator');
+if (!tool) {
+  throw new Error('Tool data for "btu-calculator" not found in tool registry.');
+}
+
+const breadcrumbs = [
+  { label: 'Home', href: '/' },
+  { label: 'Tools', href: '/tools' },
+  { label: 'BTU Calculator', href: '/tools/btu-calculator' },
+];
+
+const faqs = [
+  {
+    question: 'What is a BTU and how is it used in HVAC sizing?',
+    answer: 'A BTU (British Thermal Unit) is the standard measurement of heat energy. One BTU is the heat required to raise the temperature of 1 pound of water by 1°F. In HVAC, BTU/hr measures how much heat an air conditioner removes or a furnace adds per hour.',
+  },
+  {
+    question: 'How many BTUs do I need per square foot of room space?',
+    answer: 'On average, residential spaces require 20 to 30 BTUs per square foot for cooling, and 30 to 50 BTUs per square foot for heating depending on climate zone, ceiling height, and insulation quality.',
+  },
+  {
+    question: 'What is the conversion between BTUs and HVAC Tonnage?',
+    answer: 'One Ton of refrigeration cooling capacity equals 12,000 BTUs per hour. For example, an 18,000 BTU air conditioner is a 1.5 Ton system, while a 24,000 BTU unit is a 2.0 Ton system.',
+  },
+  {
+    question: 'Why does ceiling height affect BTU load calculations?',
+    answer: 'Standard BTU formulas assume an 8-foot ceiling. For ceilings over 8 feet (such as 10-foot or vaulted 12-foot ceilings), room volume increases proportionally. Add 10% to your BTU requirement for every foot of height above 8 feet.',
+  },
+  {
+    question: 'What happens if I install an oversized A/C unit?',
+    answer: 'An oversized A/C unit cools the room too quickly (short-cycling) without running long enough to remove humidity, resulting in a cold, clammy, humid room and increased compressor wear.',
+  },
+  {
+    question: 'What happens if I install an undersized A/C unit?',
+    answer: 'An undersized A/C unit will run continuously on hot summer days without reaching the set thermostat temperature, causing high electricity bills and premature motor failure.',
+  },
+  {
+    question: 'How do windows and sun exposure impact BTU cooling requirements?',
+    answer: 'Single-pane windows add ~1,000 BTU each of heat gain. West and South-facing windows with heavy afternoon sun exposure add 15% to your cooling load unless protected by Low-E glass or cellular shades.',
+  },
+  {
+    question: 'How much cooling BTU do server rooms and electronics require?',
+    answer: 'Server rooms require 60+ BTUs per square foot because computer servers, UPS backups, and network switches generate continuous 24/7 internal heat. Dedicated mini-split A/C systems are required.',
+  },
+  {
+    question: 'How is monthly electricity operating cost calculated for an A/C?',
+    answer: 'Electricity Cost = (BTU / (SEER × 1,000)) × Daily Hours × 30 Days × Electric Rate ($/kWh). A 12,000 BTU unit @ 14 SEER draws ~0.85 kW, costing ~$33/month operating 8 hours daily at $0.16/kWh.',
+  },
+  {
+    question: 'What is the difference between SEER and SEER2 ratings?',
+    answer: 'SEER (Seasonal Energy Efficiency Ratio) measures cooling efficiency under old test procedures. SEER2 is the new M1 testing standard introduced in 2023 that accounts for realistic duct static pressure.',
+  },
+];
+---
+
+<ToolLayout
+  tool={tool}
+  breadcrumbs={breadcrumbs}
+  faqs={faqs}
+  title="BTU Calculator | WindowMetrics"
+  description="Calculate heating and cooling BTU requirements for any room using room size, insulation, windows, climate and occupancy."
+>
+  <CalculatorHero
+    tool={tool}
+    description="Calculate heating and cooling BTU requirements for any room using room size, insulation, windows, climate and occupancy."
+    features={[
+      'Both Cooling BTU and Heating BTU load calculations',
+      'HVAC Tonnage recommendation (0.5 to 5.0 Tons)',
+      'Estimated power consumption (kW) & monthly cost ($)',
+      'Ceiling height, insulation & sun exposure adjustments',
+    ]}
+    trustItems={[
+      { label: 'HVAC engineering physics' },
+      { label: 'SEER2 energy standards' },
+      { label: 'No signup' },
+      { label: 'Instant live calculation' },
+    ]}
+  />
+
+  <div class="calc-dashboard">
+    <!-- LEFT PANEL — Inputs -->
+    <div class="calc-panel calc-panel-inputs">
+      <div class="panel-header">
+        <span class="panel-label">Room Dimensions & Purpose</span>
+        <UnitSelector defaultUnit="ft" />
+      </div>
+
+      <div class="panel-section-header">
+        <span class="panel-section-title">Room Dimensions & Target Load</span>
+      </div>
+
+      <InputCard label="Room Length" inputId="input-length" hint="Length of space">
+        <input type="text" id="input-length" class="input" placeholder="e.g., 15" autocomplete="off" />
+      </InputCard>
+
+      <InputCard label="Room Width" inputId="input-width" hint="Width of space">
+        <input type="text" id="input-width" class="input" placeholder="e.g., 20" autocomplete="off" />
+      </InputCard>
+
+      <InputCard label="Ceiling Height" inputId="input-height" hint="Std: 8 ft (2.44m)">
+        <input type="text" id="input-height" class="input" value="8" placeholder="e.g., 8" autocomplete="off" />
+      </InputCard>
+
+      <div class="input-card">
+        <div class="input-card-header">
+          <span class="input-card-label">Primary HVAC Purpose</span>
+        </div>
+        <div class="option-selector" id="purpose-selector" role="group">
+          <button type="button" class="option-btn" data-value="cooling" aria-pressed="false">Cooling Only</button>
+          <button type="button" class="option-btn" data-value="heating" aria-pressed="false">Heating Only</button>
+          <button type="button" class="option-btn" data-value="both" aria-pressed="true">Both (Heating & Cooling)</button>
+        </div>
+      </div>
+
+      <InputCard label="Room Type / Function" inputId="input-room-type">
+        <select id="input-room-type" class="input-select" aria-label="Select Room Type">
+          <option value="living-room" selected>Living Room / Family Room (25 BTU/sq ft)</option>
+          <option value="bedroom">Bedroom (20 BTU/sq ft)</option>
+          <option value="kitchen">Kitchen (35 BTU/sq ft - High Cooking Heat)</option>
+          <option value="office">Home Office (25 BTU/sq ft)</option>
+          <option value="basement">Basement (18 BTU/sq ft - Naturally Cool)</option>
+          <option value="garage">Garage / Workshop (30 BTU/sq ft)</option>
+          <option value="server-room">Server Room / Electronics (60 BTU/sq ft)</option>
+          <option value="commercial">Commercial / Retail (40 BTU/sq ft)</option>
+        </select>
+      </InputCard>
+
+      <div class="panel-section-header">
+        <span class="panel-section-title">Climate & Environment</span>
+      </div>
+
+      <InputCard label="Regional Climate Zone" inputId="input-climate">
+        <select id="input-climate" class="input-select" aria-label="Select Regional Climate Zone">
+          <option value="moderate" selected>Moderate Climate (Zone 4 - Avg Summer/Winter)</option>
+          <option value="cold">Cold Climate (Zones 5-7 - Severe Winter Heating)</option>
+          <option value="hot">Hot Climate (Zones 1-3 - Intense Summer Cooling)</option>
+        </select>
+      </InputCard>
+
+      <InputCard label="Insulation Quality" inputId="input-insulation">
+        <select id="input-insulation" class="input-select" aria-label="Select Insulation Quality">
+          <option value="good" selected>Good (R-30 Attic, R-13 Walls, Double Glazing)</option>
+          <option value="excellent">Excellent (R-49 Attic, R-21 Walls, Triple Glazing)</option>
+          <option value="average">Average (Standard builder grade insulation)</option>
+          <option value="poor">Poor (Uninsulated walls, drafty single pane)</option>
+        </select>
+      </InputCard>
+
+      <InputCard label="Sun Exposure" inputId="input-sun-exposure">
+        <select id="input-sun-exposure" class="input-select" aria-label="Select Sun Exposure">
+          <option value="medium" selected>Medium (Partial shade / mixed orientation)</option>
+          <option value="high">High (Heavy South/West sun exposure)</option>
+          <option value="low">Low (Shaded / North facing)</option>
+        </select>
+      </InputCard>
+
+      <div class="panel-section-header">
+        <span class="panel-section-title">Windows & Heat Sources</span>
+      </div>
+
+      <InputCard label="Number of Windows" inputId="input-windows" hint="Window count">
+        <input type="number" id="input-windows" class="input" value="2" min="0" max="20" step="1" />
+      </InputCard>
+
+      <InputCard label="Window Glass Type" inputId="input-window-type">
+        <select id="input-window-type" class="input-select" aria-label="Select Window Glass Type">
+          <option value="double-pane" selected>Double Pane Glass (+400 BTU/win)</option>
+          <option value="single-pane">Single Pane Clear Glass (+1,000 BTU/win)</option>
+          <option value="triple-pane">Triple Pane Low-E Glass (+200 BTU/win)</option>
+        </select>
+      </InputCard>
+
+      <InputCard label="Regular Occupants" inputId="input-occupants" hint="People count">
+        <input type="number" id="input-occupants" class="input" value="2" min="1" max="50" step="1" />
+      </InputCard>
+
+      <InputCard label="Lighting Heat Load" inputId="input-lighting">
+        <select id="input-lighting" class="input-select" aria-label="Select Lighting Heat Load">
+          <option value="standard" selected>Standard LED / Fluorescent</option>
+          <option value="bright">Bright Incandescent / Recessed Cans</option>
+          <option value="commercial">Commercial High-Bay Lighting</option>
+        </select>
+      </InputCard>
+
+      <InputCard label="Appliance Heat Gain" inputId="input-appliances">
+        <select id="input-appliances" class="input-select" aria-label="Select Appliance Heat Gain">
+          <option value="medium" selected>Medium (TV, Computer, Fridge)</option>
+          <option value="high">High (Oven, Range, Servers, Dryer)</option>
+          <option value="low">Low (Minimal electronics)</option>
+        </select>
+      </InputCard>
+    </div>
+
+    <!-- RIGHT PANEL — Results -->
+    <div class="calc-panel calc-panel-results">
+      <div id="results-empty" class="empty-state">
+        <div class="empty-icon-wrap">
+          <svg width="48" height="48" viewBox="0 0 48 48" fill="none" class="empty-svg">
+            <rect x="8" y="12" width="32" height="24" rx="3" stroke="currentColor" stroke-width="2.5" fill="none"/>
+            <circle cx="24" cy="24" r="6" stroke="currentColor" stroke-width="1.5" stroke-dasharray="2 2"/>
+          </svg>
+        </div>
+        <h3 class="empty-title">Enter room dimensions</h3>
+        <p class="empty-sub">Fill in Length and Width to calculate heating & cooling BTU loads, HVAC tonnage, and monthly energy cost.</p>
+      </div>
+
+      <div id="results-grid" hidden>
+        <!-- SVG Interactive Room Layout & Airflow Distribution Diagram Illustration -->
+        <div class="svg-section">
+          <div class="svg-header">
+            <span class="svg-label">Room HVAC Airflow & Heat Distribution Diagram</span>
+            <span class="svg-subtitle" id="svg-subtitle">Cooling & Heating Air Distribution</span>
+          </div>
+          <div class="svg-wrap">
+            <svg id="btu-svg" viewBox="0 0 400 340" width="100%" aria-label="Room BTU HVAC diagram"></svg>
+          </div>
+        </div>
+
+        <div class="results-metric-grid">
+          <ResultMetricCard id="card-recommended-btu" label="Recommended BTU Capacity" highlight={true} sublabel="Target HVAC equipment size" animate={true} />
+          <ResultMetricCard id="card-hvac-size" label="Recommended HVAC Tonnage" highlight={true} sublabel="Standard equipment size tier" animate={true} />
+          <ResultMetricCard id="card-cooling-btu" label="Adjusted Cooling Load" highlight={true} sublabel="Summer A/C cooling demand" animate={true} />
+          <ResultMetricCard id="card-heating-btu" label="Adjusted Heating Load" highlight={true} sublabel="Winter heating furnace demand" animate={true} />
+          <ResultMetricCard id="card-power" label="Est. Power Draw (kW)" sublabel="14 SEER power consumption" animate={true} />
+          <ResultMetricCard id="card-cost" label="Monthly Operating Cost" sublabel="Est. electric bill @ $0.16/kWh" animate={true} />
+          <ResultMetricCard id="card-area" label="Total Room Area" sublabel="Square feet (or m²)" animate={true} />
+          <ResultMetricCard id="card-volume" label="Total Room Volume" sublabel="Cubic feet (or m³)" animate={true} />
+        </div>
+
+        <!-- Unified Confidence Summary Card -->
+        <div id="card-confidence" class="confidence-summary-card" hidden>
+          <div class="conf-card-header">
+            <span class="conf-stars" id="confidence-stars">★★★★★</span>
+            <span class="conf-title" id="confidence-label">Optimal HVAC Sizing Match</span>
+          </div>
+          <div class="conf-card-badges">
+            <span class="conf-badge conf-badge-score" id="score-badge">18,000 BTU / 1.5 TONS</span>
+            <span class="conf-badge conf-badge-order" id="confidence-ordering-badge">✓ Low Oversizing Risk</span>
+            <span class="conf-badge conf-badge-cost" id="cost-badge">Est. $49 / mo</span>
+          </div>
+        </div>
+
+        <!-- Recommendations Grid -->
+        <div id="rec-section" class="rec-section" hidden>
+          <div class="panel-header"><span class="panel-label">Smart Recommendations & HVAC Guidance</span></div>
+          <div id="rec-list" class="rec-list"></div>
+        </div>
+
+        <!-- Share & Export + History Bar -->
+        <div class="calc-extras" id="calc-extras" hidden>
+          <ShareExportBar calculatorTitle="BTU Calculator" />
+          <HistoryPanel slug="btu-calculator" />
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <Fragment slot="sidebar">
+    <RelatedTools
+      links={[
+        {
+          title: 'Window AC BTU Calculator',
+          description: 'Calculate BTU cooling for window air conditioners.',
+          href: '/tools/window-ac-calculator',
+          icon: 'AirVent',
+        },
+        {
+          title: 'Window Energy Savings Calculator',
+          description: 'Calculate annual heating/cooling bill savings and payback.',
+          href: '/tools/window-energy-savings-calculator',
+          icon: 'Zap',
+        },
+        {
+          title: 'Window Insulation Calculator',
+          description: 'Estimate window insulation score, R-value, and U-factor.',
+          href: '/tools/window-insulation-calculator',
+          icon: 'Shield',
+        },
+        {
+          title: 'Window Cost Calculator',
+          description: 'Calculate total replacement window costs and labor.',
+          href: '/tools/window-cost-calculator',
+          icon: 'DollarSign',
+        },
+      ]}
+      tip={{
+        label: 'HVAC Tip',
+        text: 'Specifying a variable-speed inverter mini-split system allows the compressor to modulate its capacity from 30% to 100%, delivering precise temperature control while lowering monthly electric bills by up to 40%.',
+      }}
+    />
+    <FAQSection faqs={faqs} />
+  </Fragment>
+</ToolLayout>
+
+<script>
+  import {
+    calculateBTU,
+    type BtuInput,
+    type BtuPurpose,
+    type BtuRoomType,
+    type BtuClimate,
+    type BtuInsulation,
+    type BtuWindowType,
+    type BtuSunExposure,
+    type BtuLighting,
+    type BtuAppliances,
+  } from '@/engine/btu.js';
+  import { buildBtuRecommendations } from '@/engine/btu-recommendations.js';
+  import { toMm, fromMm, formatDimension, normalizeInput } from '@/engine/units.js';
+  import { readUrlState, pushUrlState } from '@/lib/url-state.js';
+  import { buildExportPayload } from '@/lib/export.js';
+  import { buildSummary } from '@/lib/share.js';
+  import { track } from '@/lib/analytics.js';
+  import type { MeasurementUnit } from '@/types/calculator.js';
+
+  let currentResult: ReturnType<typeof calculateBTU> | null = null;
+  let currentUnit: MeasurementUnit = 'ft';
+  let currentPurpose: BtuPurpose = 'both';
+
+  // ── DOM references ────────────────────────────────────────────────────────
+  const lengthInput      = document.getElementById('input-length')           as HTMLInputElement | null;
+  const widthInput       = document.getElementById('input-width')            as HTMLInputElement | null;
+  const heightInput      = document.getElementById('input-height')           as HTMLInputElement | null;
+  const roomTypeSelect   = document.getElementById('input-room-type')        as HTMLSelectElement | null;
+  const climateSelect    = document.getElementById('input-climate')          as HTMLSelectElement | null;
+  const insulSelect      = document.getElementById('input-insulation')       as HTMLSelectElement | null;
+  const winCountInput    = document.getElementById('input-windows')          as HTMLInputElement | null;
+  const winTypeSelect    = document.getElementById('input-window-type')      as HTMLSelectElement | null;
+  const sunSelect        = document.getElementById('input-sun-exposure')     as HTMLSelectElement | null;
+  const occupantInput    = document.getElementById('input-occupants')        as HTMLInputElement | null;
+  const lightingSelect   = document.getElementById('input-lighting')         as HTMLSelectElement | null;
+  const applianceSelect  = document.getElementById('input-appliances')       as HTMLSelectElement | null;
+
+  const resultsEmpty     = document.getElementById('results-empty')          as HTMLElement | null;
+  const resultsGrid      = document.getElementById('results-grid')           as HTMLElement | null;
+  const recSection       = document.getElementById('rec-section')            as HTMLElement | null;
+  const calcExtras       = document.getElementById('calc-extras')            as HTMLElement | null;
+  const cardConf         = document.getElementById('card-confidence')         as HTMLElement | null;
+
+  function updateMetric(cardId: string, value: string, unitStr: string = '') {
+    const valEl = document.querySelector(`#${cardId} .result-value-text`);
+    const unitEl = document.querySelector(`#${cardId} .result-unit`);
+    if (valEl) valEl.textContent = value;
+    if (unitEl) unitEl.textContent = unitStr;
+  }
+
+  function initOptionSelector(containerId: string, onChange: (val: string) => void) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+    container.addEventListener('click', (e) => {
+      const btn = (e.target as HTMLElement).closest('.option-btn') as HTMLElement | null;
+      if (btn?.dataset.value) {
+        container.querySelectorAll('.option-btn').forEach(b => b.setAttribute('aria-pressed', 'false'));
+        btn.setAttribute('aria-pressed', 'true');
+        onChange(btn.dataset.value);
+      }
+    });
+  }
+
+  // ── Vector SVG Room Airflow & BTU Diagram Renderer ───────────────────────────
+  function renderBtuSvg(result: ReturnType<typeof calculateBTU>, lMm: number, wMm: number) {
+    const svg = document.getElementById('btu-svg');
+    if (!svg) return;
+
+    const cx = 170, cy = 160;
+    const maxW = 200, maxH = 180;
+    const scale = Math.min(maxW / lMm, maxH / wMm);
+
+    const rw = lMm * scale;
+    const rh = wMm * scale;
+
+    svg.innerHTML = `
+      <defs>
+        <pattern id="grid-btu" width="20" height="20" patternUnits="userSpaceOnUse">
+          <path d="M 20 0 L 0 0 0 20" fill="none" stroke="rgba(0,0,0,0.03)" stroke-width="1"/>
+        </pattern>
+      </defs>
+      <rect width="400" height="340" fill="url(#grid-btu)" rx="6"/>
+
+      <!-- Room Envelope Floor Plan -->
+      <rect x="${cx - rw/2}" y="${cy - rh/2}" width="${rw}" height="${rh}" fill="#f8fafc" stroke="#0f172a" stroke-width="4" rx="4"/>
+
+      <!-- Window Indicators on South & West walls -->
+      <rect x="${cx - rw/4}" y="${cy + rh/2 - 3}" width="40" height="6" fill="#38bdf8" stroke="#0284c7" stroke-width="1"/>
+      <rect x="${cx - rw/2 - 3}" y="${cy - rh/4}" width="6" height="40" fill="#38bdf8" stroke="#0284c7" stroke-width="1"/>
+
+      <!-- Airflow Distribution Arrows -->
+      <path d="M ${cx - rw/4} ${cy - rh/4} Q ${cx} ${cy} ${cx + rw/4} ${cy + rh/4}" stroke="#38bdf8" stroke-width="3" stroke-dasharray="4 4" fill="none"/>
+      <polygon points="${cx + rw/4},${cy + rh/4} ${cx + rw/4 - 6},${cy + rh/4 - 10} ${cx + rw/4 - 10},${cy + rh/4 - 4}" fill="#38bdf8"/>
+
+      <path d="M ${cx + rw/4} ${cy - rh/4} Q ${cx} ${cy} ${cx - rw/4} ${cy + rh/4}" stroke="#ef4444" stroke-width="3" stroke-dasharray="4 4" fill="none"/>
+
+      <!-- HVAC Load Summary Card Side -->
+      <rect x="250" y="40" width="135" height="260" rx="6" fill="#0f172a"/>
+      <text x="317" y="62" font-family="sans-serif" font-size="10" font-weight="700" text-anchor="middle" fill="#94a3b8">HVAC LOAD SUMMARY</text>
+
+      <rect x="260" y="80" width="115" height="42" rx="4" fill="#1e293b"/>
+      <text x="268" y="96" font-family="sans-serif" font-size="8" font-weight="700" fill="#38bdf8">Target Capacity</text>
+      <text x="367" y="96" font-family="monospace" font-size="11" font-weight="700" text-anchor="end" fill="#ffffff">${result.recommendedBtu.toLocaleString()}</text>
+      <text x="268" y="110" font-family="sans-serif" font-size="8" fill="#94a3b8">BTU / hr</text>
+
+      <rect x="260" y="130" width="115" height="42" rx="4" fill="#1e293b"/>
+      <text x="268" y="146" font-family="sans-serif" font-size="8" font-weight="700" fill="#38bdf8">HVAC Size</text>
+      <text x="367" y="146" font-family="monospace" font-size="11" font-weight="700" text-anchor="end" fill="#ffffff">${result.recommendedTonnage} Tons</text>
+      <text x="268" y="160" font-family="sans-serif" font-size="8" fill="#94a3b8">Equipment Tier</text>
+
+      <rect x="260" y="180" width="115" height="42" rx="4" fill="#1e293b"/>
+      <text x="268" y="196" font-family="sans-serif" font-size="8" font-weight="700" fill="#38bdf8">Power Consumption</text>
+      <text x="367" y="196" font-family="monospace" font-size="11" font-weight="700" text-anchor="end" fill="#ffffff">${result.estimatedPowerConsumptionKw} kW</text>
+      <text x="268" y="210" font-family="sans-serif" font-size="8" fill="#94a3b8">14 SEER Standard</text>
+
+      <rect x="260" y="230" width="115" height="42" rx="4" fill="#1e293b"/>
+      <text x="268" y="246" font-family="sans-serif" font-size="8" font-weight="700" fill="#38bdf8">Est. Monthly Cost</text>
+      <text x="367" y="246" font-family="monospace" font-size="11" font-weight="700" text-anchor="end" fill="#22c55e">$${result.estimatedMonthlyEnergyCost}</text>
+      <text x="268" y="260" font-family="sans-serif" font-size="8" fill="#94a3b8">@ $0.16/kWh</text>
+    `;
+
+    const sub = document.getElementById('svg-subtitle');
+    if (sub) {
+      sub.textContent = `Area: ${result.roomAreaSqFt} sq ft · Volume: ${result.roomVolumeCuFt} cu ft · Target: ${result.recommendedHvacSize}`;
+    }
+  }
+
+  function calculate() {
+    const lInput = lengthInput?.value.trim() ?? '';
+    const wInput = widthInput?.value.trim() ?? '';
+    const hInput = heightInput?.value.trim() || '8';
+    const winCountVal = parseInt(winCountInput?.value || '2', 10);
+    const occupantVal = parseInt(occupantInput?.value || '2', 10);
+
+    if (!lInput || !wInput) {
+      if (resultsEmpty) resultsEmpty.hidden = false;
+      if (resultsGrid)  resultsGrid.hidden  = true;
+      if (recSection)   recSection.hidden   = true;
+      if (calcExtras)   calcExtras.hidden   = true;
+      if (cardConf)     cardConf.hidden     = true;
+      return;
+    }
+
+    const l = normalizeInput(lInput, currentUnit);
+    const w = normalizeInput(wInput, currentUnit);
+    const h = normalizeInput(hInput, currentUnit) || (currentUnit === 'm' ? 2.44 : 8);
+
+    if (!l || !w || l <= 0 || w <= 0) {
+      if (resultsEmpty) resultsEmpty.hidden = false;
+      if (resultsGrid)  resultsGrid.hidden  = true;
+      if (recSection)   recSection.hidden   = true;
+      if (calcExtras)   calcExtras.hidden   = true;
+      if (cardConf)     cardConf.hidden     = true;
+      return;
+    }
+
+    const lMm = toMm(l, currentUnit);
+    const wMm = toMm(w, currentUnit);
+    const hMm = toMm(h, currentUnit);
+
+    const input: BtuInput = {
+      roomLengthMm: lMm,
+      roomWidthMm: wMm,
+      ceilingHeightMm: hMm,
+      purpose: currentPurpose,
+      roomType: (roomTypeSelect?.value || 'living-room') as BtuRoomType,
+      climate: (climateSelect?.value || 'moderate') as BtuClimate,
+      insulation: (insulSelect?.value || 'good') as BtuInsulation,
+      numberOfWindows: winCountVal,
+      windowType: (winTypeSelect?.value || 'double-pane') as BtuWindowType,
+      orientation: 'south',
+      sunExposure: (sunSelect?.value || 'medium') as BtuSunExposure,
+      occupants: occupantVal,
+      lighting: (lightingSelect?.value || 'standard') as BtuLighting,
+      appliances: (applianceSelect?.value || 'medium') as BtuAppliances,
+    };
+
+    const result = calculateBTU(input);
+    currentResult = result;
+    const recs = buildBtuRecommendations(input, result);
+
+    // ── Metrics ──────────────────────────────────────────────────────────────
+    updateMetric('card-recommended-btu', `${result.recommendedBtu.toLocaleString()}`, 'BTU / hr capacity');
+    updateMetric('card-hvac-size', `${result.recommendedTonnage} Ton${result.recommendedTonnage > 1 ? 's' : ''}`, `${result.recommendedBtu.toLocaleString()} BTU equipment tier`);
+    updateMetric('card-cooling-btu', `${result.adjustedCoolingBtu.toLocaleString()}`, 'BTU / hr summer cooling demand');
+    updateMetric('card-heating-btu', `${result.adjustedHeatingBtu.toLocaleString()}`, 'BTU / hr winter heating demand');
+    updateMetric('card-power', `${result.estimatedPowerConsumptionKw} kW`, '14 SEER power consumption');
+    updateMetric('card-cost', `$${result.estimatedMonthlyEnergyCost} / mo`, 'Est. electric bill @ $0.16/kWh');
+    updateMetric('card-area', `${result.roomAreaSqFt.toLocaleString()} sq ft`, `(${result.roomAreaM2} m²)`);
+    updateMetric('card-volume', `${result.roomVolumeCuFt.toLocaleString()} cu ft`, `(${result.roomVolumeM3} m³)`);
+
+    // ── Confidence summary card ───────────────────────────────────────────────
+    const starsEl = document.getElementById('confidence-stars');
+    const labelEl = document.getElementById('confidence-label');
+    const orderBadge = document.getElementById('confidence-ordering-badge');
+    const costBadge = document.getElementById('cost-badge');
+    const scoreBadge = document.getElementById('score-badge');
+
+    if (starsEl) starsEl.textContent = result.confidence === 'excellent' ? '★★★★★' : '★★★★☆';
+    if (labelEl) labelEl.textContent = `Optimal HVAC Sizing Match`;
+    if (scoreBadge) scoreBadge.textContent = `${result.recommendedBtu.toLocaleString()} BTU / ${result.recommendedTonnage} TONS`;
+    if (orderBadge) orderBadge.textContent = `✓ ${result.oversizingRisk.toUpperCase()} Oversizing Risk`;
+    if (costBadge) costBadge.textContent = `Est. $${result.estimatedMonthlyEnergyCost} / mo`;
+
+    // ── Recommendation cards ─────────────────────────────────────────────────
+    const recList = document.getElementById('rec-list');
+    if (recList) {
+      const iconMap: Record<string, string> = {
+        'sizing': `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 4v10.54a4 4 0 1 1-4 0V4a2 2 0 0 1 4 0z"/></svg>`,
+        'insulation': `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>`,
+        'window': `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/></svg>`,
+        'thermostat': `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>`,
+        'energy': `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>`,
+        'climate': `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>`,
+      };
+      recList.innerHTML = recs.items.map((item: any) =>
+        `<div class="rec-card">
+          <div class="rec-card-header">
+            <span class="rec-card-icon" aria-hidden="true">${iconMap[item.type] || iconMap['sizing']}</span>
+            <span class="rec-card-title">${item.title}</span>
+          </div>
+          <div class="rec-card-body">${item.body}</div>
+          ${item.tip ? `<div class="rec-card-tip">${item.tip}</div>` : ''}
+        </div>`
+      ).join('');
+    }
+
+    try {
+      renderBtuSvg(result, lMm, wMm);
+    } catch (e) {
+      console.error('SVG rendering error:', e);
+    }
+
+    if (resultsEmpty) resultsEmpty.hidden = true;
+    if (resultsGrid)  resultsGrid.hidden  = false;
+    if (recSection)   recSection.hidden   = false;
+    if (calcExtras)   calcExtras.hidden   = false;
+    if (cardConf)     cardConf.hidden     = false;
+
+    const historyLabelText = `${l} × ${w} ${currentUnit} • ${currentPurpose.charAt(0).toUpperCase() + currentPurpose.slice(1)}`;
+    const summaryText = `${l} × ${w} ${currentUnit}`;
+    const stateParams = {
+      length: String(l),
+      width: String(w),
+      height: String(h),
+      unit: currentUnit,
+      purpose: currentPurpose,
+      roomType: roomTypeSelect?.value,
+      climate: climateSelect?.value,
+      insulation: insulSelect?.value,
+      windows: String(winCountVal),
+      winType: winTypeSelect?.value,
+      sun: sunSelect?.value,
+      occupants: String(occupantVal),
+      lighting: lightingSelect?.value,
+      appliances: applianceSelect?.value,
+      subtitle: `Target: ${result.recommendedHvacSize} · Est. $${result.estimatedMonthlyEnergyCost}/mo`,
+      summary: summaryText,
+      _display: summaryText,
+    };
+
+    (window as any).wmCurrentState = stateParams;
+    pushUrlState(stateParams);
+    (window as any).wmHistoryPanel?.add(historyLabelText, stateParams);
+
+    (window as any).wmBuildSummary = () => buildSummary(
+      'BTU Calculator',
+      [
+        ['Room Dimensions', `${l} × ${w} × ${h} ${currentUnit}`],
+        ['Room Area & Volume', `${result.roomAreaSqFt} sq ft (${result.roomVolumeCuFt} cu ft)`],
+        ['HVAC Purpose', currentPurpose],
+        ['Recommended HVAC Capacity', result.recommendedHvacSize],
+        ['Adjusted Cooling Load', `${result.adjustedCoolingBtu.toLocaleString()} BTU / hr`],
+        ['Adjusted Heating Load', `${result.adjustedHeatingBtu.toLocaleString()} BTU / hr`],
+        ['Est. Power Consumption', `${result.estimatedPowerConsumptionKw} kW`],
+        ['Est. Monthly Energy Cost', `$${result.estimatedMonthlyEnergyCost} / month`],
+        ['Climate Zone & Insulation', `${climateSelect?.value} climate • ${insulSelect?.value} insulation`],
+      ],
+      typeof window !== 'undefined' ? window.location.href : undefined,
+    );
+
+    (window as any).wmBuildExport = () => buildExportPayload(
+      'btu-calculator',
+      stateParams,
+      {
+        roomDimensions: `${l} × ${w} × ${h} ${currentUnit}`,
+        roomAreaSqFt: `${result.roomAreaSqFt} sq ft`,
+        roomVolumeCuFt: `${result.roomVolumeCuFt} cu ft`,
+        purpose: currentPurpose,
+        recommendedBtu: result.recommendedBtu,
+        recommendedTonnage: result.recommendedTonnage,
+        recommendedHvacSize: result.recommendedHvacSize,
+        adjustedCoolingBtu: result.adjustedCoolingBtu,
+        adjustedHeatingBtu: result.adjustedHeatingBtu,
+        estimatedPowerConsumptionKw: `${result.estimatedPowerConsumptionKw} kW`,
+        estimatedMonthlyEnergyCost: `$${result.estimatedMonthlyEnergyCost}`,
+        efficiencyRating: result.efficiencyRating,
+        oversizingRisk: result.oversizingRisk,
+        confidence: result.confidence,
+        recommendations: recs.items.map((i: any) => `${i.title}: ${i.body}`).join(' | '),
+        warnings: result.warnings.map((w: any) => w.message).join(' | '),
+      },
+    );
+
+    (window as any).wmShareExportBar?.show();
+
+    track({
+      type: 'calculation_completed',
+      properties: { slug: 'btu-calculator', unit: currentUnit, inputs: stateParams },
+    });
+  }
+
+  // ── Event listeners ───────────────────────────────────────────────────────
+  lengthInput?.addEventListener('input', calculate);
+  widthInput?.addEventListener('input', calculate);
+  heightInput?.addEventListener('input', calculate);
+  winCountInput?.addEventListener('input', calculate);
+  occupantInput?.addEventListener('input', calculate);
+
+  roomTypeSelect?.addEventListener('change', calculate);
+  climateSelect?.addEventListener('change', calculate);
+  insulSelect?.addEventListener('change', calculate);
+  winTypeSelect?.addEventListener('change', calculate);
+  sunSelect?.addEventListener('change', calculate);
+  lightingSelect?.addEventListener('change', calculate);
+  applianceSelect?.addEventListener('change', calculate);
+
+  initOptionSelector('purpose-selector', (val) => {
+    currentPurpose = val as BtuPurpose;
+    calculate();
+  });
+
+  document.getElementById('unit-selector')?.addEventListener('unitchange', (e) => {
+    const newUnit = (e as CustomEvent).detail?.unit as MeasurementUnit | undefined;
+    if (!newUnit) return;
+    if (lengthInput?.value) {
+      const parsed = normalizeInput(lengthInput.value, currentUnit);
+      if (parsed) lengthInput.value = String(fromMm(toMm(parsed, currentUnit), newUnit));
+    }
+    if (widthInput?.value) {
+      const parsed = normalizeInput(widthInput.value, currentUnit);
+      if (parsed) widthInput.value = String(fromMm(toMm(parsed, currentUnit), newUnit));
+    }
+    const oldUnit = currentUnit;
+    currentUnit = newUnit;
+    track({ type: 'unit_changed', properties: { slug: 'btu-calculator', from: oldUnit, to: newUnit } });
+    calculate();
+  });
+
+  // Restore URL state
+  const urlState = readUrlState();
+  if (urlState.length && lengthInput) lengthInput.value = urlState.length;
+  if (urlState.width && widthInput)   widthInput.value  = urlState.width;
+  if (urlState.height && heightInput) heightInput.value = urlState.height;
+  if (urlState.windows && winCountInput) winCountInput.value = urlState.windows;
+  if (urlState.occupants && occupantInput) occupantInput.value = urlState.occupants;
+
+  if (urlState.unit && ['mm','cm','m','in','ft'].includes(urlState.unit)) {
+    currentUnit = urlState.unit as MeasurementUnit;
+    document.querySelectorAll('.unit-btn').forEach(b => (b as HTMLElement).setAttribute('aria-pressed', (b as HTMLElement).dataset.unit === currentUnit ? 'true' : 'false'));
+  }
+
+  if (urlState.purpose) {
+    currentPurpose = urlState.purpose as BtuPurpose;
+    document.querySelectorAll('#purpose-selector .option-btn').forEach(b =>
+      (b as HTMLElement).setAttribute('aria-pressed', (b as HTMLElement).dataset.value === currentPurpose ? 'true' : 'false'));
+  }
+
+  if (urlState.roomType && roomTypeSelect) roomTypeSelect.value = urlState.roomType;
+  if (urlState.climate && climateSelect)   climateSelect.value  = urlState.climate;
+  if (urlState.insulation && insulSelect) insulSelect.value    = urlState.insulation;
+  if (urlState.winType && winTypeSelect)   winTypeSelect.value  = urlState.winType;
+  if (urlState.sun && sunSelect)           sunSelect.value      = urlState.sun;
+
+  // Initial calculation on page load
+  calculate();
+
+  // ── History restore ──────────────────────────────────────────────────────
+  document.addEventListener('wm:history-restore', (e: Event) => {
+    const { inputs } = (e as CustomEvent).detail;
+    if (inputs.length && lengthInput) lengthInput.value = inputs.length;
+    if (inputs.width && widthInput)   widthInput.value  = inputs.width;
+    if (inputs.height && heightInput) heightInput.value = inputs.height;
+    if (inputs.windows && winCountInput) winCountInput.value = inputs.windows;
+    if (inputs.occupants && occupantInput) occupantInput.value = inputs.occupants;
+
+    if (inputs.unit && ['mm','cm','m','in','ft'].includes(inputs.unit)) {
+      currentUnit = inputs.unit as MeasurementUnit;
+      document.querySelectorAll('.unit-btn').forEach(b => (b as HTMLElement).setAttribute('aria-pressed', (b as HTMLElement).dataset.unit === currentUnit ? 'true' : 'false'));
+    }
+
+    if (inputs.purpose) {
+      currentPurpose = inputs.purpose as BtuPurpose;
+      document.querySelectorAll('#purpose-selector .option-btn').forEach(b =>
+        (b as HTMLElement).setAttribute('aria-pressed', (b as HTMLElement).dataset.value === currentPurpose ? 'true' : 'false'));
+    }
+
+    if (inputs.roomType && roomTypeSelect) roomTypeSelect.value = inputs.roomType;
+    if (inputs.climate && climateSelect)   climateSelect.value  = inputs.climate;
+    if (inputs.insulation && insulSelect) insulSelect.value    = inputs.insulation;
+    if (inputs.winType && winTypeSelect)   winTypeSelect.value  = inputs.winType;
+    if (inputs.sun && sunSelect)           sunSelect.value      = inputs.sun;
+
+    calculate();
+    track({ type: 'history_restored', properties: { slug: 'btu-calculator', entryId: (e as CustomEvent).detail.entryId ?? '' } });
+  });
+</script>
+
+<style>
+  .calc-dashboard {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--spacing-xl);
+    align-items: start;
+    margin-top: var(--spacing-lg);
+  }
+
+  @media (min-width: 1024px) {
+    .calc-dashboard {
+      grid-template-columns: 380px 1fr;
+    }
+  }
+
+  .calc-panel {
+    background-color: var(--color-canvas);
+    border: 1px solid var(--color-hairline);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+  }
+
+  .calc-panel-inputs {
+    position: sticky;
+    top: var(--spacing-md);
+  }
+
+  .panel-header {
+    padding: var(--spacing-md);
+    background-color: var(--color-canvas-soft);
+    border-bottom: 1px solid var(--color-hairline);
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+  }
+
+  .panel-label {
+    font-family: var(--font-family-mono);
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--color-muted);
+  }
+
+  .panel-section-header {
+    padding: var(--spacing-xs) var(--spacing-md);
+    background-color: var(--color-canvas-soft);
+    border-top: 1px solid var(--color-hairline);
+    border-bottom: 1px solid var(--color-hairline);
+  }
+
+  .panel-section-title {
+    font-family: var(--font-family-mono);
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--color-ink-faint);
+  }
+
+  .input {
+    width: 100%;
+    padding: var(--spacing-sm) var(--spacing-md);
+    background-color: var(--color-canvas);
+    border: 1px solid var(--color-hairline);
+    border-radius: var(--radius-md);
+    font-family: var(--font-family-mono);
+    font-size: var(--font-size-body-md);
+    color: var(--color-ink);
+    transition: border-color 0.15s ease;
+  }
+
+  .input:focus {
+    outline: none;
+    border-color: var(--color-link);
+  }
+
+  .input-select {
+    width: 100%;
+    padding: var(--spacing-sm) var(--spacing-md);
+    background-color: var(--color-canvas);
+    border: 1px solid var(--color-hairline);
+    border-radius: var(--radius-md);
+    font-size: var(--font-size-body-sm);
+    color: var(--color-ink);
+  }
+
+  .option-selector {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--spacing-xs);
+    width: 100%;
+  }
+
+  .option-btn {
+    flex: 1 1 auto;
+    padding: 6px 10px;
+    font-size: 11px;
+    font-family: var(--font-family-mono);
+    border: 1px solid var(--color-hairline);
+    background: var(--color-canvas);
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    color: var(--color-ink-muted);
+    text-align: center;
+    transition: all 0.15s ease;
+  }
+
+  .option-btn[aria-pressed="true"] {
+    background: var(--color-ink);
+    color: var(--color-canvas);
+    border-color: var(--color-ink);
+    font-weight: 600;
+  }
+
+  /* Results Panel */
+  .empty-state {
+    padding: var(--spacing-3xl) var(--spacing-xl);
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .empty-icon-wrap {
+    color: var(--color-muted);
+    margin-bottom: var(--spacing-md);
+  }
+
+  .empty-title {
+    font-size: var(--font-size-h3);
+    font-weight: 600;
+    color: var(--color-ink);
+    margin: 0 0 var(--spacing-xs);
+  }
+
+  .empty-sub {
+    font-size: var(--font-size-body-sm);
+    color: var(--color-muted);
+    margin: 0;
+    max-width: 320px;
+  }
+
+  .svg-section {
+    border-bottom: 1px solid var(--color-hairline);
+    background-color: var(--color-canvas);
+  }
+
+  .svg-header {
+    padding: var(--spacing-sm) var(--spacing-md);
+    background-color: var(--color-canvas-soft);
+    border-bottom: 1px solid var(--color-hairline);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .svg-label {
+    font-family: var(--font-family-mono);
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--color-muted);
+  }
+
+  .svg-subtitle {
+    font-family: var(--font-family-mono);
+    font-size: 11px;
+    color: var(--color-ink-muted);
+  }
+
+  .svg-wrap {
+    padding: var(--spacing-md);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: var(--color-canvas);
+  }
+
+  .results-metric-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: var(--spacing-md);
+    padding: var(--spacing-lg);
+  }
+
+  .confidence-summary-card {
+    margin: 0 var(--spacing-lg) var(--spacing-lg);
+    padding: var(--spacing-md);
+    background-color: var(--color-canvas-soft);
+    border: 1px solid var(--color-hairline);
+    border-radius: var(--radius-md);
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+  }
+
+  .conf-card-header {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+  }
+
+  .conf-stars {
+    color: #f59e0b;
+    letter-spacing: 2px;
+  }
+
+  .conf-title {
+    font-weight: 600;
+    font-size: var(--font-size-body-sm);
+    color: var(--color-ink);
+  }
+
+  .conf-card-badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--spacing-xs);
+  }
+
+  .conf-badge {
+    font-family: var(--font-family-mono);
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--color-hairline);
+    background: var(--color-canvas);
+  }
+
+  .conf-badge-score {
+    color: var(--color-link);
+    font-weight: 600;
+  }
+
+  .rec-section {
+    border-top: 1px solid var(--color-hairline);
+  }
+
+  .rec-list {
+    padding: var(--spacing-lg);
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: var(--spacing-md);
+  }
+
+  .calc-extras {
+    border-top: 1px solid var(--color-hairline);
+    background-color: var(--color-canvas-soft);
+    padding: var(--spacing-lg);
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-lg);
+  }
+
+  @media (max-width: 640px) {
+    .results-metric-grid {
+      grid-template-columns: 1fr;
+      padding: var(--spacing-md);
+    }
+    .rec-list, .calc-extras, .svg-section {
+      padding: var(--spacing-md);
+    }
+    .confidence-summary-card {
+      margin: 0 var(--spacing-md) var(--spacing-md);
+      padding: var(--spacing-md);
+    }
+  }
+</style>
