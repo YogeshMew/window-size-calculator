@@ -1,0 +1,1261 @@
+---
+import ToolLayout from '@/layouts/ToolLayout.astro';
+import CalculatorHero from '@/components/calculator/CalculatorHero.astro';
+import InputCard from '@/components/calculator/InputCard.astro';
+import UnitSelector from '@/components/calculator/UnitSelector.astro';
+import ResultMetricCard from '@/components/calculator/ResultMetricCard.astro';
+import ShareExportBar from '@/components/calculator/ShareExportBar.astro';
+import HistoryPanel from '@/components/calculator/HistoryPanel.astro';
+import FAQSection from '@/components/content/FAQSection.astro';
+import RelatedTools from '@/components/calculator/RelatedTools.astro';
+import { getToolBySlug } from '@/data/tools.js';
+import type { BreadcrumbItem, FAQ } from '@/types/calculator.js';
+
+const tool = getToolBySlug('window-film-calculator')!;
+
+const breadcrumbs: BreadcrumbItem[] = [
+  { label: 'Home', href: '/' },
+  { label: 'Tools', href: '/tools' },
+  { label: tool.title, href: tool.href, current: true },
+];
+
+const faqs: FAQ[] = [
+  {
+    question: 'How much extra film should I add for trimming margin?',
+    answer:
+      'Always add at least 1 inch (25mm) of overhang on all four sides of the window pane (+2 inches total to width and height). This trimming margin gives you gripping leverage while squeegeeing and is trimmed flush with a sharp utility knife.',
+  },
+  {
+    question: 'Can I apply solar film on double-pane (insulated) glass?',
+    answer:
+      'Yes, but dark reflective or high-heat absorbing films applied to the interior pane of insulated double-pane glass can increase thermal stress and void window warranties. Choose dual-reflective heat control film or exterior-rated solar film.',
+  },
+  {
+    question: 'What is VLT (Visible Light Transmission) in window tinting?',
+    answer:
+      'VLT is the percentage of natural daylight that passes through the film. Lower VLT (10% to 20%) offers deep daytime privacy and glare reduction, while higher VLT (60% to 70%) provides heat and UV protection while keeping room interiors bright.',
+  },
+  {
+    question: 'Does one-way mirror film work at night when indoor lights are on?',
+    answer:
+      'No. One-way mirror film relies on lighting contrast — it reflects whichever side is brighter. During the daytime, outside is brighter so people cannot see in. At night when indoor lights are on, the mirror effect reverses unless outdoor floodlights are used.',
+  },
+  {
+    question: 'What tools are required for a DIY window film application?',
+    answer:
+      'You need a spray bottle with water and a few drops of baby shampoo, a hard rubber squeegee, a sharp snap-off razor knife, lint-free microfiber towels, and a measuring tape. No adhesive glue is needed for wet-apply static cling or water-activated film.',
+  },
+  {
+    question: 'How long does window film take to cure and dry completely?',
+    answer:
+      'Wet-applied window film takes 4 to 8 days in warm sunny weather, or up to 30 days in cold weather to fully cure and evaporate all moisture pockets beneath the film. Small water bubbles during curing are normal and disappear.',
+  },
+  {
+    question: 'How do I clean windows after applying window film?',
+    answer:
+      'Wait 30 days after installation before cleaning. Clean using a soft microfiber cloth and mild soapy water. Never use ammonia-based cleaners like original Windex, abrasive pads, or sharp razor blades on filmed glass.',
+  },
+];
+
+const schema = {
+  '@context': 'https://schema.org',
+  '@type': 'SoftwareApplication',
+  name: tool.title,
+  description: tool.description,
+  applicationCategory: 'UtilityApplication',
+  operatingSystem: 'All',
+  offers: {
+    '@type': 'Offer',
+    price: '0',
+    priceCurrency: 'USD',
+  },
+};
+---
+
+<ToolLayout tool={tool} breadcrumbs={breadcrumbs} description={tool.description}>
+  <Fragment slot="schema">
+    <script type="application/ld+json" set:html={JSON.stringify(schema)} />
+  </Fragment>
+
+  <CalculatorHero
+    tool={tool}
+    description="Calculate exact window film roll width, required roll length, square footage with 1&quot; trimming margin, solar heat reduction %, UV block %, and material costs."
+    features={[
+      'Film cut size with 1" trim margin',
+      'Optimal stock roll width selector (18" to 60")',
+      'Solar heat & glare reduction calculator',
+      'Glass thermal stress safety check',
+      'Privacy rating & material cost estimate',
+    ]}
+    trustItems={[
+      { label: 'All film types supported' },
+      { label: 'All units (in, mm, cm, ft, m)' },
+      { label: 'No registration required' },
+      { label: 'Instant live calculation' },
+    ]}
+  />
+
+  <div class="calc-dashboard">
+    <!-- LEFT PANEL — Inputs -->
+    <div class="calc-panel calc-panel-inputs">
+      <div class="panel-header">
+        <span class="panel-label">Glass pane measurements</span>
+        <UnitSelector defaultUnit="in" />
+      </div>
+
+      <div class="panel-section-header">
+        <span class="panel-section-title">Window Dimensions</span>
+      </div>
+
+      <InputCard label="Window Width" inputId="input-width" hint="Glass width inside frame">
+        <input type="text" id="input-width" class="input" placeholder="e.g., 36" autocomplete="off" />
+      </InputCard>
+
+      <InputCard label="Window Height" inputId="input-height" hint="Glass height inside frame">
+        <input type="text" id="input-height" class="input" placeholder="e.g., 60" autocomplete="off" />
+      </InputCard>
+
+      <InputCard label="Film Type" inputId="input-film-type">
+        <select id="input-film-type" class="input-select" aria-label="Select Film Type">
+          <option value="privacy" selected>Day/Night Privacy Tint (15% VLT)</option>
+          <option value="frosted">Frosted Architectural Matte (100% Privacy)</option>
+          <option value="decorative">Decorative Patterned Stained Film</option>
+          <option value="reflective">Reflective Silver Solar Mirror (75% Heat Cut)</option>
+          <option value="security">Clear Safety & Security Armor (8 Mil)</option>
+          <option value="uv-protection">Clear Museum UV Shield (99.9% UV Block)</option>
+          <option value="heat-control">Dual-Reflective Sun Heat Control (35% VLT)</option>
+          <option value="one-way-mirror">One-Way Daytime Mirror Film</option>
+        </select>
+      </InputCard>
+
+      <InputCard label="Glass Type" inputId="input-glass-type">
+        <select id="input-glass-type" class="input-select" aria-label="Select Glass Type">
+          <option value="single-pane">Single Pane Standard Glass</option>
+          <option value="double-pane" selected>Double Pane Insulated Glass (IGU)</option>
+          <option value="triple-pane">Triple Pane High-Efficiency</option>
+          <option value="tempered">Tempered Safety Glass</option>
+          <option value="laminated">Laminated Soundproof Glass</option>
+        </select>
+      </InputCard>
+
+      <InputCard label="Installation" inputId="install-selector">
+        <div class="option-selector" id="install-selector" role="group" aria-label="Installation Side">
+          <button type="button" class="option-btn" data-value="interior" aria-pressed="true">Interior Wet-Apply</button>
+          <button type="button" class="option-btn" data-value="exterior" aria-pressed="false">Exterior Rated</button>
+        </div>
+      </InputCard>
+
+      <InputCard label="Window Orientation" inputId="orientation-selector">
+        <div class="option-selector" id="orientation-selector" role="group" aria-label="Window Orientation">
+          <button type="button" class="option-btn" data-value="south" aria-pressed="true">South</button>
+          <button type="button" class="option-btn" data-value="west" aria-pressed="false">West</button>
+          <button type="button" class="option-btn" data-value="east" aria-pressed="false">East</button>
+          <button type="button" class="option-btn" data-value="north" aria-pressed="false">North</button>
+        </div>
+      </InputCard>
+
+      <InputCard label="Climate Zone" inputId="climate-selector">
+        <div class="option-selector" id="climate-selector" role="group" aria-label="Climate Zone">
+          <button type="button" class="option-btn" data-value="hot" aria-pressed="true">Hot / Sun</button>
+          <button type="button" class="option-btn" data-value="moderate" aria-pressed="false">Moderate</button>
+          <button type="button" class="option-btn" data-value="cold" aria-pressed="false">Cold</button>
+        </div>
+      </InputCard>
+
+      <InputCard label="Stock Roll Width" inputId="input-roll-width">
+        <select id="input-roll-width" class="input-select" aria-label="Select Roll Width">
+          <option value="0" selected>Auto-Select Optimal Roll Width</option>
+          <option value="457.2">18 Inches (457 mm)</option>
+          <option value="609.6">24 Inches (610 mm)</option>
+          <option value="762.0">30 Inches (762 mm)</option>
+          <option value="914.4">36 Inches (914 mm)</option>
+          <option value="1219.2">48 Inches (1219 mm)</option>
+          <option value="1524.0">60 Inches (1524 mm)</option>
+        </select>
+      </InputCard>
+    </div>
+
+    <!-- RIGHT PANEL — Results -->
+    <div class="calc-panel calc-panel-results">
+      <div id="results-empty" class="empty-state">
+        <div class="empty-icon-wrap">
+          <svg width="48" height="48" viewBox="0 0 48 48" fill="none" class="empty-svg">
+            <rect x="10" y="6" width="28" height="36" rx="3" stroke="currentColor" stroke-width="2.5" fill="none"/>
+            <path d="M10 18H38M10 30H38M18 6V42M30 6V42" stroke="currentColor" stroke-width="1.2" stroke-dasharray="2 2"/>
+          </svg>
+        </div>
+        <h3 class="empty-title">Enter window dimensions</h3>
+        <p class="empty-sub">Fill in Width and Height to calculate film roll width, cut length & solar reduction.</p>
+      </div>
+
+      <div id="results-grid" hidden>
+        <!-- SVG diagram section -->
+        <div class="svg-section">
+          <div class="svg-header">
+            <span class="svg-label">Film Cut Diagram</span>
+            <span class="svg-subtitle" id="svg-subtitle">Includes 1" trimming margin on all edges</span>
+          </div>
+          <div class="svg-wrap">
+            <svg id="film-svg" viewBox="0 0 400 340" width="100%" aria-label="Window film cut diagram"></svg>
+          </div>
+        </div>
+
+        <div class="results-metric-grid">
+          <ResultMetricCard id="card-film-width" label="Film Cut Width" highlight={true} sublabel="Window width + 2&quot; trim margin" animate={true} />
+          <ResultMetricCard id="card-film-height" label="Film Cut Height" highlight={true} sublabel="Window height + 2&quot; trim margin" animate={true} />
+          <ResultMetricCard id="card-roll-width" label="Stock Roll Width" highlight={true} sublabel="Optimal roll size to order" animate={true} />
+          <ResultMetricCard id="card-roll-length" label="Roll Cut Length" highlight={true} sublabel="Length needed from roll" animate={true} />
+          <ResultMetricCard id="card-total-sqft" label="Total Film Required" sublabel="Total purchased film area" animate={true} />
+          <ResultMetricCard id="card-waste-pct" label="Trimming Waste" sublabel="Excess margin percentage" animate={true} />
+          <ResultMetricCard id="card-heat-red" label="Heat Reduction" sublabel="Solar heat gain blocked" animate={true} />
+          <ResultMetricCard id="card-mat-cost" label="Material Cost" sublabel="Estimated film roll price" animate={true} />
+        </div>
+
+        <!-- Unified Confidence Summary Card -->
+        <div id="card-confidence" class="confidence-summary-card" hidden>
+          <div class="conf-card-header">
+            <span class="conf-stars" id="confidence-stars">★★★★★</span>
+            <span class="conf-title" id="confidence-label">Exact Factory Match</span>
+          </div>
+          <div class="conf-card-badges">
+            <span class="conf-badge conf-badge-score" id="score-badge">100% Fit Match</span>
+            <span class="conf-badge conf-badge-order" id="confidence-ordering-badge">✓ Order Standard Roll</span>
+            <span class="conf-badge conf-badge-cost" id="cost-badge">Est. Cost: $$</span>
+          </div>
+        </div>
+
+        <!-- Interactive Stock Roll Chips -->
+        <div id="stock-sizes-section" class="stock-section">
+          <div class="stock-section-header">
+            <span class="stock-label">Standard Stock Film Roll Widths</span>
+          </div>
+          <div class="stock-chips" id="stock-rolls"></div>
+        </div>
+
+        <!-- Recommendations Grid -->
+        <div id="rec-section" class="rec-section" hidden>
+          <div class="panel-header"><span class="panel-label">Smart Recommendations</span></div>
+          <div id="rec-list" class="rec-list"></div>
+        </div>
+
+        <!-- Share & Export + History Bar -->
+        <div class="calc-extras" id="calc-extras" hidden>
+          <ShareExportBar calculatorTitle="Window Film & Tint Calculator" />
+          <HistoryPanel slug="window-film-calculator" />
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <Fragment slot="sidebar">
+    <RelatedTools
+      links={[
+        {
+          title: 'Window Glass Calculator',
+          description: 'Calculate glass area, pane thickness, and weight.',
+          href: '/tools/window-glass-calculator',
+          icon: 'PanelTop',
+        },
+        {
+          title: 'Window Size Calculator',
+          description: 'Window opening area, perimeter, and sizing recommendations.',
+          href: '/tools/window-size-calculator',
+          icon: 'Ruler',
+        },
+        {
+          title: 'Window Screen Calculator',
+          description: 'Calculate screen frame width, height, mesh area & spline length.',
+          href: '/tools/window-screen-calculator',
+          icon: 'Grid2x2',
+        },
+        {
+          title: 'Window AC BTU Calculator',
+          description: 'Calculate required BTU cooling capacity for window air conditioners.',
+          href: '/tools/window-ac-calculator',
+          icon: 'Wind',
+        },
+      ]}
+      tip={{
+        label: 'Application Tip',
+        text: 'Always spray abundant soapy water solution on both glass and film adhesive. It lets you slide film into exact alignment before squeegeeing.',
+      }}
+    />
+    <FAQSection faqs={faqs} />
+  </Fragment>
+</ToolLayout>
+
+<script>
+  import { calculateFilm, type FilmInput, type FilmType, type FilmGlassType, type FilmInstallation, type FilmOrientation, type FilmClimate } from '@/engine/film.js';
+  import { buildFilmRecommendations } from '@/engine/film-recommendations.js';
+  import { toMm, fromMm, formatDimension, normalizeInput } from '@/engine/units.js';
+  import { readUrlState, pushUrlState } from '@/lib/url-state.js';
+  import { buildExportPayload } from '@/lib/export.js';
+  import { buildSummary } from '@/lib/share.js';
+  import { track } from '@/lib/analytics.js';
+  import type { MeasurementUnit } from '@/types/calculator.js';
+
+  let _debounceTimer: ReturnType<typeof setTimeout> | null = null;
+  function scheduleCalculate() {
+    if (_debounceTimer) clearTimeout(_debounceTimer);
+    _debounceTimer = setTimeout(() => calculate(), 300);
+  }
+
+  let currentResult: ReturnType<typeof calculateFilm> | null = null;
+  let currentUnit: MeasurementUnit = 'in';
+  let currentFilmType: FilmType = 'privacy';
+  let currentGlassType: FilmGlassType = 'double-pane';
+  let currentInstallation: FilmInstallation = 'interior';
+  let currentOrientation: FilmOrientation = 'south';
+  let currentClimate: FilmClimate = 'hot';
+  let currentRollWidthMm: number = 0;
+
+  function initOptionSelector(id: string, onChange: (val: string) => void) {
+    const el = document.getElementById(id);
+    el?.addEventListener('click', (e) => {
+      const btn = (e.target as HTMLElement).closest('[data-value]') as HTMLElement | null;
+      if (!btn) return;
+      el.querySelectorAll('[data-value]').forEach(b => (b as HTMLElement).setAttribute('aria-pressed', 'false'));
+      btn.setAttribute('aria-pressed', 'true');
+      onChange(btn.dataset.value ?? '');
+    });
+  }
+
+  function updateMetric(cardId: string, value: string, unitStr: string = '') {
+    const valEl = document.querySelector(`#${cardId} .result-value-text`);
+    const unitEl = document.querySelector(`#${cardId} .result-unit`);
+    if (valEl) valEl.textContent = value;
+    if (unitEl) unitEl.textContent = unitStr;
+  }
+
+  // ── Vector SVG Film Cut Diagram Renderer ────────────────────────────────────
+  function renderFilmSvg(result: ReturnType<typeof calculateFilm>, wMm: number, hMm: number, filmType: string) {
+    const svg = document.getElementById('film-svg');
+    if (!svg) return;
+
+    const cx = 200, cy = 170;
+    const maxW = 260, maxH = 210;
+    const scale = Math.min(maxW / wMm, maxH / hMm);
+
+    const gw = wMm * scale;
+    const gh = hMm * scale;
+
+    const fw = result.filmWidthMm * scale;
+    const fh = result.filmHeightMm * scale;
+
+    // Film style fills per type
+    function getFilmStyle(type: string): { fill: string; opacity: string; border: string; label: string } {
+      switch (type) {
+        case 'reflective':
+          return { fill: 'url(#gradReflective)', opacity: '0.85', border: '#38bdf8', label: 'REFLECTIVE SILVER' };
+        case 'frosted':
+          return { fill: '#f1f5f9', opacity: '0.9', border: '#cbd5e1', label: 'FROSTED MATTE' };
+        case 'decorative':
+          return { fill: 'url(#patternDecorative)', opacity: '0.8', border: '#a855f7', label: 'DECORATIVE PATTERN' };
+        case 'security':
+          return { fill: '#e0f2fe', opacity: '0.3', border: '#0284c7', label: 'CLEAR SECURITY 8 MIL' };
+        case 'uv-protection':
+          return { fill: '#ecfeff', opacity: '0.35', border: '#06b6d4', label: 'MUSEUM UV SHIELD' };
+        case 'heat-control':
+          return { fill: 'url(#gradHeat)', opacity: '0.75', border: '#f59e0b', label: 'HEAT CONTROL TINT' };
+        case 'one-way-mirror':
+          return { fill: 'url(#gradReflective)', opacity: '0.95', border: '#0f172a', label: 'ONE-WAY MIRROR' };
+        default: // privacy
+          return { fill: '#334155', opacity: '0.75', border: '#1e293b', label: 'DAY/NIGHT PRIVACY' };
+      }
+    }
+
+    const style = getFilmStyle(filmType);
+
+    const measureArrow = (x1: number, y1: number, x2: number, y2: number, label: string, isHoriz: boolean = false) => {
+      const mx = isHoriz ? (x1 + x2) / 2 : x2 + 18;
+      const my = isHoriz ? y1 - 12 : (y1 + y2) / 2;
+      return `
+        <line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="#0f172a" stroke-width="1.5"/>
+        <polygon points="${x1},${y1} ${x1-3},${y1+5} ${x1+3},${y1+5}" fill="#0f172a" transform="rotate(${isHoriz?90:0},${x1},${y1})"/>
+        <polygon points="${x2},${y2} ${x2-3},${y2-5} ${x2+3},${y2-5}" fill="#0f172a" transform="rotate(${isHoriz?90:0},${x2},${y2})"/>
+        <rect x="${mx - 24}" y="${my - 8}" width="48" height="16" rx="3" fill="#ffffff" stroke="#cbd5e1" stroke-width="1"/>
+        <text x="${mx}" y="${my + 4}" font-family="monospace" font-size="9" font-weight="600" text-anchor="middle" fill="#0f172a">${label}</text>`;
+    };
+
+    svg.innerHTML = `
+      <defs>
+        <pattern id="grid" width="20" height="20" patternUnits="userSpaceOnUse">
+          <path d="M 20 0 L 0 0 0 20" fill="none" stroke="rgba(0,0,0,0.03)" stroke-width="1"/>
+        </pattern>
+        <linearGradient id="gradReflective" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stop-color="#e2e8f0" stop-opacity="0.9"/>
+          <stop offset="50%" stop-color="#38bdf8" stop-opacity="0.6"/>
+          <stop offset="100%" stop-color="#0f172a" stop-opacity="0.9"/>
+        </linearGradient>
+        <linearGradient id="gradHeat" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stop-color="#fef3c7" stop-opacity="0.8"/>
+          <stop offset="100%" stop-color="#f59e0b" stop-opacity="0.6"/>
+        </linearGradient>
+        <pattern id="patternDecorative" width="12" height="12" patternUnits="userSpaceOnUse">
+          <rect width="12" height="12" fill="#faf5ff"/>
+          <circle cx="6" cy="6" r="3" fill="#c084fc" opacity="0.5"/>
+        </pattern>
+      </defs>
+      <rect width="400" height="340" fill="url(#grid)" rx="6"/>
+
+      <!-- Required Roll Width Outline (Background Stock Roll) -->
+      <rect x="${cx - fw/2 - 8}" y="${cy - fh/2 - 8}" width="${fw + 16}" height="${fh + 16}"
+        fill="none" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="4,4" rx="4"/>
+      <text x="${cx}" y="${cy - fh/2 - 12}" font-family="monospace" font-size="9" font-weight="600" text-anchor="middle" fill="#64748b">Stock Roll Width: ${Math.round(result.requiredRollWidthMm / 25.4)}"</text>
+
+      <!-- Film Cut Piece (Window + 1" Margin) -->
+      <rect x="${cx - fw/2}" y="${cy - fh/2}" width="${fw}" height="${fh}"
+        fill="${style.fill}" fill-opacity="${style.opacity}" stroke="${style.border}" stroke-width="2" rx="4"/>
+
+      <!-- Window Glass Pane (Inner Boundary) -->
+      <rect x="${cx - gw/2}" y="${cy - gh/2}" width="${gw}" height="${gh}"
+        fill="none" stroke="#0f172a" stroke-width="2" stroke-dasharray="2,2"/>
+      <text x="${cx}" y="${cy}" font-family="sans-serif" font-size="11" font-weight="700" text-anchor="middle" fill="#0f172a" opacity="0.85">Window Glass Pane</text>
+
+      <!-- 1" Trimming Margin Labels -->
+      <text x="${cx - fw/2 + 10}" y="${cy + 4}" font-family="monospace" font-size="8" font-weight="600" fill="#0f172a" opacity="0.7">1" Margin</text>
+      <text x="${cx + fw/2 - 10}" y="${cy + 4}" font-family="monospace" font-size="8" font-weight="600" text-anchor="end" fill="#0f172a" opacity="0.7">1" Margin</text>
+
+      ${measureArrow(cx - fw/2, cy + fh/2 + 22, cx + fw/2, cy + fh/2 + 22, `${Math.round(fromMm(result.filmWidthMm, currentUnit))} ${currentUnit}`, true)}
+      ${measureArrow(cx + fw/2 + 22, cy - fh/2, cx + fw/2 + 22, cy + fh/2, `${Math.round(fromMm(result.filmHeightMm, currentUnit))} ${currentUnit}`)}
+
+      <!-- Film Type Badge -->
+      <rect x="${cx - 80}" y="310" width="160" height="20" rx="4" fill="#0f172a"/>
+      <text x="${cx}" y="324" font-family="monospace" font-size="9" font-weight="600" text-anchor="middle" fill="#ffffff">${style.label}</text>
+    `;
+  }
+
+  function toggleResults(hasResults: boolean) {
+    const emptyEl = document.getElementById('results-empty');
+    const gridEl  = document.getElementById('results-grid');
+    const recEl   = document.getElementById('rec-section');
+    const extEl   = document.getElementById('calc-extras');
+
+    if (emptyEl) emptyEl.hidden = hasResults;
+    if (gridEl)  gridEl.hidden  = !hasResults;
+    if (recEl)   recEl.hidden   = !hasResults;
+    if (extEl)   extEl.hidden   = !hasResults;
+  }
+
+  function calculate() {
+    const wInput = (document.getElementById('input-width') as HTMLInputElement)?.value;
+    const hInput = (document.getElementById('input-height') as HTMLInputElement)?.value;
+
+    if (!wInput || !hInput) {
+      toggleResults(false);
+      return;
+    }
+
+    const w = normalizeInput(wInput, currentUnit);
+    const h = normalizeInput(hInput, currentUnit);
+
+    if (!w || !h || w <= 0 || h <= 0) {
+      toggleResults(false);
+      return;
+    }
+
+    const wMm = toMm(w, currentUnit);
+    const hMm = toMm(h, currentUnit);
+
+    const input: FilmInput = {
+      windowWidthMm: wMm,
+      windowHeightMm: hMm,
+      filmType: currentFilmType,
+      glassType: currentGlassType,
+      installation: currentInstallation,
+      orientation: currentOrientation,
+      climate: currentClimate,
+      rollWidthMm: currentRollWidthMm > 0 ? currentRollWidthMm : undefined,
+    };
+
+    const result = calculateFilm(input);
+    currentResult = result;
+    const recs = buildFilmRecommendations(input, result);
+
+    // ── Primary metrics ──────────────────────────────────────────────────────
+    updateMetric('card-film-width', formatDimension(result.filmWidthMm, currentUnit));
+    updateMetric('card-film-height', formatDimension(result.filmHeightMm, currentUnit));
+    updateMetric('card-roll-width', formatDimension(result.requiredRollWidthMm, currentUnit), `(${Math.round(result.requiredRollWidthMm / 25.4)}" roll)`);
+    updateMetric('card-roll-length', formatDimension(result.requiredRollLengthMm, currentUnit));
+    updateMetric('card-total-sqft', `${result.totalFilmRequiredSqFt.toFixed(1)} sq ft`, `(${result.totalFilmRequiredM2.toFixed(2)} m²)`);
+    updateMetric('card-waste-pct', `${result.wastePercent.toFixed(1)}%`, 'trimming margin');
+    updateMetric('card-heat-red', `${result.heatReductionPercent}%`, 'heat gain blocked');
+    updateMetric('card-mat-cost', `$${result.materialCostEstimate.toFixed(2)}`, `(Cost Tier: ${result.costTier})`);
+
+    // ── Confidence summary card ───────────────────────────────────────────────
+    const confEl = document.getElementById('card-confidence');
+    const starsEl = document.getElementById('confidence-stars');
+    const labelEl = document.getElementById('confidence-label');
+    const orderBadge = document.getElementById('confidence-ordering-badge');
+    const costBadge = document.getElementById('cost-badge');
+    const scoreBadge = document.getElementById('score-badge');
+
+    const confMap: Record<string, { stars: string; label: string; score: string }> = {
+      'excellent':        { stars: '★★★★★', label: 'Exact Roll Width Match', score: '100% Fit Match' },
+      'good':             { stars: '★★★★☆', label: 'Standard Stock Roll Fit', score: '95% Fit Match' },
+      'minor-adjustment': { stars: '★★★☆☆', label: 'Trim Stock Roll to Fit', score: '85% Fit Match' },
+      'custom-required':  { stars: '★★☆☆☆', label: 'Seam / Special Order', score: '70% Custom Match' },
+    };
+    const conf = confMap[result.confidence] ?? confMap['good'];
+    if (starsEl) starsEl.textContent = conf.stars;
+    if (labelEl) labelEl.textContent = conf.label;
+    if (scoreBadge) scoreBadge.textContent = conf.score;
+    if (orderBadge) {
+      const orderMap: Record<string, string> = {
+        'exact': '✓ Order Standard Roll',
+        'next-stock': '✓ Order Next Stock Size',
+        'trim': '✓ Trim Roll to Fit',
+        'custom': '⚠ Seam Joining Required',
+      };
+      orderBadge.textContent = orderMap[result.orderingRecommendation] ?? orderMap['exact'];
+    }
+    if (costBadge) costBadge.textContent = `Est. Cost: ${result.costTier}`;
+    if (confEl) confEl.removeAttribute('hidden');
+
+    // ── Interactive Stock Roll Chips ──────────────────────────────────────────
+    const nearestRoll = result.stockRollSuggestions[0] ?? 0;
+    const rollChips = result.stockRollSuggestions
+      .map((mm: number) => {
+        const isMatch = Math.abs(mm - result.requiredRollWidthMm) < 2 || mm === nearestRoll;
+        const cls = isMatch ? 'stock-chip stock-chip--nearest' : 'stock-chip';
+        const formattedVal = formatDimension(mm, currentUnit);
+        const userVal = String(mm);
+        return `<button type="button" class="${cls}" data-val="${userVal}" aria-label="Select roll width ${formattedVal}">${formattedVal} (${Math.round(mm / 25.4)}")</button>`;
+      }).join('');
+    const rollContainer = document.getElementById('stock-rolls');
+    if (rollContainer) rollContainer.innerHTML = rollChips;
+
+    // ── Recommendation cards (Normalized with SVGs) ─────────────────────────
+    const recList = document.getElementById('rec-list');
+    if (recList) {
+      const iconMap: Record<string, string> = {
+        'film-type': `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/></svg>`,
+        'roll-size': `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><line x1="12" y1="12" x2="12" y2="3"/></svg>`,
+        'solar': `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>`,
+        'installation': `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>`,
+        'care': `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>`,
+        'safety': `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>`,
+      };
+      recList.innerHTML = recs.items.map((item: { title: string; body: string; tip?: string; type: string }) =>
+        `<div class="rec-card">
+          <div class="rec-card-header">
+            <span class="rec-card-icon" aria-hidden="true">${iconMap[item.type] || iconMap['film-type']}</span>
+            <span class="rec-card-title">${item.title}</span>
+          </div>
+          <div class="rec-card-body">${item.body}</div>
+          ${item.tip ? `<div class="rec-card-tip">${item.tip}</div>` : ''}
+        </div>`
+      ).join('');
+    }
+
+    // ── SVG diagram ───────────────────────────────────────────────────────────
+    renderFilmSvg(result, wMm, hMm, currentFilmType);
+
+    // ── Reveal results panel ──────────────────────────────────────────────────
+    toggleResults(true);
+
+    // ── Build shared state ────────────────────────────────────────────────────
+    const filmLabel = currentFilmType.split('-').map(s => s.charAt(0).toUpperCase() + s.slice(1)).join(' ');
+    const glassLabel = currentGlassType.split('-').map(s => s.charAt(0).toUpperCase() + s.slice(1)).join(' ');
+    const histLabel = `Window Film`;
+    const summaryText = `${w} × ${h} ${currentUnit}`;
+
+    const stateParams = {
+      width: String(w),
+      height: String(h),
+      unit: currentUnit,
+      filmType: currentFilmType,
+      glassType: currentGlassType,
+      installation: currentInstallation,
+      orientation: currentOrientation,
+      climate: currentClimate,
+      rollWidth: String(currentRollWidthMm),
+      subtitle: `${filmLabel} · ${glassLabel}`,
+      summary: summaryText,
+      _display: summaryText,
+    };
+
+    (window as any).wmCurrentState = stateParams;
+
+    // ── URL state ─────────────────────────────────────────────────────────────
+    pushUrlState(stateParams);
+
+    // ── History ───────────────────────────────────────────────────────────────
+    (window as any).wmHistoryPanel?.add(histLabel, stateParams);
+
+    // ── Export / share wiring ─────────────────────────────────────────────────
+    (window as any).wmBuildSummary = () => buildSummary(
+      'Window Film & Tint Calculator',
+      [
+        ['Window Width', `${w} ${currentUnit}`],
+        ['Window Height', `${h} ${currentUnit}`],
+        ['Unit', currentUnit],
+        ['Film Type', filmLabel],
+        ['Glass Type', glassLabel],
+        ['Cut Width', formatDimension(result.filmWidthMm, currentUnit)],
+        ['Cut Height', formatDimension(result.filmHeightMm, currentUnit)],
+        ['Roll Width', formatDimension(result.requiredRollWidthMm, currentUnit)],
+        ['Total Required', `${result.totalFilmRequiredSqFt.toFixed(1)} sq ft`],
+        ['Heat Reduction', `${result.heatReductionPercent}%`],
+        ['Confidence', conf.label],
+        ['Cost Tier', result.costTier],
+      ],
+      typeof window !== 'undefined' ? window.location.href : undefined,
+    );
+
+    (window as any).wmBuildExport = () => buildExportPayload(
+      'window-film-calculator',
+      stateParams,
+      {
+        windowWidth: `${w} ${currentUnit}`,
+        windowHeight: `${h} ${currentUnit}`,
+        unit: currentUnit,
+        filmType: currentFilmType,
+        glassType: currentGlassType,
+        installation: currentInstallation,
+        orientation: currentOrientation,
+        climate: currentClimate,
+        filmWidth: formatDimension(result.filmWidthMm, currentUnit),
+        filmHeight: formatDimension(result.filmHeightMm, currentUnit),
+        requiredRollWidth: formatDimension(result.requiredRollWidthMm, currentUnit),
+        requiredRollLength: formatDimension(result.requiredRollLengthMm, currentUnit),
+        totalFilmSqFt: `${result.totalFilmRequiredSqFt.toFixed(1)} sq ft`,
+        wastePercent: `${result.wastePercent.toFixed(1)}%`,
+        heatReduction: `${result.heatReductionPercent}%`,
+        uvProtection: `${result.uvProtectionPercent}%`,
+        materialCost: `$${result.materialCostEstimate.toFixed(2)}`,
+        costTier: result.costTier,
+        confidence: result.confidence,
+        orderingRecommendation: result.orderingRecommendation,
+        recommendations: recs.items.map((i: any) => `${i.title}: ${i.body}`).join(' | '),
+        warnings: result.warnings.map((w: any) => w.message).join(' | '),
+      },
+    );
+
+    (window as any).wmShareExportBar?.show();
+
+    // ── Analytics ─────────────────────────────────────────────────────────────
+    track({
+      type: 'calculation_completed',
+      properties: { slug: 'window-film-calculator', unit: currentUnit, inputs: stateParams },
+    });
+  }
+
+  // ── DOMContentLoaded ─────────────────────────────────────────────────────
+  function initCalculator() {
+    const widthInput  = document.getElementById('input-width')  as HTMLInputElement;
+    const heightInput = document.getElementById('input-height') as HTMLInputElement;
+
+    widthInput?.addEventListener('input', calculate);
+    heightInput?.addEventListener('input', calculate);
+
+    document.getElementById('input-film-type')?.addEventListener('change', () => {
+      currentFilmType = (document.getElementById('input-film-type') as HTMLSelectElement).value as FilmType;
+      calculate();
+    });
+
+    document.getElementById('input-glass-type')?.addEventListener('change', () => {
+      currentGlassType = (document.getElementById('input-glass-type') as HTMLSelectElement).value as FilmGlassType;
+      calculate();
+    });
+
+    document.getElementById('input-roll-width')?.addEventListener('change', () => {
+      currentRollWidthMm = parseFloat((document.getElementById('input-roll-width') as HTMLSelectElement).value || '0');
+      calculate();
+    });
+
+    initOptionSelector('install-selector', (val) => {
+      currentInstallation = val as FilmInstallation;
+      calculate();
+    });
+
+    initOptionSelector('orientation-selector', (val) => {
+      currentOrientation = val as FilmOrientation;
+      calculate();
+    });
+
+    initOptionSelector('climate-selector', (val) => {
+      currentClimate = val as FilmClimate;
+      calculate();
+    });
+
+    // Interactive stock roll chip selection
+    document.getElementById('stock-rolls')?.addEventListener('click', (e) => {
+      const chip = (e.target as HTMLElement).closest('.stock-chip') as HTMLElement | null;
+      if (chip?.dataset.val) {
+        currentRollWidthMm = parseFloat(chip.dataset.val);
+        const sel = document.getElementById('input-roll-width') as HTMLSelectElement;
+        if (sel) sel.value = String(currentRollWidthMm);
+        calculate();
+      }
+    });
+
+    // Unit selector — listens for custom 'unitchange' event
+    document.getElementById('unit-selector')?.addEventListener('unitchange', (e) => {
+      const newUnit = (e as CustomEvent).detail?.unit as MeasurementUnit | undefined;
+      if (!newUnit) return;
+      if (widthInput?.value) {
+        const parsed = normalizeInput(widthInput.value, currentUnit);
+        if (parsed) widthInput.value = String(fromMm(toMm(parsed, currentUnit), newUnit));
+      }
+      if (heightInput?.value) {
+        const parsed = normalizeInput(heightInput.value, currentUnit);
+        if (parsed) heightInput.value = String(fromMm(toMm(parsed, currentUnit), newUnit));
+      }
+      const oldUnit = currentUnit;
+      currentUnit = newUnit;
+      track({ type: 'unit_changed', properties: { slug: 'window-film-calculator', from: oldUnit, to: newUnit } });
+      calculate();
+    });
+
+    // ── Restore URL state on load ────────────────────────────────────────────
+    const urlState = readUrlState();
+    if (urlState.width && widthInput)   widthInput.value  = urlState.width;
+    if (urlState.height && heightInput) heightInput.value = urlState.height;
+    if (urlState.unit && ['mm','cm','m','in','ft'].includes(urlState.unit)) {
+      currentUnit = urlState.unit as MeasurementUnit;
+      const unitBtn = document.querySelector<HTMLElement>(`.unit-btn[data-value="${currentUnit}"]`);
+      if (unitBtn) {
+        document.querySelectorAll('.unit-btn').forEach(b => (b as HTMLElement).setAttribute('aria-pressed','false'));
+        unitBtn.setAttribute('aria-pressed', 'true');
+      }
+    }
+    if (urlState.filmType) {
+      currentFilmType = urlState.filmType as FilmType;
+      const sel = document.getElementById('input-film-type') as HTMLSelectElement;
+      if (sel) sel.value = currentFilmType;
+    }
+    if (urlState.glassType) {
+      currentGlassType = urlState.glassType as FilmGlassType;
+      const sel = document.getElementById('input-glass-type') as HTMLSelectElement;
+      if (sel) sel.value = currentGlassType;
+    }
+    if (urlState.rollWidth) {
+      currentRollWidthMm = parseFloat(urlState.rollWidth);
+      const sel = document.getElementById('input-roll-width') as HTMLSelectElement;
+      if (sel) sel.value = String(currentRollWidthMm);
+    }
+    if (urlState.installation) {
+      currentInstallation = urlState.installation as FilmInstallation;
+      document.querySelectorAll('#install-selector .option-btn').forEach(b =>
+        (b as HTMLElement).setAttribute('aria-pressed', (b as HTMLElement).dataset.value === currentInstallation ? 'true' : 'false'));
+    }
+    if (urlState.orientation) {
+      currentOrientation = urlState.orientation as FilmOrientation;
+      document.querySelectorAll('#orientation-selector .option-btn').forEach(b =>
+        (b as HTMLElement).setAttribute('aria-pressed', (b as HTMLElement).dataset.value === currentOrientation ? 'true' : 'false'));
+    }
+    if (urlState.climate) {
+      currentClimate = urlState.climate as FilmClimate;
+      document.querySelectorAll('#climate-selector .option-btn').forEach(b =>
+        (b as HTMLElement).setAttribute('aria-pressed', (b as HTMLElement).dataset.value === currentClimate ? 'true' : 'false'));
+    }
+
+    // Auto-calculate on load if valid inputs exist
+    calculate();
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initCalculator);
+  } else {
+    initCalculator();
+  }
+
+  // ── History restore ──────────────────────────────────────────────────────
+  document.addEventListener('wm:history-restore', (e: Event) => {
+    const { inputs } = (e as CustomEvent).detail;
+    const widthInput  = document.getElementById('input-width')  as HTMLInputElement;
+    const heightInput = document.getElementById('input-height') as HTMLInputElement;
+
+    if (inputs.width)  widthInput.value  = inputs.width;
+    if (inputs.height) heightInput.value = inputs.height;
+    if (inputs.unit && ['mm','cm','m','in','ft'].includes(inputs.unit)) {
+      currentUnit = inputs.unit as MeasurementUnit;
+      const unitBtn = document.querySelector<HTMLElement>(`.unit-btn[data-value="${currentUnit}"]`);
+      if (unitBtn) {
+        document.querySelectorAll('.unit-btn').forEach(b => (b as HTMLElement).setAttribute('aria-pressed','false'));
+        unitBtn.setAttribute('aria-pressed', 'true');
+      }
+    }
+    if (inputs.filmType) {
+      currentFilmType = inputs.filmType as FilmType;
+      const sel = document.getElementById('input-film-type') as HTMLSelectElement;
+      if (sel) sel.value = currentFilmType;
+    }
+    if (inputs.glassType) {
+      currentGlassType = inputs.glassType as FilmGlassType;
+      const sel = document.getElementById('input-glass-type') as HTMLSelectElement;
+      if (sel) sel.value = currentGlassType;
+    }
+    calculate();
+    track({ type: 'history_restored', properties: { slug: 'window-film-calculator', entryId: (e as CustomEvent).detail.entryId ?? '' } });
+  });
+</script>
+
+<style>
+  .calc-dashboard {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--spacing-xl);
+    align-items: start;
+    margin-top: var(--spacing-lg);
+  }
+
+  @media (min-width: 1024px) {
+    .calc-dashboard {
+      grid-template-columns: 360px 1fr;
+    }
+  }
+
+  .calc-panel {
+    background-color: var(--color-canvas);
+    border: 1px solid var(--color-hairline);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+  }
+
+  .calc-panel-inputs {
+    position: sticky;
+    top: var(--spacing-md);
+  }
+
+  .panel-header {
+    padding: var(--spacing-md);
+    background-color: var(--color-canvas-soft);
+    border-bottom: 1px solid var(--color-hairline);
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+  }
+
+  .panel-label {
+    font-family: var(--font-family-mono);
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--color-muted);
+  }
+
+  .panel-section-header {
+    padding: var(--spacing-sm) var(--spacing-md);
+    background-color: var(--color-canvas-soft-2);
+    border-bottom: 1px solid var(--color-hairline);
+  }
+
+  .panel-section-title {
+    font-family: var(--font-family-mono);
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--color-brand);
+  }
+
+  .input {
+    width: 100%;
+    height: 38px;
+    padding: 0 var(--spacing-md);
+    font-family: var(--font-family-sans);
+    font-size: var(--font-size-body-sm);
+    color: var(--color-ink);
+    background-color: var(--color-canvas);
+    border: 1px solid var(--color-hairline-strong);
+    border-radius: var(--radius-sm);
+    box-sizing: border-box;
+    transition: border-color 150ms ease, box-shadow 150ms ease;
+  }
+
+  .input:focus {
+    outline: none;
+    border-color: var(--color-link);
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-link) 20%, transparent);
+  }
+
+  .input-select {
+    width: 100%;
+    height: 38px;
+    padding: 0 var(--spacing-md);
+    font-family: var(--font-family-sans);
+    font-size: var(--font-size-body-sm);
+    color: var(--color-ink);
+    background-color: var(--color-canvas);
+    border: 1px solid var(--color-hairline-strong);
+    border-radius: var(--radius-sm);
+    box-sizing: border-box;
+    cursor: pointer;
+  }
+
+  .input-select:focus {
+    outline: none;
+    border-color: var(--color-link);
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-link) 20%, transparent);
+  }
+
+  .option-selector {
+    display: flex;
+    gap: 4px;
+    flex-wrap: wrap;
+  }
+
+  .option-btn {
+    flex: 1;
+    min-width: 60px;
+    height: 34px;
+    padding: 0 var(--spacing-xs);
+    font-family: var(--font-family-sans);
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--color-muted);
+    background-color: var(--color-canvas);
+    border: 1px solid var(--color-hairline-strong);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    white-space: nowrap;
+    text-align: center;
+    transition: all 120ms ease;
+  }
+
+  .option-btn:hover {
+    color: var(--color-ink);
+    border-color: var(--color-ink);
+  }
+
+  .option-btn[aria-pressed='true'] {
+    color: #ffffff;
+    background-color: var(--color-brand);
+    border-color: var(--color-brand);
+    font-weight: 600;
+  }
+
+  .empty-state {
+    padding: var(--spacing-3xl) var(--spacing-xl);
+    text-align: center;
+    color: var(--color-muted);
+  }
+
+  .empty-icon-wrap {
+    display: inline-flex;
+    padding: var(--spacing-md);
+    background: var(--color-canvas-soft);
+    border-radius: var(--radius-full);
+    margin-bottom: var(--spacing-md);
+  }
+
+  .empty-svg {
+    color: var(--color-muted);
+  }
+
+  .empty-title {
+    font-size: var(--font-size-title-sm);
+    font-weight: 600;
+    color: var(--color-ink);
+    margin: 0 0 var(--spacing-xs);
+  }
+
+  .empty-sub {
+    font-size: var(--font-size-caption);
+    margin: 0;
+  }
+
+  .results-metric-grid {
+    padding: var(--spacing-lg);
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--spacing-md);
+  }
+
+  @media (min-width: 640px) {
+    .results-metric-grid {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+
+  .results-metric-grid > * {
+    height: 100%;
+    min-height: 96px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+
+  /* ── Unified Confidence Summary Card ────────────────────────────── */
+  .confidence-summary-card {
+    margin: 0 var(--spacing-lg) var(--spacing-md);
+    padding: var(--spacing-lg);
+    background: linear-gradient(180deg, color-mix(in srgb, var(--color-brand) 8%, var(--color-canvas)) 0%, var(--color-canvas) 100%);
+    border: 1px solid color-mix(in srgb, var(--color-brand) 22%, transparent);
+    border-radius: var(--radius-lg);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+    text-align: center;
+  }
+
+  .conf-card-header {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    margin-bottom: var(--spacing-md);
+  }
+
+  .conf-stars {
+    font-size: 20px;
+    letter-spacing: 3px;
+    color: #f59e0b;
+  }
+
+  .conf-title {
+    font-weight: 700;
+    font-size: var(--font-size-body);
+    color: var(--color-ink);
+  }
+
+  .conf-card-badges {
+    display: flex;
+    justify-content: center;
+    gap: var(--spacing-sm);
+    flex-wrap: wrap;
+  }
+
+  .conf-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 12px;
+    border-radius: var(--radius-full);
+    font-size: var(--font-size-caption);
+    font-weight: 600;
+    background: var(--color-canvas-soft-2);
+    border: 1px solid var(--color-hairline);
+    color: var(--color-ink);
+    font-family: var(--font-family-mono);
+  }
+
+  .conf-badge-cost {
+    background: color-mix(in srgb, var(--color-brand) 12%, transparent);
+    border-color: color-mix(in srgb, var(--color-brand) 25%, transparent);
+    color: var(--color-brand);
+  }
+
+  .conf-badge-order {
+    background: color-mix(in srgb, #22c55e 12%, transparent);
+    border-color: color-mix(in srgb, #22c55e 25%, transparent);
+    color: #15803d;
+  }
+
+  [data-theme='dark'] .conf-badge-order {
+    color: #4ade80;
+  }
+
+  .conf-badge-score {
+    background: color-mix(in srgb, #22c55e 12%, transparent);
+    border-color: color-mix(in srgb, #22c55e 25%, transparent);
+    color: #15803d;
+  }
+
+  [data-theme='dark'] .conf-badge-score {
+    color: #4ade80;
+  }
+
+  /* ── Stock Chips ────────────────────────────────────────────────── */
+  .stock-section {
+    padding: var(--spacing-lg);
+    border-top: 1px solid var(--color-hairline);
+  }
+
+  .stock-section-header {
+    margin-bottom: var(--spacing-sm);
+  }
+
+  .stock-label {
+    font-family: var(--font-family-mono);
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    color: var(--color-muted);
+  }
+
+  .stock-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .stock-chip {
+    padding: 4px 10px;
+    background-color: var(--color-canvas-soft-2);
+    border: 1px solid var(--color-hairline);
+    border-radius: var(--radius-full);
+    font-size: var(--font-size-caption);
+    color: var(--color-ink);
+    font-family: var(--font-family-mono);
+    font-weight: 500;
+    cursor: pointer;
+    appearance: none;
+    transition: all 0.15s ease;
+  }
+
+  .stock-chip:hover {
+    border-color: var(--color-brand);
+    color: var(--color-brand);
+    background-color: var(--color-canvas);
+  }
+
+  .stock-chip:focus-visible {
+    outline: 2px solid var(--color-brand);
+    outline-offset: 2px;
+  }
+
+  .stock-chip--nearest {
+    background-color: var(--color-brand);
+    color: #ffffff !important;
+    border-color: var(--color-brand);
+    font-weight: 700;
+    box-shadow: 0 1px 4px color-mix(in srgb, var(--color-brand) 35%, transparent);
+  }
+
+  .stock-chip--nearest:hover {
+    background-color: color-mix(in srgb, var(--color-brand) 85%, black);
+    color: #ffffff !important;
+  }
+
+  .svg-section {
+    padding: var(--spacing-lg);
+    border-bottom: 1px solid var(--color-hairline);
+    background-color: var(--color-canvas-soft);
+  }
+
+  .svg-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--spacing-md);
+  }
+
+  .svg-label {
+    font-family: var(--font-family-mono);
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    color: var(--color-ink);
+  }
+
+  .svg-subtitle {
+    font-size: var(--font-size-caption);
+    color: var(--color-muted);
+    font-family: var(--font-family-mono);
+  }
+
+  .svg-wrap {
+    background-color: #ffffff;
+    border: 1px solid var(--color-hairline);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    padding: var(--spacing-md);
+    display: flex;
+    justify-content: center;
+    box-shadow: inset 0 1px 3px rgba(0,0,0,0.03);
+  }
+
+  [data-theme='dark'] .svg-wrap {
+    background-color: #0f172a;
+    border-color: #334155;
+  }
+
+  .rec-section {
+    border-top: 1px solid var(--color-hairline);
+  }
+
+  .rec-list {
+    padding: var(--spacing-lg);
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--spacing-md);
+  }
+
+  @media (min-width: 640px) {
+    .rec-list {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+
+  .rec-card {
+    padding: var(--spacing-md) var(--spacing-lg);
+    background: var(--color-canvas-soft);
+    border: 1px solid var(--color-hairline);
+    border-radius: var(--radius-md);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 4px;
+    height: 100%;
+    min-height: 100px;
+  }
+
+  .rec-card-header {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .rec-card-icon {
+    color: var(--color-brand);
+    display: inline-flex;
+    align-items: center;
+    flex-shrink: 0;
+  }
+
+  .rec-card-title {
+    font-family: var(--font-family-mono);
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--color-brand);
+  }
+
+  .rec-card-body {
+    font-size: var(--font-size-body-sm);
+    font-weight: 700;
+    color: var(--color-ink);
+    line-height: 1.3;
+  }
+
+  .rec-card-tip {
+    font-size: var(--font-size-caption);
+    color: var(--color-muted);
+    line-height: 1.35;
+  }
+
+  .calc-extras {
+    border-top: 1px solid var(--color-hairline);
+    background-color: var(--color-canvas-soft);
+    padding: var(--spacing-lg);
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-lg);
+  }
+
+  @media (max-width: 640px) {
+    .results-metric-grid {
+      grid-template-columns: 1fr;
+      padding: var(--spacing-md);
+    }
+    .stock-section, .rec-list, .calc-extras, .svg-section {
+      padding: var(--spacing-md);
+    }
+    .confidence-summary-card {
+      margin: 0 var(--spacing-md) var(--spacing-md);
+      padding: var(--spacing-md);
+    }
+    .stock-chips {
+      gap: 4px;
+    }
+    .conf-card-badges {
+      flex-direction: column;
+      align-items: stretch;
+    }
+    .conf-badge {
+      justify-content: center;
+    }
+  }
+</style>
