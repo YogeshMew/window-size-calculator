@@ -1,0 +1,963 @@
+---
+/**
+ * WindowMetrics — Window Installation Materials Calculator Page
+ * Route: /tools/window-installation-calculator
+ *
+ * Dedicated window installation materials takeoff and hardware calculator.
+ * Calculates exact flashing tape linear length, sealant caulk tubes, low-expansion foam cans,
+ * backer rod, shim packs, fastener counts, anchor spacing, drip cap header flashing,
+ * waterproof sill membrane area, estimated installation labor hours, and difficulty rating.
+ */
+
+import ToolLayout from '@/layouts/ToolLayout.astro';
+import CalculatorHero from '@/components/calculator/CalculatorHero.astro';
+import InputCard from '@/components/calculator/InputCard.astro';
+import UnitSelector from '@/components/calculator/UnitSelector.astro';
+import ResultMetricCard from '@/components/calculator/ResultMetricCard.astro';
+import ShareExportBar from '@/components/calculator/ShareExportBar.astro';
+import HistoryPanel from '@/components/calculator/HistoryPanel.astro';
+import RelatedTools from '@/components/calculator/RelatedTools.astro';
+import FAQSection from '@/components/content/FAQSection.astro';
+import { getToolBySlug } from '@/data/tools.js';
+
+const tool = getToolBySlug('window-installation-calculator');
+if (!tool) {
+  throw new Error('Tool data for "window-installation-calculator" not found in tool registry.');
+}
+
+const breadcrumbs = [
+  { label: 'Home', href: '/' },
+  { label: 'Tools', href: '/tools' },
+  { label: 'Window Installation Calculator', href: '/tools/window-installation-calculator' },
+];
+
+const faqs = [
+  {
+    question: 'What materials are required to install a window properly?',
+    answer: 'Standard window installation requires 4 key material layers: 1) Self-adhered flashing tape for waterproofing, 2) Composite shims for leveling, 3) Fasteners/screws appropriate for the wall substrate, 4) Low-expansion foam for perimeter air sealing, and 5) Exterior elastomeric sealant.',
+  },
+  {
+    question: 'How much flashing tape do I need per window?',
+    answer: 'Calculate window perimeter plus 2 feet of extra overlap for the sill pan flaps. A standard 36" × 48" window (14 ft perimeter) requires 16 linear feet of 4-inch self-adhered flashing tape.',
+  },
+  {
+    question: 'How many caulk tubes of sealant are needed for window installation?',
+    answer: 'One standard 10.1 oz tube of sealant covers ~24 linear feet at a 1/4" × 1/4" bead size. A single window requiring 2 passes (exterior joint + interior air seal) usually requires 1.5 to 2 tubes of caulk.',
+  },
+  {
+    question: 'Why must I use LOW-EXPANSION spray foam for windows?',
+    answer: 'Standard expanding foam generates intense pressure as it cures, which bows vinyl and wood window frame jambs inward and jams the operating sashes. Low-expansion window & door foam expands minimally without distorting jambs.',
+  },
+  {
+    question: 'How far apart should window installation fasteners be spaced?',
+    answer: 'Fasteners must be placed within 4 inches of each corner and spaced no more than 16 inches apart along side and top jambs (at least 3 fasteners per jamb side for standard 48" tall windows).',
+  },
+  {
+    question: 'What screws are needed for installing windows into concrete or brick walls?',
+    answer: 'Masonry installations require 3/16" or 1/4" diameter concrete masonry screws (such as Tapcon screws) with at least 1-1/4 inches of embedment into pilot holes pre-drilled with a hammer drill.',
+  },
+  {
+    question: 'How long does it take to install one window?',
+    answer: 'A standard pocket insert window installation takes 1 to 1.5 hours per window. A full-frame replacement in a wood stud wall takes 2 to 2.5 hours, while masonry installations take 3+ hours per window.',
+  },
+  {
+    question: 'Why should I leave a backer rod gap behind exterior sealant?',
+    answer: 'Backer rod prevents 3-sided caulk adhesion failure. Caulk should only adhere to the window frame edge and the wall edge, allowing the caulk bead to stretch flexibly as the wall expands and contracts.',
+  },
+  {
+    question: 'What is an aluminum drip cap and where is it installed?',
+    answer: 'A drip cap is a Z-shaped metal header flashing installed over the top exterior trim or nailing flange. It directs rainwater away from the top window joint and prevents water from seeping behind siding.',
+  },
+];
+---
+
+<ToolLayout
+  tool={tool}
+  breadcrumbs={breadcrumbs}
+  faqs={faqs}
+  title="Window Installation Materials Calculator | WindowMetrics"
+  description="Calculate flashing tape, sealant, foam, shims, fasteners, drip cap, and installation time for any window."
+>
+  <CalculatorHero
+    tool={tool}
+    description="Calculate flashing tape, sealant, foam, shims, fasteners, drip cap, and installation time for any window."
+    features={[
+      'Complete material takeoff checklist (Flashing, Caulk, Foam, Screws)',
+      'Flashing tape linear feet & waterproof sill membrane area',
+      'Sealant caulk tube & low-expansion foam can coverage',
+      'Fastener counts & anchor spacing for Wood, Steel & Masonry',
+    ]}
+    trustItems={[
+      { label: 'ASTM E2112 installation math' },
+      { label: 'Masonry & Wood substrate support' },
+      { label: 'No signup' },
+      { label: 'Instant live calculation' },
+    ]}
+  />
+
+  <div class="calc-dashboard">
+    <!-- LEFT PANEL — Inputs -->
+    <div class="calc-panel calc-panel-inputs">
+      <div class="panel-header">
+        <span class="panel-label">Window Dimensions & Quantity</span>
+        <UnitSelector defaultUnit="in" />
+      </div>
+
+      <div class="panel-section-header">
+        <span class="panel-section-title">Dimensions & Type</span>
+      </div>
+
+      <InputCard label="Window Width" inputId="input-width" hint="Frame width">
+        <input type="text" id="input-width" class="input" placeholder="e.g., 36" autocomplete="off" />
+      </InputCard>
+
+      <InputCard label="Window Height" inputId="input-height" hint="Frame height">
+        <input type="text" id="input-height" class="input" placeholder="e.g., 48" autocomplete="off" />
+      </InputCard>
+
+      <InputCard label="Quantity" inputId="input-quantity" hint="Number of windows to install">
+        <input type="number" id="input-quantity" class="input" value="1" min="1" max="100" step="1" />
+      </InputCard>
+
+      <InputCard label="Installation Type" inputId="input-install-type">
+        <select id="input-install-type" class="input-select" aria-label="Select Installation Type">
+          <option value="new-construction" selected>New Construction (Nailing Flange)</option>
+          <option value="replacement">Full-Frame Replacement (Finless Frame)</option>
+          <option value="insert">Pocket Insert Replacement (Existing Frame)</option>
+        </select>
+      </InputCard>
+
+      <div class="panel-section-header">
+        <span class="panel-section-title">Substrate & Hardware</span>
+      </div>
+
+      <InputCard label="Frame Material" inputId="input-frame-material">
+        <select id="input-frame-material" class="input-select" aria-label="Select Frame Material">
+          <option value="vinyl" selected>Vinyl (PVC Profile)</option>
+          <option value="wood">Wood Timber</option>
+          <option value="aluminum">Aluminum Profile</option>
+          <option value="fiberglass">Fiberglass Composite</option>
+        </select>
+      </InputCard>
+
+      <InputCard label="Wall Substrate Type" inputId="input-wall-type">
+        <select id="input-wall-type" class="input-select" aria-label="Select Wall Substrate Type">
+          <option value="wood-stud" selected>Wood Stud Framing (2x4 / 2x6)</option>
+          <option value="steel-stud">Light Gauge Steel Stud Framing</option>
+          <option value="concrete">Poured Solid Concrete</option>
+          <option value="brick">Brick Masonry Cavity Wall</option>
+          <option value="block">CMU Concrete Block Wall</option>
+        </select>
+      </InputCard>
+
+      <InputCard label="Fastener Anchor Type" inputId="input-fastener-type">
+        <select id="input-fastener-type" class="input-select" aria-label="Select Fastener Anchor Type">
+          <option value="standard" selected>Standard #8 Exterior Screws</option>
+          <option value="concrete">3/16" Concrete Tapcon Screws</option>
+          <option value="structural">#10 Heavy Structural Screws</option>
+        </select>
+      </InputCard>
+
+      <InputCard label="Use Low-Expansion Foam" inputId="input-use-foam">
+        <select id="input-use-foam" class="input-select" aria-label="Use Low-Expansion Foam">
+          <option value="true" selected>Yes — Spray Foam Air Seal (Recommended)</option>
+          <option value="false">No — Fiber Insulation Pack Only</option>
+        </select>
+      </InputCard>
+
+      <InputCard label="Use Flashing Tape" inputId="input-use-flashing">
+        <select id="input-use-flashing" class="input-select" aria-label="Use Flashing Tape">
+          <option value="true" selected>Yes — Self-Adhered Flashing Tape</option>
+          <option value="false">No Flashing Tape</option>
+        </select>
+      </InputCard>
+    </div>
+
+    <!-- RIGHT PANEL — Results -->
+    <div class="calc-panel calc-panel-results">
+      <div id="results-empty" class="empty-state">
+        <div class="empty-icon-wrap">
+          <svg width="48" height="48" viewBox="0 0 48 48" fill="none" class="empty-svg">
+            <rect x="8" y="12" width="32" height="24" rx="3" stroke="currentColor" stroke-width="2.5" fill="none"/>
+            <circle cx="24" cy="24" r="6" stroke="currentColor" stroke-width="1.5" stroke-dasharray="2 2"/>
+          </svg>
+        </div>
+        <h3 class="empty-title">Enter window dimensions</h3>
+        <p class="empty-sub">Fill in Width and Height to calculate complete installation materials, flashing tape, caulk, foam, screws, and labor time.</p>
+      </div>
+
+      <div id="results-grid" hidden>
+        <!-- SVG Technical Window Wall Cross-Section Installation Vector Diagram Illustration -->
+        <div class="svg-section">
+          <div class="svg-header">
+            <span class="svg-label">Window Wall Cross-Section Installation Diagram</span>
+            <span class="svg-subtitle" id="svg-subtitle">Flashing, Shims, Foam, Sealant & Anchors</span>
+          </div>
+          <div class="svg-wrap">
+            <svg id="installation-svg" viewBox="0 0 400 340" width="100%" aria-label="Window installation cross-section diagram"></svg>
+          </div>
+        </div>
+
+        <div class="results-metric-grid">
+          <ResultMetricCard id="card-material-summary" label="Material Takeoff Checklist" highlight={true} sublabel="Hardware & supply items" animate={true} />
+          <ResultMetricCard id="card-difficulty" label="Installation Difficulty" highlight={true} sublabel="Skill level & labor rating" animate={true} />
+          <ResultMetricCard id="card-flashing" label="Flashing Tape Required" highlight={true} sublabel="Linear feet (4&quot; self-adhered)" animate={true} />
+          <ResultMetricCard id="card-sealant" label="Exterior Caulk Sealant" highlight={true} sublabel="10.1 oz tubes (ASTM C920)" animate={true} />
+          <ResultMetricCard id="card-foam" label="Low-Expansion Foam" sublabel="12 oz cans (Window & Door foam)" animate={true} />
+          <ResultMetricCard id="card-shims" label="Shim Packs Needed" sublabel="Packs of composite shim pairs" animate={true} />
+          <ResultMetricCard id="card-fasteners" label="Fasteners & Anchors" sublabel="Total screws & anchor spacing" animate={true} />
+          <ResultMetricCard id="card-time" label="Estimated Installation Time" sublabel="Labor hours (Total job time)" animate={true} />
+        </div>
+
+        <!-- Unified Confidence Summary Card -->
+        <div id="card-confidence" class="confidence-summary-card" hidden>
+          <div class="conf-card-header">
+            <span class="conf-stars" id="confidence-stars">★★★★★</span>
+            <span class="conf-title" id="confidence-label">Complete Installation Material Takeoff</span>
+          </div>
+          <div class="conf-card-badges">
+            <span class="conf-badge conf-badge-score" id="score-badge">NEW CONSTRUCTION</span>
+            <span class="conf-badge conf-badge-order" id="confidence-ordering-badge">✓ ASTM E2112 Standard Match</span>
+            <span class="conf-badge conf-badge-cost" id="cost-badge">Est. 1.5 Hours / Window</span>
+          </div>
+        </div>
+
+        <!-- Material Takeoff Checklist Table -->
+        <div id="checklist-section" class="checklist-section">
+          <div class="panel-header"><span class="panel-label">Complete Material Takeoff & Hardware Checklist</span></div>
+          <div id="checklist-grid" class="checklist-grid"></div>
+        </div>
+
+        <!-- Recommendations Grid -->
+        <div id="rec-section" class="rec-section" hidden>
+          <div class="panel-header"><span class="panel-label">Smart Recommendations & Installation Sequencing</span></div>
+          <div id="rec-list" class="rec-list"></div>
+        </div>
+
+        <!-- Share & Export + History Bar -->
+        <div class="calc-extras" id="calc-extras" hidden>
+          <ShareExportBar calculatorTitle="Window Installation Materials Calculator" />
+          <HistoryPanel slug="window-installation-calculator" />
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <Fragment slot="sidebar">
+    <RelatedTools
+      links={[
+        {
+          title: 'Window Frame Calculator',
+          description: 'Calculate frame dimensions, 4-piece cut list, and profile volume.',
+          href: '/tools/window-frame-calculator',
+          icon: 'Frame',
+        },
+        {
+          title: 'Window Trim Calculator',
+          description: 'Calculate trim casing lengths, stool, apron, and extension jambs.',
+          href: '/tools/window-trim-calculator',
+          icon: 'Crop',
+        },
+        {
+          title: 'Replacement Window Calculator',
+          description: 'Find standard replacement window sizes and rough openings.',
+          href: '/tools/replacement-window-calculator',
+          icon: 'RefreshCw',
+        },
+        {
+          title: 'Window Cost Calculator',
+          description: 'Calculate total window replacement costs and labor.',
+          href: '/tools/window-cost-calculator',
+          icon: 'DollarSign',
+        },
+      ]}
+      tip={{
+        label: 'Installer Tip',
+        text: 'Always install low-expansion non-bowing foam. Standard expanding foam generates high pressure that distorts vinyl jambs inward, causing window sashes to bind.',
+      }}
+    />
+    <FAQSection faqs={faqs} />
+  </Fragment>
+</ToolLayout>
+
+<script>
+  import {
+    calculateWindowInstallation,
+    type WindowInstallationInput,
+    type WindowInstallationType,
+    type WindowInstallationFrameMaterial,
+    type WindowInstallationWallType,
+    type WindowInstallationFastenerType,
+  } from '@/engine/window-installation.js';
+  import { buildWindowInstallationRecommendations } from '@/engine/window-installation-recommendations.js';
+  import { toMm, fromMm, formatDimension, normalizeInput } from '@/engine/units.js';
+  import { readUrlState, pushUrlState } from '@/lib/url-state.js';
+  import { buildExportPayload } from '@/lib/export.js';
+  import { buildSummary } from '@/lib/share.js';
+  import { track } from '@/lib/analytics.js';
+  import type { MeasurementUnit } from '@/types/calculator.js';
+
+  let currentResult: ReturnType<typeof calculateWindowInstallation> | null = null;
+  let currentUnit: MeasurementUnit = 'in';
+
+  // ── DOM references ────────────────────────────────────────────────────────
+  const widthInput        = document.getElementById('input-width')           as HTMLInputElement | null;
+  const heightInput       = document.getElementById('input-height')          as HTMLInputElement | null;
+  const qtyInput          = document.getElementById('input-quantity')        as HTMLInputElement | null;
+  const installTypeSelect = document.getElementById('input-install-type')    as HTMLSelectElement | null;
+  const materialSelect    = document.getElementById('input-frame-material')  as HTMLSelectElement | null;
+  const wallTypeSelect    = document.getElementById('input-wall-type')        as HTMLSelectElement | null;
+  const fastenerTypeSelect= document.getElementById('input-fastener-type')    as HTMLSelectElement | null;
+  const foamSelect        = document.getElementById('input-use-foam')        as HTMLSelectElement | null;
+  const flashingSelect    = document.getElementById('input-use-flashing')    as HTMLSelectElement | null;
+
+  const resultsEmpty      = document.getElementById('results-empty')          as HTMLElement | null;
+  const resultsGrid       = document.getElementById('results-grid')           as HTMLElement | null;
+  const recSection        = document.getElementById('rec-section')            as HTMLElement | null;
+  const calcExtras        = document.getElementById('calc-extras')            as HTMLElement | null;
+  const cardConf          = document.getElementById('card-confidence')         as HTMLElement | null;
+
+  function updateMetric(cardId: string, value: string, unitStr: string = '') {
+    const valEl = document.querySelector(`#${cardId} .result-value-text`);
+    const unitEl = document.querySelector(`#${cardId} .result-unit`);
+    if (valEl) valEl.textContent = value;
+    if (unitEl) unitEl.textContent = unitStr;
+  }
+
+  // ── Vector SVG Window Wall Installation Renderer ───────────────────────────
+  function renderInstallationSvg(result: ReturnType<typeof calculateWindowInstallation>, wMm: number, hMm: number) {
+    const svg = document.getElementById('installation-svg');
+    if (!svg) return;
+
+    const cx = 170, cy = 160;
+    const maxW = 190, maxH = 170;
+    const scale = Math.min(maxW / wMm, maxH / hMm);
+
+    const winW = wMm * scale;
+    const winH = hMm * scale;
+
+    svg.innerHTML = `
+      <defs>
+        <pattern id="grid-inst" width="20" height="20" patternUnits="userSpaceOnUse">
+          <path d="M 20 0 L 0 0 0 20" fill="none" stroke="rgba(0,0,0,0.03)" stroke-width="1"/>
+        </pattern>
+      </defs>
+      <rect width="400" height="340" fill="url(#grid-inst)" rx="6"/>
+
+      <!-- Wall Framing Rough Opening -->
+      <rect x="${cx - winW/2 - 20}" y="${cy - winH/2 - 20}" width="${winW + 40}" height="${winH + 40}" fill="#f1f5f9" stroke="#334155" stroke-width="6" rx="4"/>
+      <text x="${cx}" y="${cy - winH/2 - 26}" font-family="sans-serif" font-size="9" font-weight="700" text-anchor="middle" fill="#475569">ROUGH OPENING WALL FRAMING</text>
+
+      <!-- Flashing Tape Layer (Blue line) -->
+      <rect x="${cx - winW/2 - 12}" y="${cy - winH/2 - 12}" width="${winW + 24}" height="${winH + 24}" fill="none" stroke="#0284c7" stroke-width="3" stroke-dasharray="6 3"/>
+
+      <!-- Low-Expansion Foam Expansion Cavity (Yellow fill) -->
+      <rect x="${cx - winW/2 - 8}" y="${cy - winH/2 - 8}" width="${winW + 16}" height="${winH + 16}" fill="#fef08a" stroke="#eab308" stroke-width="1.5" rx="2"/>
+
+      <!-- Window Frame Unit (Dark Envelope) -->
+      <rect x="${cx - winW/2}" y="${cy - winH/2}" width="${winW}" height="${winH}" fill="#ffffff" stroke="#0f172a" stroke-width="3" rx="2"/>
+      <rect x="${cx - winW/2 + 10}" y="${cy - winH/2 + 10}" width="${winW - 20}" height="${winH - 20}" fill="#e0f2fe" stroke="#38bdf8" stroke-width="1.5"/>
+
+      <!-- Shims (Green Wedges) -->
+      <polygon points="${cx - winW/2 - 8},${cy} ${cx - winW/2},${cy - 6} ${cx - winW/2},${cy + 6}" fill="#22c55e"/>
+      <polygon points="${cx + winW/2 + 8},${cy} ${cx + winW/2},${cy - 6} ${cx + winW/2},${cy + 6}" fill="#22c55e"/>
+
+      <!-- Fastener Screw Anchors (Crosses) -->
+      <circle cx="${cx - winW/2 + 4}" cy="${cy - winH/3}" r="3" fill="#ef4444"/>
+      <circle cx="${cx - winW/2 + 4}" cy="${cy + winH/3}" r="3" fill="#ef4444"/>
+      <circle cx="${cx + winW/2 - 4}" cy="${cy - winH/3}" r="3" fill="#ef4444"/>
+      <circle cx="${cx + winW/2 - 4}" cy="${cy + winH/3}" r="3" fill="#ef4444"/>
+
+      <!-- Installation Checklist Side Card -->
+      <rect x="250" y="40" width="135" height="260" rx="6" fill="#0f172a"/>
+      <text x="317" y="62" font-family="sans-serif" font-size="10" font-weight="700" text-anchor="middle" fill="#94a3b8">HARDWARE LIST</text>
+
+      <rect x="260" y="78" width="115" height="40" rx="4" fill="#1e293b"/>
+      <text x="268" y="92" font-family="sans-serif" font-size="8" font-weight="700" fill="#38bdf8">Flashing Tape</text>
+      <text x="367" y="92" font-family="monospace" font-size="11" font-weight="700" text-anchor="end" fill="#ffffff">${result.flashingTapeLengthFt} ft</text>
+      <text x="268" y="106" font-family="sans-serif" font-size="8" fill="#94a3b8">4" Self-Adhered</text>
+
+      <rect x="260" y="124" width="115" height="40" rx="4" fill="#1e293b"/>
+      <text x="268" y="138" font-family="sans-serif" font-size="8" font-weight="700" fill="#38bdf8">Caulk Sealant</text>
+      <text x="367" y="138" font-family="monospace" font-size="11" font-weight="700" text-anchor="end" fill="#ffffff">${result.sealantTubesCount} Tubes</text>
+      <text x="268" y="152" font-family="sans-serif" font-size="8" fill="#94a3b8">10.1 oz Caulk</text>
+
+      <rect x="260" y="170" width="115" height="40" rx="4" fill="#1e293b"/>
+      <text x="268" y="184" font-family="sans-serif" font-size="8" font-weight="700" fill="#38bdf8">Fasteners</text>
+      <text x="367" y="184" font-family="monospace" font-size="11" font-weight="700" text-anchor="end" fill="#ffffff">${result.fastenerCountTotal} Screws</text>
+      <text x="268" y="198" font-family="sans-serif" font-size="8" fill="#94a3b8">Every ${result.fastenerSpacingIn}"</text>
+
+      <rect x="260" y="216" width="115" height="40" rx="4" fill="#1e293b"/>
+      <text x="268" y="230" font-family="sans-serif" font-size="8" font-weight="700" fill="#38bdf8">Labor Time</text>
+      <text x="367" y="230" font-family="monospace" font-size="11" font-weight="700" text-anchor="end" fill="#22c55e">${result.estimatedHoursTotal} hrs</text>
+      <text x="268" y="244" font-family="sans-serif" font-size="8" fill="#94a3b8">Total Job Time</text>
+    `;
+
+    const sub = document.getElementById('svg-subtitle');
+    if (sub) {
+      sub.textContent = `Perimeter: ${result.perimeterFt} ft · Flashing: ${result.flashingTapeLengthFt} ft · Screws: ${result.fastenerCountTotal} · Labor: ${result.estimatedHoursTotal} hrs`;
+    }
+  }
+
+  function calculate() {
+    const wInput = widthInput?.value.trim() ?? '';
+    const hInput = heightInput?.value.trim() ?? '';
+    const qVal = parseInt(qtyInput?.value || '1', 10);
+
+    if (!wInput || !hInput) {
+      if (resultsEmpty) resultsEmpty.hidden = false;
+      if (resultsGrid)  resultsGrid.hidden  = true;
+      if (recSection)   recSection.hidden   = true;
+      if (calcExtras)   calcExtras.hidden   = true;
+      if (cardConf)     cardConf.hidden     = true;
+      return;
+    }
+
+    const w = normalizeInput(wInput, currentUnit);
+    const h = normalizeInput(hInput, currentUnit);
+
+    if (!w || !h || w <= 0 || h <= 0) {
+      if (resultsEmpty) resultsEmpty.hidden = false;
+      if (resultsGrid)  resultsGrid.hidden  = true;
+      if (recSection)   recSection.hidden   = true;
+      if (calcExtras)   calcExtras.hidden   = true;
+      if (cardConf)     cardConf.hidden     = true;
+      return;
+    }
+
+    const wMm = toMm(w, currentUnit);
+    const hMm = toMm(h, currentUnit);
+
+    const input: WindowInstallationInput = {
+      windowWidthMm: wMm,
+      windowHeightMm: hMm,
+      quantity: qVal,
+      installationType: (installTypeSelect?.value || 'new-construction') as WindowInstallationType,
+      frameMaterial: (materialSelect?.value || 'vinyl') as WindowInstallationFrameMaterial,
+      wallType: (wallTypeSelect?.value || 'wood-stud') as WindowInstallationWallType,
+      fastenerType: (fastenerTypeSelect?.value || 'standard') as WindowInstallationFastenerType,
+      useFoam: foamSelect?.value !== 'false',
+      useFlashingTape: flashingSelect?.value !== 'false',
+    };
+
+    const result = calculateWindowInstallation(input);
+    currentResult = result;
+    const recs = buildWindowInstallationRecommendations(input, result);
+
+    // ── Metrics ──────────────────────────────────────────────────────────────
+    updateMetric('card-material-summary', `${result.materialsChecklist.length} Items`, 'Complete hardware takeoff');
+    updateMetric('card-difficulty', result.difficultyRating, 'Skill level & labor rating');
+    updateMetric('card-flashing', `${result.flashingTapeLengthFt} ft`, `(${result.flashingTapeLengthM} m) 4" self-adhered roll`);
+    updateMetric('card-sealant', `${result.sealantTubesCount} Tube${result.sealantTubesCount > 1 ? 's' : ''}`, `10.1 oz caulk (${result.sealantLinearFt} ft coverage)`);
+    updateMetric('card-foam', `${result.foamCansCount} Can${result.foamCansCount > 1 ? 's' : ''}`, `12 oz low-expansion foam`);
+    updateMetric('card-shims', `${result.shimPacksCount} Pack${result.shimPacksCount > 1 ? 's' : ''}`, `(${result.shimPairsCount} pairs composite shims)`);
+    updateMetric('card-fasteners', `${result.fastenerCountTotal} Screws`, `Spaced every ${result.fastenerSpacingIn}" along jambs`);
+    updateMetric('card-time', `${result.estimatedHoursTotal} Hours`, `(${result.estimatedHoursPerWindow} hrs / window)`);
+
+    // ── Confidence summary card ───────────────────────────────────────────────
+    const starsEl = document.getElementById('confidence-stars');
+    const labelEl = document.getElementById('confidence-label');
+    const orderBadge = document.getElementById('confidence-ordering-badge');
+    const costBadge = document.getElementById('cost-badge');
+    const scoreBadge = document.getElementById('score-badge');
+
+    if (starsEl) starsEl.textContent = result.confidence === 'excellent' ? '★★★★★' : '★★★★☆';
+    if (labelEl) labelEl.textContent = `Complete Installation Material Takeoff`;
+    if (scoreBadge) scoreBadge.textContent = `${input.installationType.toUpperCase().replace('-', ' ')}`;
+    if (orderBadge) orderBadge.textContent = `✓ ASTM E2112 Standard Match`;
+    if (costBadge) costBadge.textContent = `Est. ${result.estimatedHoursTotal} Hours Labor`;
+
+    // ── Material Takeoff Checklist Table ──────────────────────────────────────
+    const checklistGrid = document.getElementById('checklist-grid');
+    if (checklistGrid) {
+      checklistGrid.innerHTML = result.materialsChecklist.map((item) => `
+        <div class="check-card">
+          <div class="check-header">
+            <span class="check-category">${item.category}</span>
+            <span class="check-qty">${item.quantity} ${item.unit}</span>
+          </div>
+          <div class="check-name">${item.name}</div>
+          <div class="check-desc">${item.description}</div>
+        </div>
+      `).join('');
+    }
+
+    // ── Recommendation cards ─────────────────────────────────────────────────
+    const recList = document.getElementById('rec-list');
+    if (recList) {
+      const iconMap: Record<string, string> = {
+        'sequence': `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>`,
+        'safety': `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>`,
+        'material': `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/></svg>`,
+        'waterproofing': `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/></svg>`,
+        'professional': `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>`,
+        'mistake': `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>`,
+      };
+      recList.innerHTML = recs.items.map((item: any) =>
+        `<div class="rec-card">
+          <div class="rec-card-header">
+            <span class="rec-card-icon" aria-hidden="true">${iconMap[item.type] || iconMap['sequence']}</span>
+            <span class="rec-card-title">${item.title}</span>
+          </div>
+          <div class="rec-card-body">${item.body}</div>
+          ${item.tip ? `<div class="rec-card-tip">${item.tip}</div>` : ''}
+        </div>`
+      ).join('');
+    }
+
+    try {
+      renderInstallationSvg(result, wMm, hMm);
+    } catch (e) {
+      console.error('SVG rendering error:', e);
+    }
+
+    if (resultsEmpty) resultsEmpty.hidden = true;
+    if (resultsGrid)  resultsGrid.hidden  = false;
+    if (recSection)   recSection.hidden   = false;
+    if (calcExtras)   calcExtras.hidden   = false;
+    if (cardConf)     cardConf.hidden     = false;
+
+    const historyLabelText = `${w} × ${h} ${currentUnit} • ${input.installationType.charAt(0).toUpperCase() + input.installationType.slice(1)}`;
+    const summaryText = `${w} × ${h} ${currentUnit}`;
+    const stateParams = {
+      width: String(w),
+      height: String(h),
+      unit: currentUnit,
+      qty: String(qVal),
+      install: input.installationType,
+      material: input.frameMaterial,
+      wall: input.wallType,
+      fastener: input.fastenerType,
+      foam: foamSelect?.value,
+      flashing: flashingSelect?.value,
+      subtitle: `Flashing: ${result.flashingTapeLengthFt} ft · Caulk: ${result.sealantTubesCount} tubes · Time: ${result.estimatedHoursTotal} hrs`,
+      summary: summaryText,
+      _display: summaryText,
+    };
+
+    (window as any).wmCurrentState = stateParams;
+    pushUrlState(stateParams);
+    (window as any).wmHistoryPanel?.add(historyLabelText, stateParams);
+
+    (window as any).wmBuildSummary = () => buildSummary(
+      'Window Installation Materials Calculator',
+      [
+        ['Window Dimensions', `${w} × ${h} ${currentUnit} (Qty: ${qVal})`],
+        ['Installation Type', input.installationType],
+        ['Wall Substrate & Fasteners', `${input.wallType} (${input.fastenerType})`],
+        ['Flashing Tape Length', `${result.flashingTapeLengthFt} ft (${result.flashingTapeLengthM} m)`],
+        ['Exterior Caulk Sealant', `${result.sealantTubesCount} Tubes (10.1 oz)`],
+        ['Low-Expansion Foam', `${result.foamCansCount} Cans (12 oz)`],
+        ['Fasteners & Spacing', `${result.fastenerCountTotal} Screws (Spaced every ${result.fastenerSpacingIn}")`],
+        ['Estimated Labor Time', `${result.estimatedHoursTotal} Hours total (${result.estimatedHoursPerWindow} hrs/win)`],
+        ['Difficulty Rating', result.difficultyRating],
+      ],
+      typeof window !== 'undefined' ? window.location.href : undefined,
+    );
+
+    (window as any).wmBuildExport = () => buildExportPayload(
+      'window-installation-calculator',
+      stateParams,
+      {
+        windowDimensions: `${w} × ${h} ${currentUnit}`,
+        quantity: qVal,
+        installationType: input.installationType,
+        frameMaterial: input.frameMaterial,
+        wallType: input.wallType,
+        fastenerType: input.fastenerType,
+        flashingTapeLengthFt: `${result.flashingTapeLengthFt} ft`,
+        sealantTubesCount: `${result.sealantTubesCount} tubes`,
+        foamCansCount: `${result.foamCansCount} cans`,
+        fastenerCountTotal: result.fastenerCountTotal,
+        fastenerSpacingIn: `${result.fastenerSpacingIn}"`,
+        estimatedHoursTotal: `${result.estimatedHoursTotal} hrs`,
+        difficultyRating: result.difficultyRating,
+        materialsChecklist: result.materialsChecklist.map(m => `${m.name}: ${m.quantity} ${m.unit}`).join(' | '),
+        confidence: result.confidence,
+        recommendations: recs.items.map((i: any) => `${i.title}: ${i.body}`).join(' | '),
+        warnings: result.warnings.map((w: any) => w.message).join(' | '),
+      },
+    );
+
+    (window as any).wmShareExportBar?.show();
+
+    track({
+      type: 'calculation_completed',
+      properties: { slug: 'window-installation-calculator', unit: currentUnit, inputs: stateParams },
+    });
+  }
+
+  // ── Event listeners ───────────────────────────────────────────────────────
+  widthInput?.addEventListener('input', calculate);
+  heightInput?.addEventListener('input', calculate);
+  qtyInput?.addEventListener('input', calculate);
+
+  installTypeSelect?.addEventListener('change', calculate);
+  materialSelect?.addEventListener('change', calculate);
+  wallTypeSelect?.addEventListener('change', calculate);
+  fastenerTypeSelect?.addEventListener('change', calculate);
+  foamSelect?.addEventListener('change', calculate);
+  flashingSelect?.addEventListener('change', calculate);
+
+  document.getElementById('unit-selector')?.addEventListener('unitchange', (e) => {
+    const newUnit = (e as CustomEvent).detail?.unit as MeasurementUnit | undefined;
+    if (!newUnit) return;
+    if (widthInput?.value) {
+      const parsed = normalizeInput(widthInput.value, currentUnit);
+      if (parsed) widthInput.value = String(fromMm(toMm(parsed, currentUnit), newUnit));
+    }
+    if (heightInput?.value) {
+      const parsed = normalizeInput(heightInput.value, currentUnit);
+      if (parsed) heightInput.value = String(fromMm(toMm(parsed, currentUnit), newUnit));
+    }
+    const oldUnit = currentUnit;
+    currentUnit = newUnit;
+    track({ type: 'unit_changed', properties: { slug: 'window-installation-calculator', from: oldUnit, to: newUnit } });
+    calculate();
+  });
+
+  // Restore URL state
+  const urlState = readUrlState();
+  if (urlState.width && widthInput)   widthInput.value  = urlState.width;
+  if (urlState.height && heightInput) heightInput.value = urlState.height;
+  if (urlState.qty && qtyInput)       qtyInput.value    = urlState.qty;
+
+  if (urlState.unit && ['mm','cm','m','in','ft'].includes(urlState.unit)) {
+    currentUnit = urlState.unit as MeasurementUnit;
+    document.querySelectorAll('.unit-btn').forEach(b => (b as HTMLElement).setAttribute('aria-pressed', (b as HTMLElement).dataset.unit === currentUnit ? 'true' : 'false'));
+  }
+
+  if (urlState.install && installTypeSelect) installTypeSelect.value = urlState.install;
+  if (urlState.material && materialSelect)   materialSelect.value   = urlState.material;
+  if (urlState.wall && wallTypeSelect)       wallTypeSelect.value   = urlState.wall;
+  if (urlState.fastener && fastenerTypeSelect) fastenerTypeSelect.value = urlState.fastener;
+  if (urlState.foam && foamSelect)           foamSelect.value       = urlState.foam;
+  if (urlState.flashing && flashingSelect)   flashingSelect.value   = urlState.flashing;
+
+  // Initial calculation on page load
+  calculate();
+
+  // ── History restore ──────────────────────────────────────────────────────
+  document.addEventListener('wm:history-restore', (e: Event) => {
+    const { inputs } = (e as CustomEvent).detail;
+    if (inputs.width && widthInput)   widthInput.value  = inputs.width;
+    if (inputs.height && heightInput) heightInput.value = inputs.height;
+    if (inputs.qty && qtyInput)       qtyInput.value    = inputs.qty;
+
+    if (inputs.unit && ['mm','cm','m','in','ft'].includes(inputs.unit)) {
+      currentUnit = inputs.unit as MeasurementUnit;
+      document.querySelectorAll('.unit-btn').forEach(b => (b as HTMLElement).setAttribute('aria-pressed', (b as HTMLElement).dataset.unit === currentUnit ? 'true' : 'false'));
+    }
+
+    if (inputs.install && installTypeSelect) installTypeSelect.value = inputs.install;
+    if (inputs.material && materialSelect)   materialSelect.value   = inputs.material;
+    if (inputs.wall && wallTypeSelect)       wallTypeSelect.value   = inputs.wall;
+    if (inputs.fastener && fastenerTypeSelect) fastenerTypeSelect.value = inputs.fastener;
+    if (inputs.foam && foamSelect)           foamSelect.value       = inputs.foam;
+    if (inputs.flashing && flashingSelect)   flashingSelect.value   = inputs.flashing;
+
+    calculate();
+    track({ type: 'history_restored', properties: { slug: 'window-installation-calculator', entryId: (e as CustomEvent).detail.entryId ?? '' } });
+  });
+</script>
+
+<style>
+  .calc-dashboard {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--spacing-xl);
+    align-items: start;
+    margin-top: var(--spacing-lg);
+  }
+
+  @media (min-width: 1024px) {
+    .calc-dashboard {
+      grid-template-columns: 380px 1fr;
+    }
+  }
+
+  .calc-panel {
+    background-color: var(--color-canvas);
+    border: 1px solid var(--color-hairline);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+  }
+
+  .calc-panel-inputs {
+    position: sticky;
+    top: var(--spacing-md);
+  }
+
+  .panel-header {
+    padding: var(--spacing-md);
+    background-color: var(--color-canvas-soft);
+    border-bottom: 1px solid var(--color-hairline);
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+  }
+
+  .panel-label {
+    font-family: var(--font-family-mono);
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--color-muted);
+  }
+
+  .panel-section-header {
+    padding: var(--spacing-xs) var(--spacing-md);
+    background-color: var(--color-canvas-soft);
+    border-top: 1px solid var(--color-hairline);
+    border-bottom: 1px solid var(--color-hairline);
+  }
+
+  .panel-section-title {
+    font-family: var(--font-family-mono);
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--color-ink-faint);
+  }
+
+  .input {
+    width: 100%;
+    padding: var(--spacing-sm) var(--spacing-md);
+    background-color: var(--color-canvas);
+    border: 1px solid var(--color-hairline);
+    border-radius: var(--radius-md);
+    font-family: var(--font-family-mono);
+    font-size: var(--font-size-body-md);
+    color: var(--color-ink);
+    transition: border-color 0.15s ease;
+  }
+
+  .input:focus {
+    outline: none;
+    border-color: var(--color-link);
+  }
+
+  .input-select {
+    width: 100%;
+    padding: var(--spacing-sm) var(--spacing-md);
+    background-color: var(--color-canvas);
+    border: 1px solid var(--color-hairline);
+    border-radius: var(--radius-md);
+    font-size: var(--font-size-body-sm);
+    color: var(--color-ink);
+  }
+
+  /* Results Panel */
+  .empty-state {
+    padding: var(--spacing-3xl) var(--spacing-xl);
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .empty-icon-wrap {
+    color: var(--color-muted);
+    margin-bottom: var(--spacing-md);
+  }
+
+  .empty-title {
+    font-size: var(--font-size-h3);
+    font-weight: 600;
+    color: var(--color-ink);
+    margin: 0 0 var(--spacing-xs);
+  }
+
+  .empty-sub {
+    font-size: var(--font-size-body-sm);
+    color: var(--color-muted);
+    margin: 0;
+    max-width: 320px;
+  }
+
+  .svg-section {
+    border-bottom: 1px solid var(--color-hairline);
+    background-color: var(--color-canvas);
+  }
+
+  .svg-header {
+    padding: var(--spacing-sm) var(--spacing-md);
+    background-color: var(--color-canvas-soft);
+    border-bottom: 1px solid var(--color-hairline);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .svg-label {
+    font-family: var(--font-family-mono);
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--color-muted);
+  }
+
+  .svg-subtitle {
+    font-family: var(--font-family-mono);
+    font-size: 11px;
+    color: var(--color-ink-muted);
+  }
+
+  .svg-wrap {
+    padding: var(--spacing-md);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: var(--color-canvas);
+  }
+
+  .results-metric-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: var(--spacing-md);
+    padding: var(--spacing-lg);
+  }
+
+  .confidence-summary-card {
+    margin: 0 var(--spacing-lg) var(--spacing-lg);
+    padding: var(--spacing-md);
+    background-color: var(--color-canvas-soft);
+    border: 1px solid var(--color-hairline);
+    border-radius: var(--radius-md);
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+  }
+
+  .conf-card-header {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+  }
+
+  .conf-stars {
+    color: #f59e0b;
+    letter-spacing: 2px;
+  }
+
+  .conf-title {
+    font-weight: 600;
+    font-size: var(--font-size-body-sm);
+    color: var(--color-ink);
+  }
+
+  .conf-card-badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--spacing-xs);
+  }
+
+  .conf-badge {
+    font-family: var(--font-family-mono);
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--color-hairline);
+    background: var(--color-canvas);
+  }
+
+  .conf-badge-score {
+    color: var(--color-link);
+    font-weight: 600;
+  }
+
+  /* Checklist Section */
+  .checklist-section {
+    border-top: 1px solid var(--color-hairline);
+  }
+
+  .checklist-grid {
+    padding: var(--spacing-lg);
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: var(--spacing-md);
+  }
+
+  .check-card {
+    padding: var(--spacing-md);
+    background-color: var(--color-canvas);
+    border: 1px solid var(--color-hairline);
+    border-radius: var(--radius-md);
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .check-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .check-category {
+    font-family: var(--font-family-mono);
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: var(--color-link);
+  }
+
+  .check-qty {
+    font-family: var(--font-family-mono);
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--color-ink);
+    background: var(--color-canvas-soft);
+    padding: 2px 6px;
+    border-radius: var(--radius-sm);
+  }
+
+  .check-name {
+    font-weight: 600;
+    font-size: var(--font-size-body-sm);
+    color: var(--color-ink);
+  }
+
+  .check-desc {
+    font-size: 11px;
+    color: var(--color-muted);
+  }
+
+  .rec-section {
+    border-top: 1px solid var(--color-hairline);
+  }
+
+  .rec-list {
+    padding: var(--spacing-lg);
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: var(--spacing-md);
+  }
+
+  .calc-extras {
+    border-top: 1px solid var(--color-hairline);
+    background-color: var(--color-canvas-soft);
+    padding: var(--spacing-lg);
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-lg);
+  }
+
+  @media (max-width: 640px) {
+    .results-metric-grid {
+      grid-template-columns: 1fr;
+      padding: var(--spacing-md);
+    }
+    .checklist-grid, .rec-list, .calc-extras, .svg-section {
+      padding: var(--spacing-md);
+    }
+    .confidence-summary-card {
+      margin: 0 var(--spacing-md) var(--spacing-md);
+      padding: var(--spacing-md);
+    }
+  }
+</style>
