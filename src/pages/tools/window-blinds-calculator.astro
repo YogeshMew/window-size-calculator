@@ -1,0 +1,1563 @@
+---
+/**
+ * WindowMetrics — Window Blinds Size Calculator
+ * Route: /tools/window-blinds-calculator
+ *
+ * Calculates blind width, height, deduction, and mount recommendations.
+ */
+
+import ToolLayout from '@/layouts/ToolLayout.astro';
+import InputCard from '@/components/calculator/InputCard.astro';
+import UnitSelector from '@/components/calculator/UnitSelector.astro';
+import ResultMetricCard from '@/components/calculator/ResultMetricCard.astro';
+import EmptyState from '@/components/calculator/EmptyState.astro';
+import WarningBanner from '@/components/calculator/WarningBanner.astro';
+import RelatedTools from '@/components/calculator/RelatedTools.astro';
+import FAQSection from '@/components/content/FAQSection.astro';
+import CalculatorHero from '@/components/calculator/CalculatorHero.astro';
+import HistoryPanel from '@/components/calculator/HistoryPanel.astro';
+import ShareExportBar from '@/components/calculator/ShareExportBar.astro';
+
+import { getToolBySlug, getRelatedTools } from '@/data/tools.js';
+import type { BreadcrumbItem, FAQ } from '@/types/calculator.js';
+
+const tool = getToolBySlug('window-blinds-calculator')!;
+
+
+const breadcrumbs: BreadcrumbItem[] = [
+  { label: 'Home', href: '/' },
+  { label: 'Tools', href: '/tools' },
+  { label: tool.title, href: tool.href, current: true },
+];
+
+const faqs: FAQ[] = [
+  {
+    question: 'How do I measure for inside mount blinds?',
+    answer: 'Measure inside of frame, record narrowest width. Always measure at three points (top, middle, bottom) and take the smallest measurement to ensure the blinds will fit within the opening.'
+  },
+  {
+    question: 'What is the standard deduction for blinds?',
+    answer: 'Standard deduction is 0.5" per side for most blinds = 1" total. Cellular shades usually have a 0.375" per side deduction, while mini-blinds have a 0.25" per side deduction.'
+  },
+  {
+    question: 'Inside mount vs outside mount blinds — which is better?',
+    answer: 'Inside mount offers a clean, streamlined look but requires sufficient window depth. Outside mount provides more light coverage, blocks more light around the edges, and can make windows appear larger.'
+  },
+  {
+    question: 'What minimum window depth do I need for inside mount?',
+    answer: 'It depends on the type of blind: mini-blinds need at least 1", roller shades need 1.5", venetian/cellular shades need 2.25", and vertical/roman shades need 2.5" for a fully flush mount.'
+  },
+  {
+    question: 'How wide should outside mount blinds be?',
+    answer: 'Outside mount blinds should be your window width + a 3" per side overlap = a total of 6" wider than the window frame to provide proper light blocking and privacy.'
+  },
+  {
+    question: 'What blind type is best for my window?',
+    answer: 'For wide windows or sliding doors, vertical blinds are best. Small windows suit mini-blinds well. If you want light filtering, consider cellular or roller shades. For maximum privacy and light control, wood or faux-wood venetian blinds are ideal.'
+  },
+  {
+    question: 'Can I install blinds without a headrail bracket?',
+    answer: 'No — the headrail is structural and essential for installation. For an inside mount, brackets go into the window frame; for an outside mount, brackets screw directly into the wall or trim above the window.'
+  }
+];
+
+const schema = {
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "BreadcrumbList",
+      "itemListElement": breadcrumbs.map((crumb, i) => ({
+        "@type": "ListItem",
+        "position": i + 1,
+        "name": crumb.label,
+        "item": new URL(crumb.href, Astro.site || 'https://windowmetrics.com').toString(),
+      })),
+    },
+    {
+      "@type": "SoftwareApplication",
+      "name": "Window Blinds Size Calculator",
+      "applicationCategory": "UtilityApplication",
+      "operatingSystem": "Any",
+      "url": new URL(tool.href, Astro.site || 'https://windowmetrics.com').toString(),
+    }
+  ]
+};
+---
+
+<ToolLayout tool={tool} breadcrumbs={breadcrumbs} faqs={faqs}>
+  <Fragment slot="head">
+    <script type="application/ld+json" set:html={JSON.stringify(schema)} />
+  </Fragment>
+
+  <CalculatorHero
+    tool={tool}
+    description="Enter your window dimensions to get exact blind width, height, deduction, and mount recommendations for any blind type — inside or outside mount."
+    features={[
+      'Inside & outside mount sizing',
+      'Deduction by blind type',
+      'Window depth compatibility',
+      'Closest stock size suggestions',
+    ]}
+    trustItems={[
+      { label: 'All blind types' },
+      { label: 'All units' },
+      { label: 'No signup' },
+      { label: 'Stock suggestions' },
+    ]}
+  />
+
+  <div class="calc-dashboard">
+    <!-- LEFT PANEL — Inputs -->
+    <div class="calc-panel calc-panel-inputs">
+      
+      <div class="panel-header">
+        <span class="panel-label">Window dimensions</span>
+      </div>
+
+      <div class="unit-row">
+        <span class="unit-row-label">Unit</span>
+        <UnitSelector selected="in" id="unit-selector" name="unit" />
+      </div>
+
+      <InputCard label="Window Width" inputId="input-width" required>
+        <input type="text" id="input-width" class="input" placeholder="e.g., 36" autocomplete="off" />
+      </InputCard>
+      
+      <InputCard label="Window Height" inputId="input-height" required>
+        <input type="text" id="input-height" class="input" placeholder="e.g., 60" autocomplete="off" />
+      </InputCard>
+
+      <WarningBanner id="calc-error" />
+
+      <div class="panel-section-header"></div>
+      <div class="panel-header">
+        <span class="panel-label">Mount & blind type</span>
+      </div>
+
+      <InputCard label="Mount Type" inputId="mount-selector">
+        <div class="option-selector" id="mount-selector" role="group" aria-label="Mount Type">
+          <button type="button" class="option-btn" data-value="inside" aria-pressed="true">Inside Mount</button>
+          <button type="button" class="option-btn" data-value="outside" aria-pressed="false">Outside Mount</button>
+        </div>
+      </InputCard>
+
+      <InputCard label="Blind Type" inputId="input-blind-type">
+        <select id="input-blind-type" class="input-select" aria-label="Select Blind Type">
+          <option value="roller" selected>Roller</option>
+          <option value="venetian">Venetian</option>
+          <option value="vertical">Vertical</option>
+          <option value="roman">Roman</option>
+          <option value="cellular">Cellular</option>
+          <option value="zebra">Zebra</option>
+          <option value="mini-blind">Mini-blind</option>
+          <option value="wood">Wood</option>
+          <option value="faux-wood">Faux-wood</option>
+        </select>
+      </InputCard>
+
+      <InputCard label="Control Side" inputId="control-side-selector">
+        <div class="option-selector" id="control-side-selector" role="group" aria-label="Control Side">
+          <button type="button" class="option-btn" data-value="left" aria-pressed="true">Left</button>
+          <button type="button" class="option-btn" data-value="right" aria-pressed="false">Right</button>
+        </div>
+      </InputCard>
+
+      <div class="panel-section-header"></div>
+      <div class="panel-header">
+        <span class="panel-label">Window depth & clearance</span>
+      </div>
+
+      <InputCard label="Window Depth" inputId="input-depth" hint="Inside frame depth (sill to glass face)">
+        <input type="text" id="input-depth" class="input" placeholder="e.g., 2.5" autocomplete="off" />
+      </InputCard>
+
+      <details class="advanced-section">
+        <summary>Advanced options</summary>
+        <div class="advanced-content">
+          <InputCard label="Headrail Width" inputId="input-headrail-width">
+            <input type="text" id="input-headrail-width" class="input" placeholder="Optional" autocomplete="off" />
+          </InputCard>
+          
+          <InputCard label="Headrail Height" inputId="input-headrail-height">
+            <input type="text" id="input-headrail-height" class="input" placeholder="Optional" autocomplete="off" />
+          </InputCard>
+          
+          <InputCard label="Frame Depth" inputId="input-frame-depth">
+            <input type="text" id="input-frame-depth" class="input" placeholder="Optional" autocomplete="off" />
+          </InputCard>
+        </div>
+      </details>
+
+      </div>
+
+    <!-- RIGHT PANEL — Results -->
+    <div class="calc-panel calc-panel-results">
+      <div id="results-empty" class="empty-state">
+        <div class="empty-icon-wrap">
+          <svg width="48" height="48" viewBox="0 0 48 48" fill="none" class="empty-svg">
+            <rect x="8" y="10" width="32" height="28" rx="4" stroke="currentColor" stroke-width="2.5" fill="none"/>
+            <line x1="8" y1="18" x2="40" y2="18" stroke="currentColor" stroke-width="2"/>
+            <path d="M12 24H36M12 29H36M12 34H36" stroke="currentColor" stroke-width="1.5" stroke-dasharray="3 2"/>
+          </svg>
+        </div>
+        <h3 class="empty-title">Enter window dimensions</h3>
+        <p class="empty-sub">Fill in Width and Height to see instant blind sizing & recommendations.</p>
+      </div>
+
+      <div id="results-grid" hidden>
+        
+        <!-- SVG diagram section -->
+        <div class="svg-section">
+          <div class="svg-header">
+            <span class="svg-label">Diagram</span>
+            <span class="svg-subtitle" id="svg-subtitle">—</span>
+          </div>
+          <div class="svg-wrap">
+            <svg id="blinds-svg" viewBox="0 0 400 340" width="100%" aria-label="Blind size diagram"></svg>
+          </div>
+        </div>
+
+        <div class="results-metric-grid">
+          <ResultMetricCard id="card-finished-width" label="Finished Width" highlight={true} sublabel="Order this width exactly" animate={true} />
+          <ResultMetricCard id="card-finished-height" label="Finished Height" highlight={true} sublabel="Order this height exactly" animate={true} />
+          <ResultMetricCard id="card-mount-rec" label="Mount Recommendation" highlight={true} sublabel="Best fit for your window" animate={true} />
+          <ResultMetricCard id="card-depth-compat" label="Depth Compatibility" highlight={true} sublabel="Inside mount feasibility" animate={true} />
+          <ResultMetricCard id="card-deduction" label="Manufacturing Deduction" sublabel="Width reduction applied" animate={true} />
+          <ResultMetricCard id="card-overlap" label="Overlap" sublabel="Beyond window frame (outside mount)" animate={true} />
+          <ResultMetricCard id="card-install-rating" label="Installation Rating" sublabel="DIY difficulty" animate={true} />
+          <ResultMetricCard id="card-rec-blind" label="Recommended Blind" sublabel="Smart suggestion" animate={true} />
+        </div>
+
+        <div id="card-confidence" class="confidence-summary-card" hidden>
+          <div class="conf-card-header">
+            <span class="conf-stars" id="confidence-stars">★★★★★</span>
+            <span class="conf-title" id="confidence-label">Exact Factory Match</span>
+          </div>
+          <div class="conf-card-badges">
+            <span class="conf-badge conf-badge-score" id="score-badge">100% Fit Match</span>
+            <span class="conf-badge conf-badge-order" id="confidence-ordering-badge">✓ Order Exact Size</span>
+            <span class="conf-badge conf-badge-cost" id="cost-badge">Est. Cost: $$</span>
+          </div>
+        </div>
+
+        <div id="stock-sizes-section" class="stock-section">
+          <div class="stock-section-header">
+            <span class="stock-label">Closest Standard Widths</span>
+          </div>
+          <div class="stock-chips" id="stock-widths"></div>
+          <div class="stock-section-header">
+            <span class="stock-label">Closest Standard Heights</span>
+          </div>
+          <div class="stock-chips" id="stock-heights"></div>
+        </div>
+
+        <div id="rec-section" class="rec-section" hidden>
+          <div class="panel-header"><span class="panel-label">Smart Recommendations</span></div>
+          <div id="rec-list" class="rec-list"></div>
+        </div>
+
+        <div class="calc-extras" id="calc-extras" hidden>
+          <ShareExportBar calculatorTitle="Window Blinds Size Calculator" />
+          <HistoryPanel slug="window-blinds-calculator" />
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <Fragment slot="sidebar">
+    <RelatedTools
+      links={[
+        {
+          title: 'Curtain Size Calculator',
+          description: 'Get curtain width, drop, and fabric recommendations.',
+          href: '/tools/curtain-size-calculator',
+          icon: 'Blinds',
+        },
+        {
+          title: 'Replacement Window Calculator',
+          description: 'Find the nearest standard replacement window size.',
+          href: '/tools/replacement-window-calculator',
+          icon: 'RefreshCw',
+        },
+        {
+          title: 'Window Glass Calculator',
+          description: 'Calculate glass area, weight, and pane thickness.',
+          href: '/tools/window-glass-calculator',
+          icon: 'PanelTop',
+        },
+        {
+          title: 'Window Size Calculator',
+          description: 'Window area, perimeter and standard size match.',
+          href: '/tools/window-size-calculator',
+          icon: 'Ruler',
+        },
+        {
+          title: 'Window AC Calculator',
+          description: 'Calculate required BTU capacity for window air conditioners.',
+          href: '/tools/window-ac-calculator',
+          icon: 'Wind',
+        },
+      ]}
+      tip={{
+        label: 'Measuring Tip',
+        text: 'For inside mount, always measure the narrowest point of the frame width. Windows are not perfectly square.',
+      }}
+    />
+    <FAQSection faqs={faqs} />
+  </Fragment>
+
+</ToolLayout>
+
+<script>
+  import { calculateBlinds } from '@/engine/blinds.js';
+  import { buildBlindsRecommendations } from '@/engine/blinds-recommendations.js';
+  import { toMm, fromMm, formatDimension, normalizeInput } from '@/engine/units.js';
+  import { readUrlState, pushUrlState, buildShareUrl } from '@/lib/url-state.js';
+  import { buildExportPayload } from '@/lib/export.js';
+  import { buildSummary } from '@/lib/share.js';
+  import { track } from '@/lib/analytics.js';
+  import type { MeasurementUnit } from '@/types/calculator.js';
+  import type { BlindsInput } from '@/engine/blinds.js';
+
+  // ── Debounced calculate (live calculation on every keystroke) ──────────────
+  let _debounceTimer: ReturnType<typeof setTimeout> | null = null;
+  function scheduleCalculate() {
+    if (_debounceTimer) clearTimeout(_debounceTimer);
+    _debounceTimer = setTimeout(() => calculate(), 300);
+  }
+
+  function updateMetric(cardId: string, value: string, unitStr: string = '') {
+    const valEl = document.querySelector(`#${cardId} .result-value-text`);
+    const unitEl = document.querySelector(`#${cardId} .result-unit`);
+    if (valEl) valEl.textContent = value;
+    if (unitEl) unitEl.textContent = unitStr;
+  }
+
+  // ── State ──────────────────────────────────────────────────────────────────
+  let currentResult: ReturnType<typeof calculateBlinds> | null = null;
+  let currentUnit: MeasurementUnit = 'in';
+  let currentMountType: 'inside' | 'outside' = 'inside';
+  let currentBlindType = 'roller';
+  let currentControlSide: 'left' | 'right' = 'left';
+
+  function initOptionSelector(id: string, onChange: (val: string) => void) {
+    const el = document.getElementById(id);
+    el?.addEventListener('click', (e) => {
+      const btn = (e.target as HTMLElement).closest('[data-value]') as HTMLElement | null;
+      if (!btn) return;
+      el.querySelectorAll('[data-value]').forEach(b => (b as HTMLElement).setAttribute('aria-pressed', 'false'));
+      btn.setAttribute('aria-pressed', 'true');
+      onChange(btn.dataset.value ?? '');
+    });
+  }
+
+  // ── Blind-type-aware SVG diagram ───────────────────────────────────────────
+  function renderBlindsSvg(result: ReturnType<typeof calculateBlinds>, wMm: number, hMm: number, blindType: string) {
+    const svg = document.getElementById('blinds-svg');
+    if (!svg) return;
+
+    const isInside = currentMountType === 'inside';
+    const cx = 200, cy = 170;
+    const maxW = 270, maxH = 220;
+    const scale = Math.min(maxW / wMm, maxH / hMm);
+    const fw = wMm * scale;
+    const fh = hMm * scale;
+
+    // Finished blind dimensions in SVG space
+    const bw = isInside
+      ? fw - (result.manufacturingDeductionMm * scale * 2)
+      : fw + (result.overlapMm * scale * 2);
+    const bh = isInside
+      ? fh
+      : fh + (result.overlapMm * scale * 2) + ((50.8 - result.overlapMm) * scale);
+
+    const bx = cx - bw / 2;
+    const by = isInside ? cy - fh / 2 : cy - fh / 2 - (50.8 * scale);
+
+    // ── Generate blind fill pattern based on type ──────────────────────────
+    function slatsPattern(id: string, slotH: number, gapH: number, fill: string, line: string = 'rgba(0,0,0,0.1)'): string {
+      return `<pattern id="${id}" x="0" y="0" width="${bw}" height="${slotH + gapH}" patternUnits="userSpaceOnUse">
+        <rect width="${bw}" height="${slotH}" fill="${fill}" rx="1"/>
+        <rect y="${slotH}" width="${bw}" height="${gapH}" fill="${line}"/>
+      </pattern>`;
+    }
+
+    function verticalLouvres(id: string, count: number, fill: string): string {
+      const lw = Math.max(10, bw / count);
+      return `<pattern id="${id}" x="0" y="0" width="${lw}" height="${bh}" patternUnits="userSpaceOnUse">
+        <rect width="${lw - 2}" height="${bh}" fill="${fill}" rx="1"/>
+        <line x1="${lw - 1}" y1="0" x2="${lw - 1}" y2="${bh}" stroke="rgba(0,0,0,0.15)" stroke-width="1.5"/>
+      </pattern>`;
+    }
+
+    function honeycombPattern(id: string): string {
+      const cw = 14, ch = 9;
+      return `<pattern id="${id}" x="0" y="0" width="${cw}" height="${ch}" patternUnits="userSpaceOnUse">
+        <path d="M${cw/2},0 L${cw},${ch/2} L${cw/2},${ch} L0,${ch/2} Z" fill="#f1f5f9" stroke="#94a3b8" stroke-width="0.8"/>
+      </pattern>`;
+    }
+
+    function zebraPattern(id: string): string {
+      return `<pattern id="${id}" x="0" y="0" width="${bw}" height="24" patternUnits="userSpaceOnUse">
+        <rect width="${bw}" height="12" fill="#475569" opacity="0.85"/>
+        <rect y="12" width="${bw}" height="12" fill="#cbd5e1" opacity="0.35"/>
+      </pattern>`;
+    }
+
+    let patternDef = '';
+    let blindFill = 'url(#blindFill)';
+    let headrailExtra = '';
+    let blindExtraDetails = '';
+
+    const baseColor = '#94a3b8';
+    const darkColor = '#334155';
+    const woodColor = '#92400e';
+    const fauxWoodColor = '#f8fafc';
+
+    // Ladder cords for slat blinds
+    const ladderX1 = bx + bw * 0.25;
+    const ladderX2 = bx + bw * 0.75;
+    const ladderStrings = `
+      <line x1="${ladderX1}" y1="${by}" x2="${ladderX1}" y2="${by + bh}" stroke="rgba(0,0,0,0.25)" stroke-width="1.2" stroke-dasharray="2,2"/>
+      <line x1="${ladderX2}" y1="${by}" x2="${ladderX2}" y2="${by + bh}" stroke="rgba(0,0,0,0.25)" stroke-width="1.2" stroke-dasharray="2,2"/>`;
+
+    const woodTapes = `
+      <rect x="${ladderX1 - 4}" y="${by}" width="8" height="${bh}" fill="#451a03" opacity="0.75"/>
+      <rect x="${ladderX2 - 4}" y="${by}" width="8" height="${bh}" fill="#451a03" opacity="0.75"/>`;
+
+    switch (blindType) {
+      case 'roller':
+        blindFill = '#cbd5e1';
+        headrailExtra = `<rect x="${bx - 3}" y="${by - 5}" width="${bw + 6}" height="10" fill="#334155" rx="5"/>
+          <circle cx="${bx}" cy="${by}" r="5" fill="#1e293b"/>
+          <circle cx="${bx + bw}" cy="${by}" r="5" fill="#1e293b"/>`;
+        blindExtraDetails = `<rect x="${bx}" y="${by + bh - 6}" width="${bw}" height="6" fill="#475569" rx="2"/>
+          <line x1="${bx + bw / 2}" y1="${by + bh}" x2="${bx + bw / 2}" y2="${by + bh + 14}" stroke="#64748b" stroke-width="1.5"/>
+          <circle cx="${bx + bw / 2}" cy="${by + bh + 16}" r="3" fill="#475569"/>`;
+        break;
+      case 'venetian':
+        patternDef = slatsPattern('blindFill', 6, 2, baseColor);
+        blindExtraDetails = ladderStrings;
+        break;
+      case 'wood':
+        patternDef = slatsPattern('blindFill', 9, 2, woodColor, '#78350f');
+        blindExtraDetails = woodTapes;
+        break;
+      case 'faux-wood':
+        patternDef = slatsPattern('blindFill', 8, 2, fauxWoodColor, '#cbd5e1');
+        blindExtraDetails = ladderStrings;
+        break;
+      case 'mini-blind':
+        patternDef = slatsPattern('blindFill', 3, 1.5, baseColor);
+        blindExtraDetails = ladderStrings;
+        break;
+      case 'vertical': {
+        const lCount = Math.max(4, Math.round(bw / 16));
+        patternDef = verticalLouvres('blindFill', lCount, baseColor);
+        headrailExtra = `<rect x="${bx - 2}" y="${by - 3}" width="${bw + 4}" height="6" fill="#1e293b" rx="2"/>`;
+        // Bottom link chain
+        blindExtraDetails = `<path d="M ${bx} ${by + bh - 4} Q ${bx + bw/2} ${by + bh + 4} ${bx + bw} ${by + bh - 4}" stroke="#475569" stroke-width="1.2" fill="none" stroke-dasharray="3,3"/>`;
+        break;
+      }
+      case 'cellular':
+        patternDef = honeycombPattern('blindFill');
+        blindExtraDetails = `<rect x="${bx}" y="${by + bh - 4}" width="${bw}" height="4" fill="#64748b" rx="1"/>`;
+        break;
+      case 'zebra':
+        patternDef = zebraPattern('blindFill');
+        blindExtraDetails = `<rect x="${bx}" y="${by + bh - 5}" width="${bw}" height="5" fill="#334155" rx="2"/>`;
+        break;
+      case 'roman': {
+        const folds = Math.max(3, Math.round(bh / 42));
+        const foldH = bh / folds;
+        patternDef = `<pattern id="blindFill" x="0" y="0" width="${bw}" height="${foldH}" patternUnits="userSpaceOnUse">
+          <rect width="${bw}" height="${foldH - 3}" fill="#cbd5e1" rx="2"/>
+          <line x1="0" y1="${foldH - 2}" x2="${bw}" y2="${foldH - 2}" stroke="#475569" stroke-width="1.5"/>
+        </pattern>`;
+        blindExtraDetails = `<rect x="${bx}" y="${by + bh - 8}" width="${bw}" height="8" fill="#94a3b8" rx="2"/>`;
+        break;
+      }
+      default:
+        blindFill = baseColor;
+    }
+
+    const measureArrow = (x1: number, y1: number, x2: number, y2: number, label: string, isHoriz: boolean = false) => {
+      const mx = isHoriz ? (x1 + x2) / 2 : x2 + 18;
+      const my = isHoriz ? y1 - 12 : (y1 + y2) / 2;
+      return `
+        <line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="#0f172a" stroke-width="1.5"/>
+        <polygon points="${x1},${y1} ${x1-3},${y1+5} ${x1+3},${y1+5}" fill="#0f172a" transform="rotate(${isHoriz?90:0},${x1},${y1})"/>
+        <polygon points="${x2},${y2} ${x2-3},${y2-5} ${x2+3},${y2-5}" fill="#0f172a" transform="rotate(${isHoriz?90:0},${x2},${y2})"/>
+        <rect x="${mx - 24}" y="${my - 8}" width="48" height="16" rx="3" fill="#ffffff" stroke="#cbd5e1" stroke-width="1"/>
+        <text x="${mx}" y="${my + 4}" font-family="monospace" font-size="9" font-weight="600" text-anchor="middle" fill="#0f172a">${label}</text>`;
+    };
+
+    const outsideTag = isInside ? '' : `
+      <!-- Outside overlap visual boundary -->
+      <rect x="${cx - fw/2 - result.overlapMm*scale}" y="${by}" width="${result.overlapMm*scale}" height="${bh}"
+        fill="rgba(59,130,246,0.12)" stroke="#3b82f6" stroke-width="1" stroke-dasharray="3,3"/>
+      <rect x="${cx + fw/2}" y="${by}" width="${result.overlapMm*scale}" height="${bh}"
+        fill="rgba(59,130,246,0.12)" stroke="#3b82f6" stroke-width="1" stroke-dasharray="3,3"/>`;
+
+    svg.innerHTML = `
+      <defs>
+        <pattern id="grid" width="20" height="20" patternUnits="userSpaceOnUse">
+          <path d="M 20 0 L 0 0 0 20" fill="none" stroke="rgba(0,0,0,0.03)" stroke-width="1"/>
+        </pattern>
+        ${patternDef}
+      </defs>
+      <!-- Background grid -->
+      <rect width="400" height="340" fill="url(#grid)" rx="6"/>
+
+      <!-- Outer Trim/Wall outline -->
+      <rect x="${cx - fw/2 - 20}" y="${cy - fh/2 - 20}" width="${fw+40}" height="${fh+40}"
+        fill="#f8fafc" stroke="#e2e8f0" stroke-width="2" rx="6"/>
+
+      <!-- Window frame -->
+      <rect x="${cx - fw/2 - 10}" y="${cy - fh/2 - 10}" width="${fw+20}" height="${fh+20}"
+        fill="#f1f5f9" stroke="#64748b" stroke-width="4" rx="4"/>
+      <!-- Glass surface -->
+      <rect x="${cx - fw/2}" y="${cy - fh/2}" width="${fw}" height="${fh}"
+        fill="#e0f2fe" stroke="#38bdf8" stroke-width="1.5"/>
+
+      ${outsideTag}
+
+      <!-- Blind body -->
+      <rect x="${bx}" y="${by}" width="${bw}" height="${bh}"
+        fill="${blindFill}" stroke="${darkColor}" stroke-width="1.5" opacity="0.95" rx="2"/>
+
+      ${blindExtraDetails}
+
+      <!-- Headrail & hardware -->
+      <rect x="${bx - 2}" y="${by - 2}" width="${bw + 4}" height="10"
+        fill="${darkColor}" rx="2"/>
+      ${headrailExtra}
+
+      <!-- Control tilt cord/wand indicator -->
+      <line x1="${currentControlSide === 'left' ? bx + 8 : bx + bw - 8}" y1="${by + 8}"
+            x2="${currentControlSide === 'left' ? bx + 8 : bx + bw - 8}" y2="${by + bh * 0.65}"
+            stroke="#0f172a" stroke-width="1.5" stroke-dasharray="4,2"/>
+      <circle cx="${currentControlSide === 'left' ? bx + 8 : bx + bw - 8}" cy="${by + bh * 0.65}" r="3.5" fill="#0f172a"/>
+
+      ${measureArrow(cx - fw/2, cy + fh/2 + 26, cx + fw/2, cy + fh/2 + 26, `${Math.round(fromMm(wMm, currentUnit))} ${currentUnit}`, true)}
+      ${measureArrow(cx + fw/2 + 26, cy - fh/2, cx + fw/2 + 26, cy + fh/2, `${Math.round(fromMm(hMm, currentUnit))} ${currentUnit}`)}
+
+      <!-- Mount badge -->
+      <rect x="${cx - 50}" y="310" width="100" height="20" rx="4" fill="#0f172a"/>
+      <text x="${cx}" y="324" font-family="monospace" font-size="10" font-weight="600" text-anchor="middle" fill="#ffffff">${blindType.toUpperCase()} · ${isInside ? 'INSIDE' : 'OUTSIDE'}</text>
+    `;
+
+    // Update SVG subtitle
+    const sub = document.getElementById('svg-subtitle');
+    if (sub) sub.textContent = isInside ? 'Fits inside existing window frame' : 'Overlaps frame for maximum coverage';
+  }
+
+
+  // ── Helper to toggle empty state vs results panel ────────────────────────
+  function toggleResults(hasResults: boolean) {
+    const emptyEl = document.getElementById('results-empty');
+    const gridEl  = document.getElementById('results-grid');
+    const recEl   = document.getElementById('rec-section');
+    const extEl   = document.getElementById('calc-extras');
+
+    if (hasResults) {
+      emptyEl?.setAttribute('hidden', '');
+      gridEl?.removeAttribute('hidden');
+      recEl?.removeAttribute('hidden');
+      extEl?.removeAttribute('hidden');
+    } else {
+      emptyEl?.removeAttribute('hidden');
+      gridEl?.setAttribute('hidden', '');
+      recEl?.setAttribute('hidden', '');
+      extEl?.setAttribute('hidden', '');
+    }
+  }
+
+  function calculate() {
+    const wInput = (document.getElementById('input-width') as HTMLInputElement)?.value;
+    const hInput = (document.getElementById('input-height') as HTMLInputElement)?.value;
+    const dInput = (document.getElementById('input-depth') as HTMLInputElement)?.value;
+    const hwInput = (document.getElementById('input-headrail-width') as HTMLInputElement)?.value;
+    const hhInput = (document.getElementById('input-headrail-height') as HTMLInputElement)?.value;
+
+    if (!wInput || !hInput) {
+      toggleResults(false);
+      return;
+    }
+
+    const w = normalizeInput(wInput, currentUnit);
+    const h = normalizeInput(hInput, currentUnit);
+    const d = dInput ? normalizeInput(dInput, currentUnit) : 0;
+    const hw = hwInput ? normalizeInput(hwInput, currentUnit) : undefined;
+    const hh = hhInput ? normalizeInput(hhInput, currentUnit) : undefined;
+
+    if (!w || !h || w <= 0 || h <= 0) {
+      toggleResults(false);
+      return;
+    }
+
+    const wMm = toMm(w, currentUnit);
+    const hMm = toMm(h, currentUnit);
+    const dMm = d ? toMm(d, currentUnit) : 0;
+    const hwMm = hw ? toMm(hw, currentUnit) : undefined;
+    const hhMm = hh ? toMm(hh, currentUnit) : undefined;
+
+    const input: BlindsInput = {
+      windowWidthMm: wMm,
+      windowHeightMm: hMm,
+      mountType: currentMountType,
+      blindType: currentBlindType as BlindsInput['blindType'],
+      windowDepthMm: dMm,
+      headrailWidthMm: hwMm,
+      headrailHeightMm: hhMm,
+      controlSide: currentControlSide,
+    };
+
+    const result = calculateBlinds(input);
+    currentResult = result;
+    const recs = buildBlindsRecommendations(input, result);
+
+    // ── Primary decision cards ────────────────────────────────────────────────
+    updateMetric('card-finished-width', formatDimension(result.finishedWidthMm, currentUnit));
+    updateMetric('card-finished-height', formatDimension(result.finishedHeightMm, currentUnit));
+    updateMetric('card-mount-rec', recs.mountRecommendation === 'inside' ? 'Inside Mount' : 'Outside Mount');
+
+    const depthLabel = dMm > 0
+      ? (result.isMountSuitable
+          ? `✓ ${formatDimension(result.clearanceMm, currentUnit)} clearance`
+          : '✗ Too shallow for inside')
+      : `Min. depth: ${formatDimension(result.minimumDepthMm, currentUnit)}`;
+    updateMetric('card-depth-compat', depthLabel);
+
+    // ── Secondary cards ──────────────────────────────────────────────────────
+    updateMetric('card-deduction',
+      result.manufacturingDeductionMm > 0
+        ? formatDimension(result.manufacturingDeductionMm, currentUnit)
+        : '—');
+
+    updateMetric('card-overlap',
+      result.overlapMm > 0
+        ? formatDimension(result.overlapMm * 2, currentUnit)
+        : '—');
+
+    const difficultyMap: Record<string, string> = { easy: 'Easy DIY', moderate: 'Moderate DIY', professional: 'Professional' };
+    updateMetric('card-install-rating', difficultyMap[result.installationDifficulty] ?? 'Easy DIY');
+    updateMetric('card-rec-blind', recs.recommendedBlindType
+      .split('-').map((s: string) => s.charAt(0).toUpperCase() + s.slice(1)).join(' '));
+
+    // ── Confidence summary card (Unified Grouped Card) ───────────────────────
+    const confEl = document.getElementById('card-confidence');
+    const starsEl = document.getElementById('confidence-stars');
+    const labelEl = document.getElementById('confidence-label');
+    const orderBadge = document.getElementById('confidence-ordering-badge');
+    const costBadge = document.getElementById('cost-badge');
+    const scoreBadge = document.getElementById('score-badge');
+
+    const confMap: Record<string, { stars: string; label: string; score: string }> = {
+      'excellent':        { stars: '★★★★★', label: 'Exact Factory Match', score: '100% Fit Match' },
+      'good':             { stars: '★★★★☆', label: 'Standard Stock Fit', score: '95% Fit Match' },
+      'minor-adjustment': { stars: '★★★☆☆', label: 'Stock Trim Required', score: '85% Fit Match' },
+      'custom-required':  { stars: '★★☆☆☆', label: 'Custom Sizing Required', score: '70% Custom Match' },
+    };
+    const conf = confMap[result.confidence] ?? confMap['good'];
+    if (starsEl) starsEl.textContent = conf.stars;
+    if (labelEl) labelEl.textContent = conf.label;
+    if (scoreBadge) scoreBadge.textContent = conf.score;
+    if (orderBadge) {
+      const orderMap: Record<string, string> = {
+        'exact': '✓ Order Exact Size',
+        'next-stock': '✓ Order Next Stock Size',
+        'trim': '✓ Trim Stock Blind',
+        'custom': '⚠ Custom Order',
+      };
+      orderBadge.textContent = orderMap[result.orderingRecommendation] ?? orderMap['exact'];
+    }
+    if (costBadge) costBadge.textContent = `Est. Cost: ${result.costTier}`;
+    if (confEl) confEl.removeAttribute('hidden');
+
+    // ── Ordering note ─────────────────────────────────────────────────────────
+    const orderEl = document.getElementById('ordering-note');
+    if (orderEl) orderEl.textContent = recs.orderingNote;
+
+    // ── Interactive Stock Size Chips ──────────────────────────────────────────
+    const nearestW = result.stockWidthSuggestions[0] ?? 0;
+    const wChips = result.stockWidthSuggestions
+      .map((mm: number) => {
+        const isMatch = Math.abs(mm - result.finishedWidthMm) < 2 || mm === nearestW;
+        const cls = isMatch ? 'stock-chip stock-chip--nearest' : 'stock-chip';
+        const formattedVal = formatDimension(mm, currentUnit);
+        const userVal = String(fromMm(mm, currentUnit));
+        return `<button type="button" class="${cls}" data-val="${userVal}" aria-label="Use stock width ${formattedVal}">${formattedVal}</button>`;
+      }).join('');
+    const nearestH = result.stockHeightSuggestions[0] ?? 0;
+    const hChips = result.stockHeightSuggestions
+      .map((mm: number) => {
+        const isMatch = Math.abs(mm - result.finishedHeightMm) < 2 || mm === nearestH;
+        const cls = isMatch ? 'stock-chip stock-chip--nearest' : 'stock-chip';
+        const formattedVal = formatDimension(mm, currentUnit);
+        const userVal = String(fromMm(mm, currentUnit));
+        return `<button type="button" class="${cls}" data-val="${userVal}" aria-label="Use stock height ${formattedVal}">${formattedVal}</button>`;
+      }).join('');
+    
+    const wContainer = document.getElementById('stock-widths');
+    const hContainer = document.getElementById('stock-heights');
+    if (wContainer) wContainer.innerHTML = wChips;
+    if (hContainer) hContainer.innerHTML = hChips;
+
+    // ── Recommendation cards (Normalized with SVGs) ─────────────────────────
+    const recList = document.getElementById('rec-list');
+    if (recList) {
+      const iconMap: Record<string, string> = {
+        'mount': `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/></svg>`,
+        'blind-type': `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16M4 9h16M4 14h16M4 19h16"/></svg>`,
+        'installation': `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>`,
+        'ordering': `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>`,
+        'control': `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>`,
+      };
+      recList.innerHTML = recs.items.map((item: { title: string; body: string; tip?: string; type: string }) =>
+        `<div class="rec-card">
+          <div class="rec-card-header">
+            <span class="rec-card-icon" aria-hidden="true">${iconMap[item.type] || iconMap['mount']}</span>
+            <span class="rec-card-title">${item.title}</span>
+          </div>
+          <div class="rec-card-body">${item.body}</div>
+          ${item.tip ? `<div class="rec-card-tip">${item.tip}</div>` : ''}
+        </div>`
+      ).join('');
+    }
+
+    // ── SVG diagram ───────────────────────────────────────────────────────────
+    renderBlindsSvg(result, wMm, hMm, currentBlindType);
+
+    // ── Reveal results panel ──────────────────────────────────────────────────
+    toggleResults(true);
+
+    // ── Build shared state ────────────────────────────────────────────────────
+    const blindLabel = currentBlindType.split('-')
+      .map((s: string) => s.charAt(0).toUpperCase() + s.slice(1)).join(' ');
+    const mountLabel = currentMountType === 'inside' ? 'Inside Mount' : 'Outside Mount';
+    const histLabel = `${blindLabel} Blind`;
+    const summaryText = `${w} × ${h} ${currentUnit}`;
+
+    const stateParams = {
+      width: String(w),
+      height: String(h),
+      unit: currentUnit,
+      mount: currentMountType,
+      blindType: currentBlindType,
+      depth: dMm > 0 ? String(d ?? 0) : '',
+      controlSide: currentControlSide,
+      subtitle: mountLabel,
+      summary: summaryText,
+      _display: summaryText,
+    };
+
+    (window as any).wmCurrentState = stateParams;
+
+    // ── URL state ─────────────────────────────────────────────────────────────
+    pushUrlState(stateParams);
+
+    // ── History ───────────────────────────────────────────────────────────────
+    (window as any).wmHistoryPanel?.add(histLabel, stateParams);
+
+    // ── Export / share wiring ─────────────────────────────────────────────────
+    (window as any).wmBuildSummary = () => buildSummary(
+      'Window Blinds Size Calculator',
+      [
+        ['Window Width', `${w} ${currentUnit}`],
+        ['Window Height', `${h} ${currentUnit}`],
+        ['Unit', currentUnit],
+        ['Mount Type', mountLabel],
+        ['Blind Type', blindLabel],
+        ['Finished Width', formatDimension(result.finishedWidthMm, currentUnit)],
+        ['Finished Height', formatDimension(result.finishedHeightMm, currentUnit)],
+        ['Confidence', conf.label],
+        ['Ordering Recommendation', result.orderingRecommendation],
+        ['Cost Tier', result.costTier],
+        ['Recommended Blind', recs.recommendedBlindType],
+      ],
+      typeof window !== 'undefined' ? window.location.href : undefined,
+    );
+
+    (window as any).wmBuildExport = () => buildExportPayload(
+      'window-blinds-calculator',
+      stateParams,
+      {
+        windowWidth: `${w} ${currentUnit}`,
+        windowHeight: `${h} ${currentUnit}`,
+        unit: currentUnit,
+        mountType: currentMountType,
+        blindType: currentBlindType,
+        finishedWidth: formatDimension(result.finishedWidthMm, currentUnit),
+        finishedHeight: formatDimension(result.finishedHeightMm, currentUnit),
+        confidence: result.confidence,
+        orderingRecommendation: result.orderingRecommendation,
+        costTier: result.costTier,
+        recommendedBlind: recs.recommendedBlindType,
+        recommendations: recs.items.map((i: any) => `${i.title}: ${i.body}`).join(' | '),
+        warnings: result.warnings.map((w: any) => w.message).join(' | '),
+      },
+    );
+
+    (window as any).wmShareExportBar?.show();
+
+    // ── Analytics ─────────────────────────────────────────────────────────────
+    track({
+      type: 'calculation_completed',
+      properties: { slug: 'window-blinds-calculator', unit: currentUnit, inputs: stateParams },
+    });
+  }
+
+  // ── DOMContentLoaded ─────────────────────────────────────────────────────
+  document.addEventListener('DOMContentLoaded', () => {
+    const widthInput   = document.getElementById('input-width')  as HTMLInputElement;
+    const heightInput  = document.getElementById('input-height') as HTMLInputElement;
+    const depthInput   = document.getElementById('input-depth')  as HTMLInputElement;
+    const hwInput      = document.getElementById('input-headrail-width') as HTMLInputElement;
+    const hhInput      = document.getElementById('input-headrail-height') as HTMLInputElement;
+    const fdInput      = document.getElementById('input-frame-depth') as HTMLInputElement;
+
+    // Live calculation on every input change (debounced)
+    [widthInput, heightInput, depthInput, hwInput, hhInput, fdInput].forEach(el => {
+      el?.addEventListener('input', () => scheduleCalculate());
+      el?.addEventListener('change', () => calculate());
+      el?.addEventListener('keydown', (e) => { if (e.key === 'Enter') calculate(); });
+    });
+
+    document.getElementById('input-blind-type')?.addEventListener('change', () => {
+      currentBlindType = (document.getElementById('input-blind-type') as HTMLSelectElement).value;
+      calculate();
+    });
+
+    initOptionSelector('mount-selector', (val) => {
+      currentMountType = val as 'inside' | 'outside';
+      calculate();
+    });
+
+    initOptionSelector('control-side-selector', (val) => {
+      currentControlSide = val as 'left' | 'right';
+      calculate();
+    });
+
+    // Interactive stock chip selection
+    const handleStockClick = (containerId: string, inputEl: HTMLInputElement) => {
+      document.getElementById(containerId)?.addEventListener('click', (e) => {
+        const chip = (e.target as HTMLElement).closest('.stock-chip') as HTMLElement | null;
+        if (chip?.dataset.val && inputEl) {
+          inputEl.value = chip.dataset.val;
+          calculate();
+        }
+      });
+    };
+    if (widthInput) handleStockClick('stock-widths', widthInput);
+    if (heightInput) handleStockClick('stock-heights', heightInput);
+
+    // Unit selector — listens for custom 'unitchange' event
+    document.getElementById('unit-selector')?.addEventListener('unitchange', (e) => {
+      const newUnit = (e as CustomEvent).detail?.unit as MeasurementUnit | undefined;
+      if (!newUnit) return;
+      if (widthInput?.value) {
+        const parsed = normalizeInput(widthInput.value, currentUnit);
+        if (parsed) widthInput.value = String(fromMm(toMm(parsed, currentUnit), newUnit));
+      }
+      if (heightInput?.value) {
+        const parsed = normalizeInput(heightInput.value, currentUnit);
+        if (parsed) heightInput.value = String(fromMm(toMm(parsed, currentUnit), newUnit));
+      }
+      if (depthInput?.value) {
+        const parsed = normalizeInput(depthInput.value, currentUnit);
+        if (parsed) depthInput.value = String(fromMm(toMm(parsed, currentUnit), newUnit));
+      }
+      const oldUnit = currentUnit;
+      currentUnit = newUnit;
+      track({ type: 'unit_changed', properties: { slug: 'window-blinds-calculator', from: oldUnit, to: newUnit } });
+      calculate();
+    });
+
+    document.getElementById('unit-selector')?.addEventListener('change', (e) => {
+      const target = e.target as HTMLInputElement;
+      if (target?.value && target.value !== currentUnit) {
+        currentUnit = target.value as MeasurementUnit;
+        calculate();
+      }
+    });
+
+    // ── Restore URL state on load ────────────────────────────────────────────
+    const urlState = readUrlState();
+    if (urlState.width && widthInput)   widthInput.value  = urlState.width;
+    if (urlState.height && heightInput) heightInput.value = urlState.height;
+    if (urlState.depth && depthInput)   depthInput.value  = urlState.depth;
+    if (urlState.unit && ['mm','cm','m','in','ft'].includes(urlState.unit)) {
+      currentUnit = urlState.unit as MeasurementUnit;
+      const unitBtn = document.querySelector<HTMLElement>(`.unit-btn[data-value="${currentUnit}"]`);
+      if (unitBtn) {
+        document.querySelectorAll('.unit-btn').forEach(b => (b as HTMLElement).setAttribute('aria-pressed','false'));
+        unitBtn.setAttribute('aria-pressed', 'true');
+      }
+    }
+    if (urlState.mount === 'inside' || urlState.mount === 'outside') {
+      currentMountType = urlState.mount;
+      document.querySelectorAll('#mount-selector .option-btn').forEach(b =>
+        (b as HTMLElement).setAttribute('aria-pressed', (b as HTMLElement).dataset.value === currentMountType ? 'true' : 'false'));
+    }
+    if (urlState.blindType) {
+      currentBlindType = urlState.blindType;
+      const sel = document.getElementById('input-blind-type') as HTMLSelectElement;
+      if (sel) sel.value = currentBlindType;
+    }
+    if (urlState.controlSide === 'left' || urlState.controlSide === 'right') {
+      currentControlSide = urlState.controlSide;
+      document.querySelectorAll('#control-side-selector .option-btn').forEach(b =>
+        (b as HTMLElement).setAttribute('aria-pressed', (b as HTMLElement).dataset.value === currentControlSide ? 'true' : 'false'));
+    }
+
+    // Auto-calculate on load if valid inputs exist
+    calculate();
+  });
+
+  // ── History restore ──────────────────────────────────────────────────────
+  document.addEventListener('wm:history-restore', (e: Event) => {
+    const { inputs } = (e as CustomEvent).detail;
+    const widthInput  = document.getElementById('input-width')  as HTMLInputElement;
+    const heightInput = document.getElementById('input-height') as HTMLInputElement;
+    const depthInput  = document.getElementById('input-depth')  as HTMLInputElement;
+
+    if (inputs.width)  widthInput.value  = inputs.width;
+    if (inputs.height) heightInput.value = inputs.height;
+    if (inputs.depth)  depthInput.value  = inputs.depth;
+    if (inputs.unit && ['mm','cm','m','in','ft'].includes(inputs.unit)) {
+      currentUnit = inputs.unit as MeasurementUnit;
+      const unitBtn = document.querySelector<HTMLElement>(`.unit-btn[data-value="${currentUnit}"]`);
+      if (unitBtn) {
+        document.querySelectorAll('.unit-btn').forEach(b => (b as HTMLElement).setAttribute('aria-pressed','false'));
+        unitBtn.setAttribute('aria-pressed', 'true');
+      }
+    }
+    if (inputs.mount === 'inside' || inputs.mount === 'outside') {
+      currentMountType = inputs.mount;
+      document.querySelectorAll('#mount-selector .option-btn').forEach(b =>
+        (b as HTMLElement).setAttribute('aria-pressed', (b as HTMLElement).dataset.value === currentMountType ? 'true' : 'false'));
+    }
+    if (inputs.blindType) {
+      currentBlindType = inputs.blindType;
+      const sel = document.getElementById('input-blind-type') as HTMLSelectElement;
+      if (sel) sel.value = currentBlindType;
+    }
+    if (inputs.controlSide === 'left' || inputs.controlSide === 'right') {
+      currentControlSide = inputs.controlSide;
+      document.querySelectorAll('#control-side-selector .option-btn').forEach(b =>
+        (b as HTMLElement).setAttribute('aria-pressed', (b as HTMLElement).dataset.value === currentControlSide ? 'true' : 'false'));
+    }
+    calculate();
+    track({ type: 'history_restored', properties: { slug: 'window-blinds-calculator', entryId: (e as CustomEvent).detail.entryId ?? '' } });
+  });
+</script>
+
+<style>
+  .calc-dashboard {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--spacing-xl);
+    align-items: start;
+    margin-top: var(--spacing-2xl);
+  }
+
+  @media (min-width: 1024px) {
+    .calc-dashboard {
+      grid-template-columns: 360px 1fr;
+    }
+  }
+
+  .calc-panel {
+    background-color: var(--color-canvas);
+    border: 1px solid var(--color-hairline);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+  }
+
+  .calc-panel-inputs {
+    position: sticky;
+    top: var(--spacing-md);
+  }
+
+  .panel-header {
+    padding: var(--spacing-md);
+    background-color: var(--color-canvas-soft);
+    border-bottom: 1px solid var(--color-hairline);
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+  }
+
+  .panel-label {
+    font-family: var(--font-family-mono);
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--color-ink);
+  }
+
+  .panel-section-header {
+    height: 1px;
+    background-color: var(--color-hairline);
+    margin: var(--spacing-md) 0 0;
+  }
+
+  .unit-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--spacing-md);
+    border-bottom: 1px solid var(--color-hairline);
+  }
+
+  .unit-row-label {
+    font-size: var(--font-size-body-sm);
+    font-weight: 500;
+  }
+
+  .input {
+    width: 100%;
+    padding: var(--spacing-sm) var(--spacing-md);
+    border: 1px solid var(--color-hairline-strong);
+    border-radius: var(--radius-md);
+    background-color: var(--color-canvas);
+    color: var(--color-ink);
+    font-size: var(--font-size-body);
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+
+  .input:focus {
+    outline: none;
+    border-color: var(--color-brand);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-brand) 15%, transparent);
+  }
+
+  .input-select {
+    width: 100%;
+    padding: var(--spacing-sm) var(--spacing-md);
+    border: 1px solid var(--color-hairline-strong);
+    border-radius: var(--radius-md);
+    background-color: var(--color-canvas);
+    color: var(--color-ink);
+    font-size: var(--font-size-body);
+    font-family: inherit;
+    cursor: pointer;
+    appearance: auto;
+    -webkit-appearance: auto;
+    height: 42px;
+    line-height: 1.4;
+  }
+
+  .input-select:focus {
+    outline: none;
+    border-color: var(--color-brand);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-brand) 15%, transparent);
+  }
+
+  .option-selector {
+    display: flex;
+    background-color: var(--color-canvas-soft-2);
+    border-radius: var(--radius-md);
+    padding: 2px;
+    gap: 2px;
+  }
+
+  .option-btn {
+    flex: 1;
+    appearance: none;
+    background: transparent;
+    border: none;
+    padding: var(--spacing-sm);
+    font-size: var(--font-size-body-sm);
+    font-weight: 500;
+    color: var(--color-muted);
+    border-radius: calc(var(--radius-md) - 2px);
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .option-btn:hover {
+    color: var(--color-ink);
+  }
+
+  .option-btn[aria-pressed="true"] {
+    background-color: var(--color-canvas);
+    color: var(--color-ink);
+    box-shadow: var(--shadow-sm);
+  }
+
+  .advanced-section {
+    padding: var(--spacing-md);
+    border-top: 1px solid var(--color-hairline);
+  }
+
+  .advanced-section summary {
+    font-size: var(--font-size-body-sm);
+    font-weight: 500;
+    color: var(--color-muted);
+    cursor: pointer;
+    user-select: none;
+  }
+  
+  .advanced-content {
+    margin-top: var(--spacing-md);
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+  }
+
+  /* ── Remove button styles (live calculator) ────────────────────── */
+  /* .panel-actions and .btn-primary are unused — kept for safety */
+  .panel-actions { display: none; }
+
+  .results-metric-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--spacing-md);
+    padding: var(--spacing-lg);
+  }
+
+  @media (min-width: 640px) {
+    .results-metric-grid {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+
+  /* ── Empty state illustration & typography ─────────────────────── */
+  .empty-state {
+    padding: var(--spacing-3xl) var(--spacing-xl);
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 380px;
+  }
+
+  .empty-icon-wrap {
+    width: 72px;
+    height: 72px;
+    border-radius: var(--radius-full);
+    background-color: var(--color-canvas-soft-2);
+    border: 1px solid var(--color-hairline);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: var(--spacing-md);
+    color: var(--color-muted);
+  }
+
+  .empty-title {
+    font-size: var(--font-size-body);
+    font-weight: 600;
+    color: var(--color-ink);
+    margin: 0 0 var(--spacing-xs);
+  }
+
+  .empty-sub {
+    font-size: var(--font-size-caption);
+    color: var(--color-muted);
+    margin: 0;
+    max-width: 280px;
+    line-height: 1.4;
+  }
+
+  /* ── Option Selector (Segmented control) ────────────────────────── */
+  .option-selector {
+    display: flex;
+    background-color: var(--color-canvas-soft-2);
+    border-radius: var(--radius-md);
+    padding: 3px;
+    gap: 3px;
+    border: 1px solid var(--color-hairline);
+  }
+
+  .option-btn {
+    flex: 1;
+    appearance: none;
+    background: transparent;
+    border: none;
+    padding: var(--spacing-xs) var(--spacing-sm);
+    font-size: var(--font-size-caption);
+    font-weight: 600;
+    color: var(--color-muted);
+    border-radius: calc(var(--radius-md) - 3px);
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .option-btn:hover {
+    color: var(--color-ink);
+  }
+
+  .option-btn[aria-pressed="true"] {
+    background-color: var(--color-canvas);
+    color: var(--color-ink);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+  }
+
+  .advanced-section {
+    padding: var(--spacing-md);
+    border-top: 1px solid var(--color-hairline);
+  }
+
+  .advanced-section summary {
+    font-size: var(--font-size-body-sm);
+    font-weight: 500;
+    color: var(--color-muted);
+    cursor: pointer;
+    user-select: none;
+  }
+  
+  .advanced-content {
+    margin-top: var(--spacing-md);
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+  }
+
+  .panel-actions { display: none; }
+
+  /* ── Results metric grid & equal height cards ────────────────────── */
+  .results-metric-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--spacing-md);
+    padding: var(--spacing-lg);
+    align-items: stretch;
+  }
+
+  @media (min-width: 640px) {
+    .results-metric-grid {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+
+  .results-metric-grid > * {
+    height: 100%;
+    min-height: 96px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+
+  /* ── Unified Confidence Summary Card ────────────────────────────── */
+  .confidence-summary-card {
+    margin: 0 var(--spacing-lg) var(--spacing-md);
+    padding: var(--spacing-lg);
+    background: linear-gradient(180deg, color-mix(in srgb, var(--color-brand) 8%, var(--color-canvas)) 0%, var(--color-canvas) 100%);
+    border: 1px solid color-mix(in srgb, var(--color-brand) 22%, transparent);
+    border-radius: var(--radius-lg);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+    text-align: center;
+  }
+
+  .conf-card-header {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    margin-bottom: var(--spacing-md);
+  }
+
+  .conf-stars {
+    font-size: 20px;
+    letter-spacing: 3px;
+    color: #f59e0b;
+  }
+
+  .conf-title {
+    font-weight: 700;
+    font-size: var(--font-size-body);
+    color: var(--color-ink);
+  }
+
+  .conf-card-badges {
+    display: flex;
+    justify-content: center;
+    gap: var(--spacing-sm);
+    flex-wrap: wrap;
+  }
+
+  .conf-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 12px;
+    border-radius: var(--radius-full);
+    font-size: var(--font-size-caption);
+    font-weight: 600;
+    background: var(--color-canvas-soft-2);
+    border: 1px solid var(--color-hairline);
+    color: var(--color-ink);
+    font-family: var(--font-family-mono);
+  }
+
+  .conf-badge-cost {
+    background: color-mix(in srgb, var(--color-brand) 12%, transparent);
+    border-color: color-mix(in srgb, var(--color-brand) 25%, transparent);
+    color: var(--color-brand);
+  }
+
+  .conf-badge-order {
+    background: color-mix(in srgb, #22c55e 12%, transparent);
+    border-color: color-mix(in srgb, #22c55e 25%, transparent);
+    color: #15803d;
+  }
+
+  [data-theme='dark'] .conf-badge-order {
+    color: #4ade80;
+  }
+
+  .conf-badge-score {
+    background: color-mix(in srgb, #22c55e 12%, transparent);
+    border-color: color-mix(in srgb, #22c55e 25%, transparent);
+    color: #15803d;
+  }
+
+  [data-theme='dark'] .conf-badge-score {
+    color: #4ade80;
+  }
+
+  .ordering-card {
+    margin: 0 var(--spacing-lg) var(--spacing-md);
+    padding: var(--spacing-md) var(--spacing-lg);
+    background-color: color-mix(in srgb, #22c55e 10%, transparent);
+    border: 1px solid color-mix(in srgb, #22c55e 20%, transparent);
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    color: #166534;
+  }
+
+  [data-theme='dark'] .ordering-card {
+    color: #4ade80;
+  }
+
+  .ordering-icon {
+    font-weight: bold;
+    font-size: 1.2em;
+  }
+
+  .ordering-text {
+    font-weight: 600;
+    font-size: var(--font-size-body-sm);
+  }
+
+  /* ── Stock Chips ────────────────────────────────────────────────── */
+  .stock-section {
+    padding: var(--spacing-lg);
+    border-top: 1px solid var(--color-hairline);
+  }
+
+  .stock-section-header {
+    margin-bottom: var(--spacing-sm);
+    margin-top: var(--spacing-md);
+  }
+  
+  .stock-section-header:first-child {
+    margin-top: 0;
+  }
+
+  .stock-label {
+    font-family: var(--font-family-mono);
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    color: var(--color-muted);
+  }
+
+  .stock-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .stock-chip {
+    padding: 4px 10px;
+    background-color: var(--color-canvas-soft-2);
+    border: 1px solid var(--color-hairline);
+    border-radius: var(--radius-full);
+    font-size: var(--font-size-caption);
+    color: var(--color-ink);
+    font-family: var(--font-family-mono);
+    font-weight: 500;
+    cursor: pointer;
+    appearance: none;
+    transition: all 0.15s ease;
+  }
+
+  .stock-chip:hover {
+    border-color: var(--color-brand);
+    color: var(--color-brand);
+    background-color: var(--color-canvas);
+  }
+
+  .stock-chip:focus-visible {
+    outline: 2px solid var(--color-brand);
+    outline-offset: 2px;
+  }
+
+  .stock-chip--nearest {
+    background-color: var(--color-brand);
+    color: #ffffff !important;
+    border-color: var(--color-brand);
+    font-weight: 700;
+    box-shadow: 0 1px 4px color-mix(in srgb, var(--color-brand) 35%, transparent);
+  }
+
+  .stock-chip--nearest:hover {
+    background-color: color-mix(in srgb, var(--color-brand) 85%, black);
+    color: #ffffff !important;
+  }
+
+  .svg-section {
+    padding: var(--spacing-lg);
+    border-bottom: 1px solid var(--color-hairline);
+    background-color: var(--color-canvas-soft);
+  }
+
+  .svg-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--spacing-md);
+  }
+
+  .svg-label {
+    font-family: var(--font-family-mono);
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    color: var(--color-ink);
+  }
+
+  .svg-subtitle {
+    font-size: var(--font-size-caption);
+    color: var(--color-muted);
+    font-family: var(--font-family-mono);
+  }
+
+  .svg-wrap {
+    background-color: #ffffff;
+    border: 1px solid var(--color-hairline);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    padding: var(--spacing-md);
+    display: flex;
+    justify-content: center;
+    box-shadow: inset 0 1px 3px rgba(0,0,0,0.03);
+  }
+
+  [data-theme='dark'] .svg-wrap {
+    background-color: #0f172a;
+    border-color: #334155;
+  }
+
+  /* ── Recommendation Cards Typography & Layout ──────────────────── */
+  .rec-section {
+    border-top: 1px solid var(--color-hairline);
+  }
+
+  .rec-list {
+    padding: var(--spacing-lg);
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--spacing-md);
+  }
+
+  @media (min-width: 640px) {
+    .rec-list {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+
+  .rec-card {
+    padding: var(--spacing-md) var(--spacing-lg);
+    background: var(--color-canvas-soft);
+    border: 1px solid var(--color-hairline);
+    border-radius: var(--radius-md);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 4px;
+    height: 100%;
+    min-height: 100px;
+  }
+
+  .rec-card-header {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .rec-card-icon {
+    color: var(--color-brand);
+    display: inline-flex;
+    align-items: center;
+    flex-shrink: 0;
+  }
+
+  .rec-card-title {
+    font-family: var(--font-family-mono);
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--color-brand);
+  }
+
+  .rec-card-body {
+    font-size: var(--font-size-body-sm);
+    font-weight: 700;
+    color: var(--color-ink);
+    line-height: 1.3;
+  }
+
+  .rec-card-tip {
+    font-size: var(--font-size-caption);
+    color: var(--color-muted);
+    line-height: 1.35;
+  }
+
+  .calc-extras {
+    border-top: 1px solid var(--color-hairline);
+    background-color: var(--color-canvas-soft);
+    padding: var(--spacing-lg);
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-lg);
+  }
+
+  /* ── Mobile Layout Polish ────────────────────────────────────────── */
+  @media (max-width: 640px) {
+    .results-metric-grid {
+      grid-template-columns: 1fr;
+      padding: var(--spacing-md);
+    }
+    .stock-section, .rec-list, .calc-extras, .svg-section {
+      padding: var(--spacing-md);
+    }
+    .confidence-summary-card {
+      margin: 0 var(--spacing-md) var(--spacing-md);
+      padding: var(--spacing-md);
+    }
+    .ordering-card {
+      margin: 0 var(--spacing-md) var(--spacing-md);
+    }
+    .stock-chips {
+      gap: 4px;
+    }
+    .conf-card-badges {
+      flex-direction: column;
+      align-items: stretch;
+    }
+    .conf-badge {
+      justify-content: center;
+    }
+  }
+</style>
+

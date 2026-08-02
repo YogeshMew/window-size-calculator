@@ -403,6 +403,17 @@ export interface ReplacementRecommendationSet {
   installationNotes: string[];
 }
 
+/** Legacy replacement recommendation structure */
+export interface ReplacementRecommendation {
+  standardMatch: StandardSizeResult;
+  roughOpeningWidthMm: number;
+  roughOpeningHeightMm: number;
+  isStandardAvailable: boolean;
+  requiresCustomOrder: boolean;
+  shimSpaceMm: number;
+  notes: string[];
+}
+
 // ---------------------------------------------------------------------------
 // Warning System
 // ---------------------------------------------------------------------------
@@ -449,3 +460,133 @@ export interface SEOMetadata {
   /** Schema.org JSON-LD objects to inject */
   jsonLd?: object[];
 }
+
+// ---------------------------------------------------------------------------
+// Reusable Calculator Metadata (Phase 13+)
+// ---------------------------------------------------------------------------
+
+/**
+ * Reusable metadata header attached to every export, history entry, and share
+ * payload. Centralises version and provenance tracking for all calculators.
+ */
+export interface CalculatorMetadata {
+  /** Semver engine version */
+  version: string;
+  /** URL-safe calculator slug */
+  calculatorSlug: string;
+  /** Engine module version (e.g. "blinds@1.0.0") */
+  engineVersion: string;
+  /** ISO timestamp of calculation */
+  generatedAt: string;
+  /** Active display unit at time of calculation */
+  unit: MeasurementUnit;
+}
+
+// ---------------------------------------------------------------------------
+// Window Blinds Calculator
+// ---------------------------------------------------------------------------
+
+/** Supported blind product types */
+export type BlindType =
+  | 'roller'
+  | 'venetian'
+  | 'vertical'
+  | 'roman'
+  | 'cellular'
+  | 'zebra'
+  | 'mini-blind'
+  | 'wood'
+  | 'faux-wood';
+
+/** Mount position for blinds */
+export type BlindMountType = 'inside' | 'outside';
+
+/** Control cord side */
+export type BlindControlSide = 'left' | 'right';
+
+/** Confidence in the measurement/fit */
+export type BlindsConfidence = 'excellent' | 'good' | 'minor-adjustment' | 'custom-required';
+
+/** Cost bracket based on blind type and complexity */
+export type BlindCostTier = '$' | '$$' | '$$$' | '$$$$';
+
+/** How to order relative to stock sizes */
+export type BlindsOrderingRecommendation = 'exact' | 'next-stock' | 'trim' | 'custom';
+
+/** Severity of a blind-specific warning or note */
+export type BlindsWarnLevel = 'error' | 'warning' | 'info';
+
+export interface BlindsWarning {
+  level: BlindsWarnLevel;
+  code: string;
+  message: string;
+}
+
+/** All inputs required by the blinds engine */
+export interface BlindsInput {
+  /** Window frame width in mm */
+  windowWidthMm: number;
+  /** Window frame height in mm */
+  windowHeightMm: number;
+  /** Mount position: inside the frame or outside/over the frame */
+  mountType: BlindMountType;
+  /** Blind product type */
+  blindType: BlindType;
+  /** Window reveal depth in mm (depth from face of frame to glass) */
+  windowDepthMm: number;
+  /** Headrail width in mm (optional — from blind spec sheet) */
+  headrailWidthMm?: number;
+  /** Headrail height / stack-up in mm */
+  headrailHeightMm?: number;
+  /** Frame depth (wall to glass) for deep-set windows */
+  frameDepthMm?: number;
+  /** Which side the operating cord/wand should fall on */
+  controlSide: BlindControlSide;
+}
+
+/** Full output of a blind size calculation */
+export interface BlindsResult {
+  // ── Order dimensions ──────────────────────────────────────────────────────
+  /** Final width to order (after deduction or with overlap) */
+  finishedWidthMm: number;
+  /** Final height to order */
+  finishedHeightMm: number;
+
+  // ── Deductions & overlap ─────────────────────────────────────────────────
+  /** Total manufacturing deduction applied (inside mount) */
+  manufacturingDeductionMm: number;
+  /** Total overlap beyond the frame (outside mount) */
+  overlapMm: number;
+
+  // ── Depth compatibility ───────────────────────────────────────────────────
+  /** Minimum reveal depth required for inside mount */
+  minimumDepthMm: number;
+  /** Comfortable recommended depth (minimum + buffer) */
+  recommendedDepthMm: number;
+  /** Available clearance: windowDepthMm - minimumDepthMm */
+  clearanceMm: number;
+  /** True when inside mount is geometrically feasible */
+  isMountSuitable: boolean;
+  /** Which mount is recommended given depth and dimensions */
+  suitableMount: 'inside' | 'outside' | 'either';
+
+  // ── Assessment ────────────────────────────────────────────────────────────
+  /** DIY difficulty rating */
+  installationDifficulty: 'easy' | 'moderate' | 'professional';
+  /** Fit confidence */
+  confidence: BlindsConfidence;
+  /** Product cost bracket */
+  costTier: BlindCostTier;
+
+  // ── Stock size intelligence ───────────────────────────────────────────────
+  /** Nearest standard stock widths (3 closest), in mm */
+  stockWidthSuggestions: number[];
+  /** Nearest standard stock heights (3 closest), in mm */
+  stockHeightSuggestions: number[];
+  /** How the finished size relates to stock availability */
+  orderingRecommendation: BlindsOrderingRecommendation;
+
+  // ── Structured output ─────────────────────────────────────────────────────
+  warnings: BlindsWarning[];
+}
+
