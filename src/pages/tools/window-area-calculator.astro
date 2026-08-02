@@ -1,0 +1,864 @@
+---
+/**
+ * WindowMetrics — Window Area Calculator Page
+ * Route: /tools/window-area-calculator
+ *
+ * Dedicated area-first geometry calculator.
+ * Calculates single and multi-window surface area, perimeter, net glass area,
+ * film requirement with trim margin, frame paint casing coverage, and waste allowances across 9 technical shapes.
+ */
+
+import ToolLayout from '@/layouts/ToolLayout.astro';
+import CalculatorHero from '@/components/calculator/CalculatorHero.astro';
+import InputCard from '@/components/calculator/InputCard.astro';
+import UnitSelector from '@/components/calculator/UnitSelector.astro';
+import ResultMetricCard from '@/components/calculator/ResultMetricCard.astro';
+import ShareExportBar from '@/components/calculator/ShareExportBar.astro';
+import HistoryPanel from '@/components/calculator/HistoryPanel.astro';
+import RelatedTools from '@/components/calculator/RelatedTools.astro';
+import FAQSection from '@/components/content/FAQSection.astro';
+import { getToolBySlug } from '@/data/tools.js';
+
+const tool = getToolBySlug('window-area-calculator');
+if (!tool) {
+  throw new Error('Tool data for "window-area-calculator" not found in tool registry.');
+}
+
+const breadcrumbs = [
+  { label: 'Home', href: '/' },
+  { label: 'Tools', href: '/tools' },
+  { label: 'Window Area Calculator', href: '/tools/window-area-calculator' },
+];
+
+const faqs = [
+  {
+    question: 'How do I calculate the area of a rectangular or square window?',
+    answer: 'Multiply width by height. For example, a 48 inch wide by 60 inch tall window has an area of 2,880 square inches. To convert to square feet, divide by 144 (2,880 ÷ 144 = 20 sq ft).',
+  },
+  {
+    question: 'How do you calculate the area of an arched or half-circle window?',
+    answer: 'An arch window consists of a rectangular base plus a half-circle top. Calculate the rectangular base (width × base height) and add the half-circle top area (0.5 × π × radius²). Our calculator computes this automatically when you select the Arch shape.',
+  },
+  {
+    question: 'How much waste percentage should I add when ordering window film or glass?',
+    answer: 'Add 10% waste for standard rectangular or square windows. Add 15% to 20% waste for specialty shapes (circle, arch, triangle, trapezoid, ellipse) to allow for trimming scrap and off-cut waste.',
+  },
+  {
+    question: 'What is the difference between total window area and net glass area?',
+    answer: 'Total window area is calculated from outer frame-to-frame dimensions. Net daylight glass area deducts the perimeter frame profile width (typically 1.5 inches per side), representing the actual visible glass pane.',
+  },
+  {
+    question: 'Why does window film require a larger area than the window dimensions?',
+    answer: 'Window film is installed by cutting a piece 1 inch larger than the glass on all four sides. This 1-inch trimming margin ensures full edge-to-edge glass coverage before hand-trimming with a razor blade against the gasket.',
+  },
+  {
+    question: 'How much fabric area is required for custom curtains?',
+    answer: 'Custom drapes require 1.5× to 2× the window area to create attractive gathered fullness folds when closed. Our calculator automatically generates this curtain coverage area for your project.',
+  },
+  {
+    question: 'How much paint do I need for window trim and casing molding?',
+    answer: 'Multiply the perimeter length of your window frame by the trim width (typically 2 to 3 inches). One quart of trim paint covers approximately 85 square feet of trim casing surface with 2 coats.',
+  },
+  {
+    question: 'Can I convert window area to acres or hectares for large building projects?',
+    answer: 'Yes. Our calculator automatically displays equivalent area in square meters (m²), square feet (sq ft), square inches (sq in), square centimeters (cm²), acres, and hectares for commercial architectural projects.',
+  },
+];
+---
+
+<ToolLayout
+  tool={tool}
+  breadcrumbs={breadcrumbs}
+  faqs={faqs}
+  title="Window Area Calculator | WindowMetrics"
+  description="Calculate window area, perimeter, glass coverage, film requirements and more with live updates."
+>
+  <CalculatorHero
+    tool={tool}
+    description="Calculate exact window area, perimeter, net glass coverage, film requirement, and waste percentage across 9 technical shapes."
+    features={[
+      '9 technical shapes (Rectangle, Circle, Arch, etc.)',
+      'Instant m², sq ft, sq in & cm² area conversions',
+      'Trade coverage (net glass, film, paint, curtains)',
+      'Custom waste percentage factor allowance',
+    ]}
+    trustItems={[
+      { label: 'Exact geometric formulas' },
+      { label: 'Multi-unit support' },
+      { label: 'No signup' },
+      { label: 'Instant live calculation' },
+    ]}
+  />
+
+  <div class="calc-dashboard">
+    <!-- LEFT PANEL — Inputs -->
+    <div class="calc-panel calc-panel-inputs">
+      <div class="panel-header">
+        <span class="panel-label">Window Dimensions & Shape</span>
+        <UnitSelector defaultUnit="in" />
+      </div>
+
+      <div class="panel-section-header">
+        <span class="panel-section-title">Geometry & Shape Selection</span>
+      </div>
+
+      <InputCard label="Window Shape" inputId="input-shape">
+        <select id="input-shape" class="input-select" aria-label="Select Window Shape">
+          <option value="rectangle" selected>Rectangle (Standard Width × Height)</option>
+          <option value="square">Square (Equal Sides)</option>
+          <option value="circle">Circle / Round (Full Circle)</option>
+          <option value="half-circle">Half Circle / Semicircle (Half Round Top)</option>
+          <option value="arch">Arch / Radius Top (Rectangle + Half Circle)</option>
+          <option value="triangle">Triangle (Gable / Angled Top)</option>
+          <option value="trapezoid">Trapezoid (Sloped Top / Slanting Side)</option>
+          <option value="ellipse">Ellipse / Oval (Oval Window)</option>
+          <option value="quarter-circle">Quarter Circle / Fan Window</option>
+        </select>
+      </InputCard>
+
+      <InputCard label="Width (Base / Diameter)" inputId="input-width" hint="Overall width">
+        <input type="text" id="input-width" class="input" placeholder="e.g., 48" autocomplete="off" />
+      </InputCard>
+
+      <InputCard label="Height (Total Height)" inputId="input-height" hint="Overall height">
+        <input type="text" id="input-height" class="input" placeholder="e.g., 60" autocomplete="off" />
+      </InputCard>
+
+      <div id="extra-dimensions-group" hidden>
+        <InputCard label="Top Width (Trapezoid)" inputId="input-top-width" hint="Upper horizontal width">
+          <input type="text" id="input-top-width" class="input" placeholder="e.g., 36" autocomplete="off" />
+        </InputCard>
+        <InputCard label="Side Height (Arch / Trapezoid)" inputId="input-side-height" hint="Straight vertical side height">
+          <input type="text" id="input-side-height" class="input" placeholder="e.g., 42" autocomplete="off" />
+        </InputCard>
+      </div>
+
+      <div class="panel-section-header">
+        <span class="panel-section-title">Quantity & Waste Factor</span>
+      </div>
+
+      <InputCard label="Quantity" inputId="input-quantity" hint="Number of identical windows">
+        <input type="number" id="input-quantity" class="input" value="1" min="1" max="500" step="1" />
+      </InputCard>
+
+      <InputCard label="Waste Allowance (%)" inputId="input-waste" hint="10% standard, 15% specialty">
+        <input type="number" id="input-waste" class="input" value="10" min="0" max="50" step="1" />
+      </InputCard>
+    </div>
+
+    <!-- RIGHT PANEL — Results -->
+    <div class="calc-panel calc-panel-results">
+      <div id="results-empty" class="empty-state">
+        <div class="empty-icon-wrap">
+          <svg width="48" height="48" viewBox="0 0 48 48" fill="none" class="empty-svg">
+            <rect x="8" y="12" width="32" height="24" rx="3" stroke="currentColor" stroke-width="2.5" fill="none"/>
+            <circle cx="24" cy="24" r="6" stroke="currentColor" stroke-width="1.5" stroke-dasharray="2 2"/>
+          </svg>
+        </div>
+        <h3 class="empty-title">Enter window dimensions</h3>
+        <p class="empty-sub">Fill in Width and Height to calculate window area, perimeter, film, and glass requirements.</p>
+      </div>
+
+      <div id="results-grid" hidden>
+        <!-- SVG Geometry & Technical Overlay Illustration -->
+        <div class="svg-section">
+          <div class="svg-header">
+            <span class="svg-label">Technical Geometry & Area Overlay Diagram</span>
+            <span class="svg-subtitle" id="svg-subtitle">Dimension Vectors & Surface Area</span>
+          </div>
+          <div class="svg-wrap">
+            <svg id="area-svg" viewBox="0 0 400 340" width="100%" aria-label="Window area geometry diagram"></svg>
+          </div>
+        </div>
+
+        <div class="results-metric-grid">
+          <ResultMetricCard id="card-single-area" label="Single Window Area" highlight={true} sublabel="Surface area of 1 window" animate={true} />
+          <ResultMetricCard id="card-total-area" label="Total Window Area" highlight={true} sublabel="All windows combined" animate={true} />
+          <ResultMetricCard id="card-total-waste" label="Total Area with Waste" highlight={true} sublabel="Includes waste allowance" animate={true} />
+          <ResultMetricCard id="card-perimeter" label="Perimeter Length" highlight={true} sublabel="Outer frame edge length" animate={true} />
+          <ResultMetricCard id="card-glass-area" label="Net Daylight Glass Area" sublabel="Excludes 1.5\" frame border" animate={true} />
+          <ResultMetricCard id="card-film-area" label="Window Film Requirement" sublabel="Includes 1\" trim margin" animate={true} />
+          <ResultMetricCard id="card-curtain-area" label="Curtain Gather Coverage" sublabel="1.5x fullness fold factor" animate={true} />
+          <ResultMetricCard id="card-paint-area" label="Frame Trim Paint Area" sublabel="2\" casing molding surface" animate={true} />
+        </div>
+
+        <!-- Unified Confidence Summary Card -->
+        <div id="card-confidence" class="confidence-summary-card" hidden>
+          <div class="conf-card-header">
+            <span class="conf-stars" id="confidence-stars">★★★★★</span>
+            <span class="conf-title" id="confidence-label">Exact Technical Geometry</span>
+          </div>
+          <div class="conf-card-badges">
+            <span class="conf-badge conf-badge-score" id="score-badge">RECTANGLE SHAPE</span>
+            <span class="conf-badge conf-badge-order" id="confidence-ordering-badge">✓ 10% Waste Factor Included</span>
+            <span class="conf-badge conf-badge-cost" id="cost-badge">20.0 sq ft Total Area</span>
+          </div>
+        </div>
+
+        <!-- Recommendations Grid -->
+        <div id="rec-section" class="rec-section" hidden>
+          <div class="panel-header"><span class="panel-label">Smart Recommendations & Trade Advice</span></div>
+          <div id="rec-list" class="rec-list"></div>
+        </div>
+
+        <!-- Share & Export + History Bar -->
+        <div class="calc-extras" id="calc-extras" hidden>
+          <ShareExportBar calculatorTitle="Window Area Calculator" />
+          <HistoryPanel slug="window-area-calculator" />
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <Fragment slot="sidebar">
+    <RelatedTools
+      links={[
+        {
+          title: 'Window Size Calculator',
+          description: 'Window opening area, perimeter, and sizing recommendations.',
+          href: '/tools/window-size-calculator',
+          icon: 'Ruler',
+        },
+        {
+          title: 'Window Glass Calculator',
+          description: 'Calculate glass area, pane thickness, and weight for any shape.',
+          href: '/tools/window-glass-calculator',
+          icon: 'PanelTop',
+        },
+        {
+          title: 'Window Film Calculator',
+          description: 'Calculate roll width, length, trimming waste, and solar heat reduction.',
+          href: '/tools/window-film-calculator',
+          icon: 'Film',
+        },
+        {
+          title: 'Replacement Window Calculator',
+          description: 'Find standard replacement window sizes and rough openings.',
+          href: '/tools/replacement-window-calculator',
+          icon: 'RefreshCw',
+        },
+      ]}
+      tip={{
+        label: 'Area Tip',
+        text: 'When calculating window area for film, solar screens, or drapes, always add 10% to 15% waste allowance to account for trimming scrap and pattern alignment.',
+      }}
+    />
+    <FAQSection faqs={faqs} />
+  </Fragment>
+</ToolLayout>
+
+<script>
+  import {
+    calculateWindowArea,
+    type WindowAreaInput,
+    type WindowAreaShape,
+  } from '@/engine/window-area.js';
+  import { buildWindowAreaRecommendations } from '@/engine/window-area-recommendations.js';
+  import { toMm, fromMm, formatDimension, normalizeInput } from '@/engine/units.js';
+  import { readUrlState, pushUrlState } from '@/lib/url-state.js';
+  import { buildExportPayload } from '@/lib/export.js';
+  import { buildSummary } from '@/lib/share.js';
+  import { track } from '@/lib/analytics.js';
+  import type { MeasurementUnit } from '@/types/calculator.js';
+
+  let currentResult: ReturnType<typeof calculateWindowArea> | null = null;
+  let currentUnit: MeasurementUnit = 'in';
+  let currentShape: WindowAreaShape = 'rectangle';
+
+  // ── DOM references ────────────────────────────────────────────────────────
+  const widthInput     = document.getElementById('input-width')       as HTMLInputElement | null;
+  const heightInput    = document.getElementById('input-height')      as HTMLInputElement | null;
+  const qtyInput       = document.getElementById('input-quantity')    as HTMLInputElement | null;
+  const wasteInput     = document.getElementById('input-waste')       as HTMLInputElement | null;
+  const shapeSelect    = document.getElementById('input-shape')       as HTMLSelectElement | null;
+  const topWidthInput  = document.getElementById('input-top-width')   as HTMLInputElement | null;
+  const sideHeightInput= document.getElementById('input-side-height') as HTMLInputElement | null;
+
+  const resultsEmpty   = document.getElementById('results-empty')     as HTMLElement | null;
+  const resultsGrid    = document.getElementById('results-grid')      as HTMLElement | null;
+  const recSection     = document.getElementById('rec-section')       as HTMLElement | null;
+  const calcExtras     = document.getElementById('calc-extras')       as HTMLElement | null;
+  const cardConf       = document.getElementById('card-confidence')    as HTMLElement | null;
+  const extraGroup     = document.getElementById('extra-dimensions-group') as HTMLElement | null;
+
+  function updateMetric(cardId: string, value: string, unitStr: string = '') {
+    const valEl = document.querySelector(`#${cardId} .result-value-text`);
+    const unitEl = document.querySelector(`#${cardId} .result-unit`);
+    if (valEl) valEl.textContent = value;
+    if (unitEl) unitEl.textContent = unitStr;
+  }
+
+  // ── Vector SVG Shape Technical Illustration Renderer ─────────────────────────
+  function renderAreaSvg(result: ReturnType<typeof calculateWindowArea>, wMm: number, hMm: number, shape: WindowAreaShape) {
+    const svg = document.getElementById('area-svg');
+    if (!svg) return;
+
+    const cx = 200, cy = 160;
+    const maxW = 240, maxH = 200;
+    const scale = Math.min(maxW / wMm, maxH / hMm);
+
+    const fw = wMm * scale;
+    const fh = hMm * scale;
+
+    const measureArrow = (x1: number, y1: number, x2: number, y2: number, label: string, isHoriz: boolean = false) => {
+      const mx = isHoriz ? (x1 + x2) / 2 : x2 + 18;
+      const my = isHoriz ? y1 - 12 : (y1 + y2) / 2;
+      return `
+        <line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="#0f172a" stroke-width="1.5"/>
+        <polygon points="${x1},${y1} ${x1-3},${y1+5} ${x1+3},${y1+5}" fill="#0f172a" transform="rotate(${isHoriz?90:0},${x1},${y1})"/>
+        <polygon points="${x2},${y2} ${x2-3},${y2-5} ${x2+3},${y2-5}" fill="#0f172a" transform="rotate(${isHoriz?90:0},${x2},${y2})"/>
+        <rect x="${mx - 24}" y="${my - 8}" width="48" height="16" rx="3" fill="#ffffff" stroke="#cbd5e1" stroke-width="1"/>
+        <text x="${mx}" y="${my + 4}" font-family="monospace" font-size="9" font-weight="600" text-anchor="middle" fill="#0f172a">${label}</text>`;
+    };
+
+    let shapePath = '';
+    if (shape === 'circle') {
+      shapePath = `<circle cx="${cx}" cy="${cy}" r="${fw/2}" fill="#e0f2fe" fill-opacity="0.6" stroke="#0284c7" stroke-width="4"/>`;
+    } else if (shape === 'half-circle') {
+      shapePath = `<path d="M ${cx - fw/2} ${cy + fh/2} A ${fw/2} ${fh/2} 0 0 1 ${cx + fw/2} ${cy + fh/2} Z" fill="#e0f2fe" fill-opacity="0.6" stroke="#0284c7" stroke-width="4"/>`;
+    } else if (shape === 'quarter-circle') {
+      shapePath = `<path d="M ${cx - fw/2} ${cy + fh/2} L ${cx - fw/2} ${cy - fh/2} A ${fw} ${fh} 0 0 1 ${cx + fw/2} ${cy + fh/2} Z" fill="#e0f2fe" fill-opacity="0.6" stroke="#0284c7" stroke-width="4"/>`;
+    } else if (shape === 'ellipse') {
+      shapePath = `<ellipse cx="${cx}" cy="${cy}" rx="${fw/2}" ry="${fh/2}" fill="#e0f2fe" fill-opacity="0.6" stroke="#0284c7" stroke-width="4"/>`;
+    } else if (shape === 'triangle') {
+      shapePath = `<polygon points="${cx},${cy - fh/2} ${cx + fw/2},${cy + fh/2} ${cx - fw/2},${cy + fh/2}" fill="#e0f2fe" fill-opacity="0.6" stroke="#0284c7" stroke-width="4"/>`;
+    } else if (shape === 'trapezoid') {
+      const topW = fw * 0.7;
+      shapePath = `<polygon points="${cx - topW/2},${cy - fh/2} ${cx + topW/2},${cy - fh/2} ${cx + fw/2},${cy + fh/2} ${cx - fw/2},${cy + fh/2}" fill="#e0f2fe" fill-opacity="0.6" stroke="#0284c7" stroke-width="4"/>`;
+    } else if (shape === 'arch') {
+      const rectH = fh * 0.6;
+      shapePath = `<path d="M ${cx - fw/2} ${cy + fh/2} L ${cx - fw/2} ${cy + fh/2 - rectH} A ${fw/2} ${fh/2 - rectH/2} 0 0 1 ${cx + fw/2} ${cy + fh/2 - rectH} L ${cx + fw/2} ${cy + fh/2} Z" fill="#e0f2fe" fill-opacity="0.6" stroke="#0284c7" stroke-width="4"/>`;
+    } else {
+      shapePath = `<rect x="${cx - fw/2}" y="${cy - fh/2}" width="${fw}" height="${fh}" fill="#e0f2fe" fill-opacity="0.6" stroke="#0284c7" stroke-width="4" rx="4"/>`;
+    }
+
+    svg.innerHTML = `
+      <defs>
+        <pattern id="grid-area" width="20" height="20" patternUnits="userSpaceOnUse">
+          <path d="M 20 0 L 0 0 0 20" fill="none" stroke="rgba(0,0,0,0.03)" stroke-width="1"/>
+        </pattern>
+      </defs>
+      <rect width="400" height="340" fill="url(#grid-area)" rx="6"/>
+
+      ${shapePath}
+
+      <!-- Dimension Arrows -->
+      ${measureArrow(cx - fw/2, cy + fh/2 + 16, cx + fw/2, cy + fh/2 + 16, `${Math.round(fromMm(wMm, currentUnit))} ${currentUnit}`, true)}
+      ${measureArrow(cx + fw/2 + 16, cy - fh/2, cx + fw/2 + 16, cy + fh/2, `${Math.round(fromMm(hMm, currentUnit))} ${currentUnit}`)}
+
+      <!-- Center Area Badge -->
+      <rect x="${cx - 75}" y="${cy - 14}" width="150" height="28" rx="4" fill="#0f172a"/>
+      <text x="${cx}" y="${cy + 4}" font-family="monospace" font-size="11" font-weight="700" text-anchor="middle" fill="#38bdf8">${result.singleAreaSqFt} sq ft (${result.singleAreaM2} m²)</text>
+
+      <!-- Total Summary Badge -->
+      <rect x="${cx - 90}" y="306" width="180" height="24" rx="4" fill="#1e293b"/>
+      <text x="${cx}" y="322" font-family="monospace" font-size="10" font-weight="700" text-anchor="middle" fill="#ffffff">TOTAL: ${result.totalAreaSqFt} sq ft (${result.totalAreaM2} m²)</text>
+    `;
+
+    const sub = document.getElementById('svg-subtitle');
+    if (sub) {
+      sub.textContent = `${shape.toUpperCase()} · Area: ${result.singleAreaSqFt} sq ft · Perimeter: ${result.singlePerimeterFt} ft`;
+    }
+  }
+
+  function calculate() {
+    const wInput = widthInput?.value.trim() ?? '';
+    const hInput = heightInput?.value.trim() ?? '';
+    const qInput = parseInt(qtyInput?.value || '1', 10);
+    const wasteNum = parseFloat(wasteInput?.value || '10');
+
+    if (!wInput || !hInput) {
+      if (resultsEmpty) resultsEmpty.hidden = false;
+      if (resultsGrid)  resultsGrid.hidden  = true;
+      if (recSection)   recSection.hidden   = true;
+      if (calcExtras)   calcExtras.hidden   = true;
+      if (cardConf)     cardConf.hidden     = true;
+      return;
+    }
+
+    const w = normalizeInput(wInput, currentUnit);
+    const h = normalizeInput(hInput, currentUnit);
+
+    if (!w || !h || w <= 0 || h <= 0) {
+      if (resultsEmpty) resultsEmpty.hidden = false;
+      if (resultsGrid)  resultsGrid.hidden  = true;
+      if (recSection)   recSection.hidden   = true;
+      if (calcExtras)   calcExtras.hidden   = true;
+      if (cardConf)     cardConf.hidden     = true;
+      return;
+    }
+
+    const wMm = toMm(w, currentUnit);
+    const hMm = toMm(h, currentUnit);
+
+    const topWMm = topWidthInput?.value ? toMm(normalizeInput(topWidthInput.value, currentUnit) || w, currentUnit) : undefined;
+    const sideHMm = sideHeightInput?.value ? toMm(normalizeInput(sideHeightInput.value, currentUnit) || h, currentUnit) : undefined;
+
+    const input: WindowAreaInput = {
+      windowWidthMm: wMm,
+      windowHeightMm: hMm,
+      shape: currentShape,
+      quantity: Math.max(1, qInput),
+      wastePct: Math.max(0, wasteNum),
+      topWidthMm: topWMm,
+      sideHeightMm: sideHMm,
+    };
+
+    const result = calculateWindowArea(input);
+    currentResult = result;
+    const recs = buildWindowAreaRecommendations(input, result);
+
+    // ── Metrics ──────────────────────────────────────────────────────────────
+    updateMetric('card-single-area', `${result.singleAreaSqFt.toFixed(2)} sq ft`, `(${result.singleAreaM2.toFixed(3)} m²)`);
+    updateMetric('card-total-area', `${result.totalAreaSqFt.toFixed(2)} sq ft`, `(${result.totalAreaM2.toFixed(2)} m²)`);
+    updateMetric('card-total-waste', `${result.totalAreaWithWasteSqFt.toFixed(2)} sq ft`, `(+${input.wastePct}% waste allowance)`);
+    updateMetric('card-perimeter', `${result.totalPerimeterFt.toFixed(1)} ft`, `(${result.totalPerimeterM.toFixed(2)} m)`);
+    updateMetric('card-glass-area', `${result.netGlassAreaSqFt.toFixed(1)} sq ft`, 'Daylight opening area');
+    updateMetric('card-film-area', `${result.filmAreaSqFt.toFixed(1)} sq ft`, 'Includes 1" trim margin');
+    updateMetric('card-curtain-area', `${result.curtainCoverageAreaSqFt.toFixed(1)} sq ft`, '1.5x fullness gather');
+    updateMetric('card-paint-area', `${result.framePaintAreaSqFt.toFixed(1)} sq ft`, '2" casing trim surface');
+
+    // ── Confidence summary card ───────────────────────────────────────────────
+    const starsEl = document.getElementById('confidence-stars');
+    const labelEl = document.getElementById('confidence-label');
+    const orderBadge = document.getElementById('confidence-ordering-badge');
+    const costBadge = document.getElementById('cost-badge');
+    const scoreBadge = document.getElementById('score-badge');
+
+    if (starsEl) starsEl.textContent = result.confidence === 'excellent' ? '★★★★★' : (result.confidence === 'good' ? '★★★★☆' : '★★★☆☆');
+    if (labelEl) labelEl.textContent = result.confidence === 'excellent' ? 'Exact Technical Geometry' : 'Specialty Shape Area';
+    if (scoreBadge) scoreBadge.textContent = `${currentShape.toUpperCase()} SHAPE`;
+    if (orderBadge) orderBadge.textContent = `✓ ${input.wastePct}% Waste Factor Included`;
+    if (costBadge) costBadge.textContent = `${result.totalAreaSqFt.toFixed(1)} sq ft Total Area`;
+
+    // ── Recommendation cards ─────────────────────────────────────────────────
+    const recList = document.getElementById('rec-list');
+    if (recList) {
+      const iconMap: Record<string, string> = {
+        'film': `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18"/><line x1="7" y1="2" x2="7" y2="22"/></svg>`,
+        'glass': `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg>`,
+        'cleaning': `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>`,
+        'paint': `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>`,
+        'waste': `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>`,
+        'measurement': `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.3 15.3a2.4 2.4 0 0 1 0 3.4l-2.6 2.6a2.4 2.4 0 0 1-3.4 0L2.7 8.7a2.4 2.4 0 0 1 0-3.4l2.6-2.6a2.4 2.4 0 0 1 3.4 0z"/></svg>`,
+      };
+      recList.innerHTML = recs.items.map((item: any) =>
+        `<div class="rec-card">
+          <div class="rec-card-header">
+            <span class="rec-card-icon" aria-hidden="true">${iconMap[item.type] || iconMap['film']}</span>
+            <span class="rec-card-title">${item.title}</span>
+          </div>
+          <div class="rec-card-body">${item.body}</div>
+          ${item.tip ? `<div class="rec-card-tip">${item.tip}</div>` : ''}
+        </div>`
+      ).join('');
+    }
+
+    try {
+      renderAreaSvg(result, wMm, hMm, currentShape);
+    } catch (e) {
+      console.error('SVG rendering error:', e);
+    }
+
+    if (resultsEmpty) resultsEmpty.hidden = true;
+    if (resultsGrid)  resultsGrid.hidden  = false;
+    if (recSection)   recSection.hidden   = false;
+    if (calcExtras)   calcExtras.hidden   = false;
+    if (cardConf)     cardConf.hidden     = false;
+
+    const shapeFormatted = currentShape.split('-').map(s => s.charAt(0).toUpperCase() + s.slice(1)).join(' ');
+    const historyLabelText = `${shapeFormatted} • ${w} × ${h} ${currentUnit}`;
+    const summaryText = `${w} × ${h} ${currentUnit} (${input.quantity}x)`;
+    const stateParams = {
+      width: String(w),
+      height: String(h),
+      unit: currentUnit,
+      shape: currentShape,
+      qty: String(input.quantity),
+      waste: String(input.wastePct),
+      subtitle: `${historyLabelText} (${result.totalAreaSqFt.toFixed(1)} sq ft)`,
+      summary: summaryText,
+      _display: summaryText,
+    };
+
+    (window as any).wmCurrentState = stateParams;
+    pushUrlState(stateParams);
+    (window as any).wmHistoryPanel?.add(historyLabelText, stateParams);
+
+    (window as any).wmBuildSummary = () => buildSummary(
+      'Window Area Calculator',
+      [
+        ['Window Shape', shapeFormatted],
+        ['Window Dimensions', `${w} × ${h} ${currentUnit}`],
+        ['Quantity', String(input.quantity)],
+        ['Waste Factor', `${input.wastePct}%`],
+        ['Single Window Area', `${result.singleAreaSqFt.toFixed(2)} sq ft (${result.singleAreaM2.toFixed(3)} m²)`],
+        ['Total Window Area', `${result.totalAreaSqFt.toFixed(2)} sq ft (${result.totalAreaM2.toFixed(2)} m²)`],
+        ['Total Area with Waste', `${result.totalAreaWithWasteSqFt.toFixed(2)} sq ft`],
+        ['Total Perimeter', `${result.totalPerimeterFt.toFixed(1)} ft (${result.totalPerimeterM.toFixed(2)} m)`],
+        ['Net Glass Area', `${result.netGlassAreaSqFt.toFixed(1)} sq ft`],
+        ['Window Film Area', `${result.filmAreaSqFt.toFixed(1)} sq ft`],
+        ['Curtain Coverage', `${result.curtainCoverageAreaSqFt.toFixed(1)} sq ft`],
+        ['Frame Paint Area', `${result.framePaintAreaSqFt.toFixed(1)} sq ft`],
+      ],
+      typeof window !== 'undefined' ? window.location.href : undefined,
+    );
+
+    (window as any).wmBuildExport = () => buildExportPayload(
+      'window-area-calculator',
+      stateParams,
+      {
+        shape: shapeFormatted,
+        windowWidth: `${w} ${currentUnit}`,
+        windowHeight: `${h} ${currentUnit}`,
+        unit: currentUnit,
+        quantity: input.quantity,
+        wastePct: `${input.wastePct}%`,
+        singleAreaSqFt: `${result.singleAreaSqFt.toFixed(2)} sq ft`,
+        singleAreaM2: `${result.singleAreaM2.toFixed(3)} m²`,
+        singleAreaSqIn: `${result.singleAreaSqIn} sq in`,
+        singleAreaCm2: `${result.singleAreaCm2} cm²`,
+        totalAreaSqFt: `${result.totalAreaSqFt.toFixed(2)} sq ft`,
+        totalAreaM2: `${result.totalAreaM2.toFixed(2)} m²`,
+        totalAreaWithWasteSqFt: `${result.totalAreaWithWasteSqFt.toFixed(2)} sq ft`,
+        totalPerimeterFt: `${result.totalPerimeterFt.toFixed(1)} ft`,
+        totalPerimeterM: `${result.totalPerimeterM.toFixed(2)} m`,
+        netGlassAreaSqFt: `${result.netGlassAreaSqFt.toFixed(1)} sq ft`,
+        filmAreaSqFt: `${result.filmAreaSqFt.toFixed(1)} sq ft`,
+        curtainCoverageAreaSqFt: `${result.curtainCoverageAreaSqFt.toFixed(1)} sq ft`,
+        framePaintAreaSqFt: `${result.framePaintAreaSqFt.toFixed(1)} sq ft`,
+        confidence: result.confidence,
+        recommendations: recs.items.map((i: any) => `${i.title}: ${i.body}`).join(' | '),
+        warnings: result.warnings.map((w: any) => w.message).join(' | '),
+      },
+    );
+
+    (window as any).wmShareExportBar?.show();
+
+    track({
+      type: 'calculation_completed',
+      properties: { slug: 'window-area-calculator', unit: currentUnit, inputs: stateParams },
+    });
+  }
+
+  // ── Event listeners ───────────────────────────────────────────────────────
+  widthInput?.addEventListener('input', calculate);
+  heightInput?.addEventListener('input', calculate);
+  qtyInput?.addEventListener('input', calculate);
+  qtyInput?.addEventListener('change', calculate);
+  wasteInput?.addEventListener('input', calculate);
+  topWidthInput?.addEventListener('input', calculate);
+  sideHeightInput?.addEventListener('input', calculate);
+
+  shapeSelect?.addEventListener('change', () => {
+    if (shapeSelect) currentShape = shapeSelect.value as WindowAreaShape;
+    if (extraGroup) {
+      extraGroup.hidden = !['trapezoid', 'arch'].includes(currentShape);
+    }
+    calculate();
+  });
+
+  document.getElementById('unit-selector')?.addEventListener('unitchange', (e) => {
+    const newUnit = (e as CustomEvent).detail?.unit as MeasurementUnit | undefined;
+    if (!newUnit) return;
+    if (widthInput?.value) {
+      const parsed = normalizeInput(widthInput.value, currentUnit);
+      if (parsed) widthInput.value = String(fromMm(toMm(parsed, currentUnit), newUnit));
+    }
+    if (heightInput?.value) {
+      const parsed = normalizeInput(heightInput.value, currentUnit);
+      if (parsed) heightInput.value = String(fromMm(toMm(parsed, currentUnit), newUnit));
+    }
+    const oldUnit = currentUnit;
+    currentUnit = newUnit;
+    track({ type: 'unit_changed', properties: { slug: 'window-area-calculator', from: oldUnit, to: newUnit } });
+    calculate();
+  });
+
+  // Restore URL state
+  const urlState = readUrlState();
+  if (urlState.width && widthInput)   widthInput.value  = urlState.width;
+  if (urlState.height && heightInput) heightInput.value = urlState.height;
+  if (urlState.qty && qtyInput)       qtyInput.value    = urlState.qty;
+  if (urlState.waste && wasteInput)   wasteInput.value  = urlState.waste;
+  if (urlState.unit && ['mm','cm','m','in','ft'].includes(urlState.unit)) {
+    currentUnit = urlState.unit as MeasurementUnit;
+    document.querySelectorAll('.unit-btn').forEach(b => (b as HTMLElement).setAttribute('aria-pressed', (b as HTMLElement).dataset.unit === currentUnit ? 'true' : 'false'));
+  }
+  if (urlState.shape && shapeSelect) {
+    currentShape = urlState.shape as WindowAreaShape;
+    shapeSelect.value = currentShape;
+    if (extraGroup) {
+      extraGroup.hidden = !['trapezoid', 'arch'].includes(currentShape);
+    }
+  }
+
+  // Initial calculation on page load
+  calculate();
+
+  // ── History restore ──────────────────────────────────────────────────────
+  document.addEventListener('wm:history-restore', (e: Event) => {
+    const { inputs } = (e as CustomEvent).detail;
+    if (inputs.width && widthInput)   widthInput.value  = inputs.width;
+    if (inputs.height && heightInput) heightInput.value = inputs.height;
+    if (inputs.qty && qtyInput)       qtyInput.value    = inputs.qty;
+    if (inputs.waste && wasteInput)   wasteInput.value  = inputs.waste;
+    if (inputs.unit && ['mm','cm','m','in','ft'].includes(inputs.unit)) {
+      currentUnit = inputs.unit as MeasurementUnit;
+      document.querySelectorAll('.unit-btn').forEach(b => (b as HTMLElement).setAttribute('aria-pressed', (b as HTMLElement).dataset.unit === currentUnit ? 'true' : 'false'));
+    }
+    if (inputs.shape && shapeSelect) {
+      currentShape = inputs.shape as WindowAreaShape;
+      shapeSelect.value = currentShape;
+      if (extraGroup) {
+        extraGroup.hidden = !['trapezoid', 'arch'].includes(currentShape);
+      }
+    }
+    calculate();
+    track({ type: 'history_restored', properties: { slug: 'window-area-calculator', entryId: (e as CustomEvent).detail.entryId ?? '' } });
+  });
+</script>
+
+<style>
+  .calc-dashboard {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--spacing-xl);
+    align-items: start;
+    margin-top: var(--spacing-lg);
+  }
+
+  @media (min-width: 1024px) {
+    .calc-dashboard {
+      grid-template-columns: 380px 1fr;
+    }
+  }
+
+  .calc-panel {
+    background-color: var(--color-canvas);
+    border: 1px solid var(--color-hairline);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+  }
+
+  .calc-panel-inputs {
+    position: sticky;
+    top: var(--spacing-md);
+  }
+
+  .panel-header {
+    padding: var(--spacing-md);
+    background-color: var(--color-canvas-soft);
+    border-bottom: 1px solid var(--color-hairline);
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+  }
+
+  .panel-label {
+    font-family: var(--font-family-mono);
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--color-muted);
+  }
+
+  .panel-section-header {
+    padding: var(--spacing-xs) var(--spacing-md);
+    background-color: var(--color-canvas-soft);
+    border-top: 1px solid var(--color-hairline);
+    border-bottom: 1px solid var(--color-hairline);
+  }
+
+  .panel-section-title {
+    font-family: var(--font-family-mono);
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--color-ink-faint);
+  }
+
+  .input {
+    width: 100%;
+    padding: var(--spacing-sm) var(--spacing-md);
+    background-color: var(--color-canvas);
+    border: 1px solid var(--color-hairline);
+    border-radius: var(--radius-md);
+    font-family: var(--font-family-mono);
+    font-size: var(--font-size-body-md);
+    color: var(--color-ink);
+    transition: border-color 0.15s ease;
+  }
+
+  .input:focus {
+    outline: none;
+    border-color: var(--color-link);
+  }
+
+  .input-select {
+    width: 100%;
+    padding: var(--spacing-sm) var(--spacing-md);
+    background-color: var(--color-canvas);
+    border: 1px solid var(--color-hairline);
+    border-radius: var(--radius-md);
+    font-size: var(--font-size-body-sm);
+    color: var(--color-ink);
+  }
+
+  /* Results Panel */
+  .empty-state {
+    padding: var(--spacing-3xl) var(--spacing-xl);
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .empty-icon-wrap {
+    color: var(--color-muted);
+    margin-bottom: var(--spacing-md);
+  }
+
+  .empty-title {
+    font-size: var(--font-size-h3);
+    font-weight: 600;
+    color: var(--color-ink);
+    margin: 0 0 var(--spacing-xs);
+  }
+
+  .empty-sub {
+    font-size: var(--font-size-body-sm);
+    color: var(--color-muted);
+    margin: 0;
+    max-width: 320px;
+  }
+
+  .svg-section {
+    border-bottom: 1px solid var(--color-hairline);
+    background-color: var(--color-canvas);
+  }
+
+  .svg-header {
+    padding: var(--spacing-sm) var(--spacing-md);
+    background-color: var(--color-canvas-soft);
+    border-bottom: 1px solid var(--color-hairline);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .svg-label {
+    font-family: var(--font-family-mono);
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--color-muted);
+  }
+
+  .svg-subtitle {
+    font-family: var(--font-family-mono);
+    font-size: 11px;
+    color: var(--color-ink-muted);
+  }
+
+  .svg-wrap {
+    padding: var(--spacing-md);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: var(--color-canvas);
+  }
+
+  .results-metric-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: var(--spacing-md);
+    padding: var(--spacing-lg);
+  }
+
+  .confidence-summary-card {
+    margin: 0 var(--spacing-lg) var(--spacing-lg);
+    padding: var(--spacing-md);
+    background-color: var(--color-canvas-soft);
+    border: 1px solid var(--color-hairline);
+    border-radius: var(--radius-md);
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+  }
+
+  .conf-card-header {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+  }
+
+  .conf-stars {
+    color: #f59e0b;
+    letter-spacing: 2px;
+  }
+
+  .conf-title {
+    font-weight: 600;
+    font-size: var(--font-size-body-sm);
+    color: var(--color-ink);
+  }
+
+  .conf-card-badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--spacing-xs);
+  }
+
+  .conf-badge {
+    font-family: var(--font-family-mono);
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--color-hairline);
+    background: var(--color-canvas);
+  }
+
+  .conf-badge-score {
+    color: var(--color-link);
+    font-weight: 600;
+  }
+
+  .rec-section {
+    border-top: 1px solid var(--color-hairline);
+  }
+
+  .rec-list {
+    padding: var(--spacing-lg);
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: var(--spacing-md);
+  }
+
+  .calc-extras {
+    border-top: 1px solid var(--color-hairline);
+    background-color: var(--color-canvas-soft);
+    padding: var(--spacing-lg);
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-lg);
+  }
+
+  @media (max-width: 640px) {
+    .results-metric-grid {
+      grid-template-columns: 1fr;
+      padding: var(--spacing-md);
+    }
+    .rec-list, .calc-extras, .svg-section {
+      padding: var(--spacing-md);
+    }
+    .confidence-summary-card {
+      margin: 0 var(--spacing-md) var(--spacing-md);
+      padding: var(--spacing-md);
+    }
+  }
+</style>
